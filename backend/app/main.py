@@ -1,7 +1,10 @@
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import chart, numerology
+load_dotenv()
+
+from app.api import chart, chat, numerology  # noqa: E402 (must follow load_dotenv())
 
 app = FastAPI(title="Aureon API")
 
@@ -15,6 +18,7 @@ app.add_middleware(
 
 app.include_router(chart.router)
 app.include_router(numerology.router)
+app.include_router(chat.router)
 
 
 @app.get("/health")

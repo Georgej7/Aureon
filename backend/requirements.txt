@@ -2,3 +2,5 @@ fastapi
 uvicorn[standard]
 pyswisseph
 pytest
+anthropic
+python-dotenv

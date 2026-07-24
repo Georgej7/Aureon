@@ -1,26 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { postChatReply } from "@/lib/api";
+import type { NatalChart, NumerologyProfile } from "@/lib/api";
+import { createClient } from "@/lib/supabase/client";
 
-type Message = { id: number; role: "ai" | "user"; text: string };
-
-const INITIAL_MESSAGES: Message[] = [
-  {
-    id: 1,
-    role: "ai",
-    text: "Last time we talked, you were deciding whether to take the job offer in Berlin. Any movement on that?",
-  },
-  { id: 2, role: "user", text: "Still sitting on it. I keep going back and forth." },
-  {
-    id: 3,
-    role: "ai",
-    text: "That tracks — your Saturn transit this quarter has been pushing toward “decide slowly, decide once,” not indecision for its own sake. Your Life Path 8 also tends to regret moves made under pressure more than moves made late. What's actually driving the hesitation — the move itself, or the timing?",
-  },
-];
+type Message = { id: string; role: "user" | "assistant"; content: string };
 
 const VOICE_REPLIES = [
   "I hear that. Let's slow down for a second — what does your gut say when you picture actually saying yes?",
-  "That makes sense given your chart right now. Your Personal Year 8 rewards patience — this doesn't need to be decided today.",
+  "That makes sense given your chart right now. Your Personal Year rewards patience — this doesn't need to be decided today.",
   "Worth naming: is this fear about the move itself, or fear of choosing wrong? Those call for different next steps.",
 ];
 
@@ -57,10 +46,18 @@ const SpeakIcon = () => (
 );
 
 export default function ChatWindow() {
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<{ chart: NatalChart; numerology: NumerologyProfile } | null>(
+    null
+  );
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [chatInput, setChatInput] = useState("");
-  const [playingId, setPlayingId] = useState<number | null>(null);
-  const nextId = useRef(INITIAL_MESSAGES.length + 1);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const chatBodyRef = useRef<HTMLDivElement | null>(null);
 
   const [voiceActive, setVoiceActive] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState("Connecting…");
@@ -68,7 +65,82 @@ export default function ChatWindow() {
   const [voiceInput, setVoiceInput] = useState("");
   const [orbSpeaking, setOrbSpeaking] = useState(false);
   const voiceTurn = useRef(0);
-  const chatBodyRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        if (!cancelled) {
+          setLoadError("You need to be signed in to chat.");
+          setLoading(false);
+        }
+        return;
+      }
+
+      const { data: profileRow } = await supabase
+        .from("profiles")
+        .select("chart, numerology")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (!profileRow?.chart || !profileRow?.numerology) {
+        if (!cancelled) {
+          setLoadError("Complete your profile before chatting — visit Onboarding first.");
+          setLoading(false);
+        }
+        return;
+      }
+      if (!cancelled) {
+        setProfile({ chart: profileRow.chart, numerology: profileRow.numerology });
+      }
+
+      let { data: session } = await supabase
+        .from("chat_sessions")
+        .select("id")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!session) {
+        const { data: newSession, error: createError } = await supabase
+          .from("chat_sessions")
+          .insert({ user_id: user.id })
+          .select("id")
+          .single();
+        if (createError || !newSession) {
+          if (!cancelled) {
+            setLoadError("Couldn't start a chat session.");
+            setLoading(false);
+          }
+          return;
+        }
+        session = newSession;
+      }
+      if (cancelled) return;
+      setSessionId(session.id);
+
+      const { data: history } = await supabase
+        .from("chat_messages")
+        .select("id, role, content")
+        .eq("session_id", session.id)
+        .order("created_at", { ascending: true });
+
+      if (!cancelled) {
+        setMessages((history as Message[]) ?? []);
+        setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function scrollToBottom() {
     requestAnimationFrame(() => {
@@ -77,15 +149,58 @@ export default function ChatWindow() {
     });
   }
 
-  function sendChatMsg() {
+  async function sendChatMsg() {
     const text = chatInput.trim();
-    if (!text) return;
-    setMessages((m) => [...m, { id: nextId.current++, role: "user", text }]);
+    if (!text || sending || !sessionId || !profile) return;
+    setSendError(null);
     setChatInput("");
+    const supabase = createClient();
+
+    const { data: inserted, error: insertError } = await supabase
+      .from("chat_messages")
+      .insert({ session_id: sessionId, role: "user", content: text })
+      .select("id, role, content")
+      .single();
+    if (insertError || !inserted) {
+      setSendError("Couldn't send your message. Try again.");
+      return;
+    }
+
+    const nextMessages = [...messages, inserted as Message];
+    setMessages(nextMessages);
     scrollToBottom();
+    setSending(true);
+
+    try {
+      const { reply } = await postChatReply({
+        chart: profile.chart,
+        numerology: profile.numerology,
+        messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
+      });
+
+      const { data: assistantRow } = await supabase
+        .from("chat_messages")
+        .insert({ session_id: sessionId, role: "assistant", content: reply })
+        .select("id, role, content")
+        .single();
+
+      await supabase
+        .from("chat_sessions")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", sessionId);
+
+      if (assistantRow) {
+        setMessages((m) => [...m, assistantRow as Message]);
+        scrollToBottom();
+      }
+    } catch {
+      setSendError("Aureon couldn't reply just now — is the backend running?");
+    } finally {
+      setSending(false);
+    }
   }
 
-  function speakMsg(id: number, text: string) {
+  function speakMsg(id: string, text: string) {
     setPlayingId(id);
     speakText(text, undefined, () => setPlayingId(null));
   }
@@ -98,10 +213,10 @@ export default function ChatWindow() {
       setVoiceStatus("Connected");
       setVoiceTranscript({
         speaker: "Aureon",
-        text: "Good to hear your voice — same conversation as before. Still deciding on Berlin?",
+        text: "Good to hear your voice — what's on your mind today?",
       });
       speakText(
-        "Good to hear your voice, same conversation as before. Still deciding on Berlin?",
+        "Good to hear your voice — what's on your mind today?",
         () => setOrbSpeaking(true),
         () => setOrbSpeaking(false)
       );
@@ -135,7 +250,7 @@ export default function ChatWindow() {
         <span className="hud-tag">Session active</span>
         <div className="chat-head">
           <span className="dot-live" />
-          <span style={{ fontSize: 13, color: "var(--text-dim)" }}>Aureon — remembers your last 6 months</span>
+          <span style={{ fontSize: 13, color: "var(--text-dim)" }}>Aureon — remembers your conversations</span>
           <button className="voice-cta" onClick={openVoiceCall}>
             <span className="vip-tag">VIP</span> Start voice call
           </button>
@@ -144,29 +259,38 @@ export default function ChatWindow() {
         {!voiceActive && (
           <>
             <div className="chat-body" id="chatBody" ref={chatBodyRef}>
-              {messages.map((m) => (
-                <div key={m.id} className={`msg ${m.role}`}>
-                  {m.text}
-                  {m.role === "ai" && (
-                    <button
-                      className={`speak-btn${playingId === m.id ? " playing" : ""}`}
-                      onClick={() => speakMsg(m.id, m.text)}
-                    >
-                      <SpeakIcon />
-                    </button>
-                  )}
-                </div>
-              ))}
+              {loading && <p style={{ color: "var(--text-dim)", fontSize: 13 }}>Loading your conversation…</p>}
+              {loadError && <p style={{ color: "#c96a4a", fontSize: 13 }}>{loadError}</p>}
+              {!loading &&
+                !loadError &&
+                messages.map((m) => (
+                  <div key={m.id} className={`msg ${m.role === "assistant" ? "ai" : "user"}`}>
+                    {m.content}
+                    {m.role === "assistant" && (
+                      <button
+                        className={`speak-btn${playingId === m.id ? " playing" : ""}`}
+                        onClick={() => speakMsg(m.id, m.content)}
+                      >
+                        <SpeakIcon />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              {sending && <p style={{ color: "var(--text-dim)", fontSize: 13 }}>Aureon is thinking…</p>}
+              {sendError && <p style={{ color: "#c96a4a", fontSize: 13 }}>{sendError}</p>}
             </div>
             <div className="chat-input">
               <input
                 id="chatInputBox"
                 placeholder="Ask about your chart, your year, or what's on your mind…"
                 value={chatInput}
+                disabled={loading || !!loadError}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendChatMsg()}
               />
-              <button onClick={sendChatMsg}>Send</button>
+              <button onClick={sendChatMsg} disabled={loading || !!loadError || sending}>
+                Send
+              </button>
             </div>
           </>
         )}

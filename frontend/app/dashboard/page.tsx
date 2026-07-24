@@ -4,32 +4,40 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { NatalChart, NumerologyProfile } from "@/lib/api";
 import { zodiacSign } from "@/lib/astrology";
+import { createClient } from "@/lib/supabase/client";
 
-type StoredProfile = {
-  fullName: string;
-  birthDate: string;
-  birthTime: string;
-  birthLocation: string;
+type Profile = {
   chart: NatalChart;
   numerology: NumerologyProfile;
 };
 
-// Stopgap only: real persistence (Supabase/Postgres) hasn't been built yet, so
-// the onboarding result is kept in localStorage until then.
-function loadStoredProfile(): StoredProfile | null {
-  try {
-    const raw = localStorage.getItem("aureon_profile");
-    return raw ? (JSON.parse(raw) as StoredProfile) : null;
-  } catch {
-    return null;
-  }
-}
-
 export default function DashboardPage() {
-  const [profile, setProfile] = useState<StoredProfile | null | undefined>(undefined);
+  const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
 
   useEffect(() => {
-    setProfile(loadStoredProfile());
+    let cancelled = false;
+    async function load() {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        if (!cancelled) setProfile(null);
+        return;
+      }
+      const { data } = await supabase
+        .from("profiles")
+        .select("chart, numerology")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!cancelled) {
+        setProfile(data && data.chart && data.numerology ? (data as Profile) : null);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const sun = profile?.chart.planets.find((p) => p.name === "Sun");

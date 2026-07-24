@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import ChartReveal, { ChartRevealHandle } from "@/components/ChartReveal";
 import { postNatalChart, postNumerology } from "@/lib/api";
+import { createClient } from "@/lib/supabase/client";
 
 function offsetToIso(offsetHours: number): string {
   const sign = offsetHours < 0 ? "-" : "+";
@@ -40,15 +41,37 @@ export default function OnboardingPage() {
     setSubmitting(true);
     setError(null);
     try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setError("You need to be signed in to generate a profile.");
+        setSubmitting(false);
+        return;
+      }
+
       const datetime = `${birthDate}T${birthTime}:00${offsetToIso(Number(utcOffset))}`;
       const [chart, numerology] = await Promise.all([
         postNatalChart({ datetime, latitude: Number(latitude), longitude: Number(longitude) }),
         postNumerology({ full_name: fullName, date: birthDate }),
       ]);
-      localStorage.setItem(
-        "aureon_profile",
-        JSON.stringify({ fullName, birthDate, birthTime, birthLocation, chart, numerology })
-      );
+
+      const { error: upsertError } = await supabase.from("profiles").upsert({
+        id: user.id,
+        full_name: fullName,
+        birth_date: birthDate,
+        birth_time: birthTime,
+        birth_location: birthLocation,
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+        utc_offset: Number(utcOffset),
+        chart,
+        numerology,
+        updated_at: new Date().toISOString(),
+      });
+      if (upsertError) throw upsertError;
+
       chartRevealRef.current?.reveal();
     } catch {
       setError("Couldn't generate your profile — is the backend running? Try again in a moment.");

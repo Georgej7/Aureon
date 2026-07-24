@@ -71,3 +71,15 @@ export function postNatalChart(payload: NatalChartRequest): Promise<NatalChart> 
 export function postNumerology(payload: NumerologyRequest): Promise<NumerologyProfile> {
   return postJson<NumerologyProfile>("/api/numerology", payload);
 }
+
+export type ChatReplyMessage = { role: "user" | "assistant"; content: string };
+
+export type ChatReplyRequest = {
+  chart: NatalChart;
+  numerology: NumerologyProfile;
+  messages: ChatReplyMessage[];
+};
+
+export function postChatReply(payload: ChatReplyRequest): Promise<{ reply: string }> {
+  return postJson<{ reply: string }>("/api/chat/reply", payload);
+}

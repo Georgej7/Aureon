@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
 
 const TABS = [
   { href: "/", label: "Landing" },
@@ -11,8 +14,31 @@ const TABS = [
   { href: "/pricing", label: "Pricing" },
 ];
 
+const SUPABASE_CONFIGURED =
+  !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
 export default function TopNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    if (!SUPABASE_CONFIGURED) return;
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.subscription.unsubscribe();
+  }, []);
+
+  async function handleLogOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setUser(null);
+    router.push("/");
+    router.refresh();
+  }
 
   return (
     <div className="topnav">
@@ -36,6 +62,25 @@ export default function TopNav() {
             {tab.label}
           </Link>
         ))}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {user ? (
+          <>
+            <span style={{ fontSize: 12, color: "var(--text-dim)" }}>{user.email}</span>
+            <button className="btn btn-ghost" onClick={handleLogOut}>
+              Log out
+            </button>
+          </>
+        ) : (
+          <>
+            <Link className="btn btn-ghost" href="/login">
+              Log in
+            </Link>
+            <Link className="btn btn-gold" href="/register">
+              Sign up
+            </Link>
+          </>
+        )}
       </div>
     </div>
   );

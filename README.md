@@ -32,6 +32,10 @@ computation of placements.
 
 ## Running locally
 
+**Supabase** (auth + all persistence — profiles, chat history): create a free project at
+supabase.com, run `backend/migrations/001_init.sql` in its SQL Editor, then copy
+`frontend/.env.local.example` to `frontend/.env.local` and fill in the project URL + anon key.
+
 **Frontend**:
 ```
 cd frontend
@@ -40,17 +44,20 @@ npm run dev
 ```
 Visit `http://localhost:3000`.
 
-**Backend**:
+**Backend** (Python 3.11 specifically — see `backend/README.md`):
 ```
 cd backend
-python -m venv .venv
+py -3.11 -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
-Visit `http://localhost:8000/health`.
+Visit `http://localhost:8000/health`. Copy `backend/.env.example` to `backend/.env` and set
+`ANTHROPIC_API_KEY` for real chat replies — chat runs in an honestly-labeled stub mode without it.
 
 ## Status
 
-Early scaffold stage. No calculation engine, no AI wiring, no payments yet — see the project brief
-for the full MVP build order.
+Calculation engine (astrology + numerology), registration/login, and persistent chat history are
+built. Chat responds directly from chart/numerology context — no knowledge base yet, and no real
+Claude replies until an Anthropic key is configured. No payments yet. See the project brief for the
+full MVP build order.
