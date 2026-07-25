@@ -45,6 +45,30 @@ const SpeakIcon = () => (
   </svg>
 );
 
+/** Every knowledge_base topic relevant to this user's actual chart + numerology —
+ * exact structured lookups, not semantic search, since a chart is a fully known
+ * set of placements. */
+function topicsForProfile(chart: NatalChart, numerology: NumerologyProfile): string[] {
+  const topics = new Set<string>();
+  for (const planet of chart.planets) {
+    topics.add(planet.name);
+    topics.add(planet.sign);
+    topics.add(`House ${planet.house}`);
+  }
+  if (chart.houses[0]) topics.add(chart.houses[0].sign); // ascendant sign
+  for (const aspect of chart.aspects) topics.add(aspect.aspect_type);
+  for (const value of [
+    numerology.life_path,
+    numerology.expression,
+    numerology.soul_urge,
+    numerology.personality,
+    numerology.personal_year,
+  ]) {
+    topics.add(`Number ${value}`);
+  }
+  return Array.from(topics);
+}
+
 export default function ChatWindow() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -172,9 +196,18 @@ export default function ChatWindow() {
     setSending(true);
 
     try {
+      const topics = topicsForProfile(profile.chart, profile.numerology);
+      const { data: knowledge } = await supabase
+        .from("knowledge_base")
+        .select(
+          "system, category, topic, definition, traditional_interpretation, modern_interpretation, psychological_interpretation, positive_aspects, challenges, career_meaning, relationship_meaning, growth_meaning, sources, confidence_level, context_notes"
+        )
+        .in("topic", topics);
+
       const { reply } = await postChatReply({
         chart: profile.chart,
         numerology: profile.numerology,
+        knowledge: knowledge ?? [],
         messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
       });
 

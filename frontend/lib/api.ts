@@ -74,9 +74,28 @@ export function postNumerology(payload: NumerologyRequest): Promise<NumerologyPr
 
 export type ChatReplyMessage = { role: "user" | "assistant"; content: string };
 
+export type KnowledgeEntry = {
+  system: string;
+  category: string;
+  topic: string;
+  definition: string;
+  traditional_interpretation: string;
+  modern_interpretation: string;
+  psychological_interpretation: string;
+  positive_aspects: string;
+  challenges: string;
+  career_meaning: string;
+  relationship_meaning: string;
+  growth_meaning: string;
+  sources: string[];
+  confidence_level: string;
+  context_notes: Record<string, string> | null;
+};
+
 export type ChatReplyRequest = {
   chart: NatalChart;
   numerology: NumerologyProfile;
+  knowledge: KnowledgeEntry[];
   messages: ChatReplyMessage[];
 };
 

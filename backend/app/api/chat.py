@@ -14,6 +14,7 @@ class ChatMessage(BaseModel):
 class ChatReplyRequest(BaseModel):
     chart: dict
     numerology: dict
+    knowledge: list[dict] = []
     messages: list[ChatMessage]
 
 
@@ -26,6 +27,7 @@ def chat_reply(request: ChatReplyRequest) -> ChatReplyResponse:
     reply = generate_reply(
         request.chart,
         request.numerology,
+        request.knowledge,
         [m.model_dump() for m in request.messages],
     )
     return ChatReplyResponse(reply=reply)
