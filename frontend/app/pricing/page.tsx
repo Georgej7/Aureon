@@ -1,4 +1,57 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { initializePaddle, type Paddle } from "@paddle/paddle-js";
+import { createClient } from "@/lib/supabase/client";
+
 export default function PricingPage() {
+  const router = useRouter();
+  const [paddle, setPaddle] = useState<Paddle>();
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+    if (!clientToken) return;
+
+    initializePaddle({
+      token: clientToken,
+      environment: process.env.NEXT_PUBLIC_PADDLE_ENV === "production" ? "production" : "sandbox",
+      eventCallback: (event) => {
+        if (event.name === "checkout.completed") {
+          router.push("/dashboard?upgraded=1");
+        }
+      },
+    }).then(setPaddle);
+  }, [router]);
+
+  async function goPremium() {
+    setError(null);
+    const priceId = process.env.NEXT_PUBLIC_PADDLE_PREMIUM_PRICE_ID;
+    if (!paddle || !priceId) {
+      setError("Billing isn't configured yet.");
+      return;
+    }
+
+    // Fetched fresh here (rather than read from state set in the effect
+    // above) so a click right after page load can't race an in-flight
+    // getUser() call and misfire the "not signed in" redirect.
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    paddle.Checkout.open({
+      items: [{ priceId, quantity: 1 }],
+      ...(user.email && { customer: { email: user.email } }),
+      customData: { supabase_user_id: user.id },
+    });
+  }
+
   return (
     <section className="screen active" id="pricing">
       <div className="price-grid">
@@ -24,7 +77,10 @@ export default function PricingPage() {
             <li>Compatibility analysis</li>
             <li>Long-term memory</li>
           </ul>
-          <button className="btn btn-gold">Go Premium</button>
+          <button className="btn btn-gold" onClick={goPremium}>
+            Go Premium
+          </button>
+          {error && <p style={{ color: "#c96a4a", fontSize: 13, marginTop: 8 }}>{error}</p>}
         </div>
         <div className="plan">
           <div className="tier">VIP</div>
@@ -37,7 +93,9 @@ export default function PricingPage() {
             <li>Priority AI response</li>
             <li>Advanced multi-system reports</li>
           </ul>
-          <button className="btn btn-ghost">Go VIP</button>
+          <button className="btn btn-ghost" disabled title="Coming soon">
+            Coming soon
+          </button>
         </div>
       </div>
       <footer className="note">

@@ -1,11 +1,24 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { postChatReply } from "@/lib/api";
 import type { NatalChart, NumerologyProfile } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
-type Message = { id: string; role: "user" | "assistant"; content: string };
+type Message = { id: string; role: "user" | "assistant"; content: string; created_at: string };
+
+const FREE_DAILY_MESSAGE_LIMIT = 3;
+
+function isToday(isoTimestamp: string): boolean {
+  const d = new Date(isoTimestamp);
+  const now = new Date();
+  return (
+    d.getUTCFullYear() === now.getUTCFullYear() &&
+    d.getUTCMonth() === now.getUTCMonth() &&
+    d.getUTCDate() === now.getUTCDate()
+  );
+}
 
 const VOICE_REPLIES = [
   "I hear that. Let's slow down for a second — what does your gut say when you picture actually saying yes?",
@@ -75,6 +88,7 @@ export default function ChatWindow() {
   const [profile, setProfile] = useState<{ chart: NatalChart; numerology: NumerologyProfile } | null>(
     null
   );
+  const [tier, setTier] = useState<"free" | "premium" | "vip">("free");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -107,7 +121,7 @@ export default function ChatWindow() {
 
       const { data: profileRow } = await supabase
         .from("profiles")
-        .select("chart, numerology")
+        .select("chart, numerology, subscription_tier")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -120,6 +134,7 @@ export default function ChatWindow() {
       }
       if (!cancelled) {
         setProfile({ chart: profileRow.chart, numerology: profileRow.numerology });
+        setTier((profileRow.subscription_tier as "free" | "premium" | "vip") ?? "free");
       }
 
       let { data: session } = await supabase
@@ -150,7 +165,7 @@ export default function ChatWindow() {
 
       const { data: history } = await supabase
         .from("chat_messages")
-        .select("id, role, content")
+        .select("id, role, content, created_at")
         .eq("session_id", session.id)
         .order("created_at", { ascending: true });
 
@@ -173,9 +188,20 @@ export default function ChatWindow() {
     });
   }
 
+  const todaysUserMessageCount = messages.filter(
+    (m) => m.role === "user" && isToday(m.created_at)
+  ).length;
+  const freeLimitReached = tier === "free" && todaysUserMessageCount >= FREE_DAILY_MESSAGE_LIMIT;
+
   async function sendChatMsg() {
     const text = chatInput.trim();
     if (!text || sending || !sessionId || !profile) return;
+    if (freeLimitReached) {
+      setSendError(
+        `You've used your ${FREE_DAILY_MESSAGE_LIMIT} free messages for today — upgrade to Premium for unlimited conversations.`
+      );
+      return;
+    }
     setSendError(null);
     setChatInput("");
     const supabase = createClient();
@@ -183,7 +209,7 @@ export default function ChatWindow() {
     const { data: inserted, error: insertError } = await supabase
       .from("chat_messages")
       .insert({ session_id: sessionId, role: "user", content: text })
-      .select("id, role, content")
+      .select("id, role, content, created_at")
       .single();
     if (insertError || !inserted) {
       setSendError("Couldn't send your message. Try again.");
@@ -214,7 +240,7 @@ export default function ChatWindow() {
       const { data: assistantRow } = await supabase
         .from("chat_messages")
         .insert({ session_id: sessionId, role: "assistant", content: reply })
-        .select("id, role, content")
+        .select("id, role, content, created_at")
         .single();
 
       await supabase
@@ -310,18 +336,40 @@ export default function ChatWindow() {
                   </div>
                 ))}
               {sending && <p style={{ color: "var(--text-dim)", fontSize: 13 }}>Aureon is thinking…</p>}
-              {sendError && <p style={{ color: "#c96a4a", fontSize: 13 }}>{sendError}</p>}
+              {sendError && (
+                <p style={{ color: "#c96a4a", fontSize: 13 }}>
+                  {sendError}
+                  {freeLimitReached && (
+                    <>
+                      {" "}
+                      <Link href="/pricing" style={{ color: "var(--gold, #c9a24a)" }}>
+                        Upgrade to Premium
+                      </Link>
+                    </>
+                  )}
+                </p>
+              )}
+              {!loading && !loadError && tier === "free" && !freeLimitReached && (
+                <p style={{ color: "var(--text-dim)", fontSize: 12 }}>
+                  {FREE_DAILY_MESSAGE_LIMIT - todaysUserMessageCount} free message
+                  {FREE_DAILY_MESSAGE_LIMIT - todaysUserMessageCount === 1 ? "" : "s"} left today
+                </p>
+              )}
             </div>
             <div className="chat-input">
               <input
                 id="chatInputBox"
-                placeholder="Ask about your chart, your year, or what's on your mind…"
+                placeholder={
+                  freeLimitReached
+                    ? "Daily free messages used — upgrade for unlimited chat"
+                    : "Ask about your chart, your year, or what's on your mind…"
+                }
                 value={chatInput}
-                disabled={loading || !!loadError}
+                disabled={loading || !!loadError || freeLimitReached}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendChatMsg()}
               />
-              <button onClick={sendChatMsg} disabled={loading || !!loadError || sending}>
+              <button onClick={sendChatMsg} disabled={loading || !!loadError || sending || freeLimitReached}>
                 Send
               </button>
             </div>
