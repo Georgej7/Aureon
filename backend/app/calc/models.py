@@ -11,12 +11,21 @@ class BirthData(BaseModel):
     latitude/longitude are optional: plenty of people don't know their exact
     birth coordinates. Without them, planet positions (sign/degree) are still
     fully accurate — they don't depend on location — but houses, the
-    Ascendant, and the Midheaven can't be computed and come back null."""
+    Ascendant, and the Midheaven can't be computed and come back null.
+
+    time_known follows the same idea for birth time: plenty of people don't
+    know their exact birth time either. When False, the caller should still
+    send a placeholder time in `datetime` (the frontend defaults to noon) so
+    the timestamp parses, but houses/Ascendant/Midheaven come back null
+    regardless of whether latitude/longitude are present — a guessed time
+    makes those numbers meaningless, not just imprecise, since the Ascendant
+    moves roughly a full sign every two hours."""
 
     datetime: str
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
     house_system: str = "P"  # Placidus
+    time_known: bool = True
 
 
 class PlanetPlacement(BaseModel):

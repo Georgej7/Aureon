@@ -30,11 +30,11 @@ export default function OnboardingPage() {
   const locationValid =
     (latitude.trim() === "" || !Number.isNaN(Number(latitude))) &&
     (longitude.trim() === "" || !Number.isNaN(Number(longitude)));
+  const hasTime = birthTime.trim() !== "";
 
   const canSubmit =
     fullName.trim() !== "" &&
     birthDate !== "" &&
-    birthTime !== "" &&
     locationValid &&
     !Number.isNaN(Number(utcOffset));
 
@@ -53,10 +53,11 @@ export default function OnboardingPage() {
         return;
       }
 
-      const datetime = `${birthDate}T${birthTime}:00${offsetToIso(Number(utcOffset))}`;
+      const datetime = `${birthDate}T${hasTime ? birthTime : "12:00"}:00${offsetToIso(Number(utcOffset))}`;
       const [chart, numerology] = await Promise.all([
         postNatalChart({
           datetime,
+          time_known: hasTime,
           ...(hasLocation ? { latitude: Number(latitude), longitude: Number(longitude) } : {}),
         }),
         postNumerology({ full_name: fullName, date: birthDate }),
@@ -66,7 +67,7 @@ export default function OnboardingPage() {
         id: user.id,
         full_name: fullName,
         birth_date: birthDate,
-        birth_time: birthTime,
+        birth_time: hasTime ? birthTime : null,
         birth_location: birthLocation,
         latitude: hasLocation ? Number(latitude) : null,
         longitude: hasLocation ? Number(longitude) : null,
@@ -112,10 +113,14 @@ export default function OnboardingPage() {
               <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
             </div>
             <div className="field">
-              <label>Exact birth time</label>
+              <label>Birth time (optional)</label>
               <input type="time" value={birthTime} onChange={(e) => setBirthTime(e.target.value)} />
             </div>
           </div>
+          <p className="sub" style={{ marginTop: -8, marginBottom: 16, textAlign: "left" }}>
+            Don&apos;t know your exact birth time? Leave it blank — you&apos;ll still get accurate
+            planets and numerology, just without house placements like your Rising sign.
+          </p>
           <div className="field">
             <label>Birth location</label>
             <input

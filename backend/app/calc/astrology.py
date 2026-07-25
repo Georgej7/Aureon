@@ -58,13 +58,15 @@ def build_natal_chart(birth: BirthData) -> NatalChart:
     jd = ephemeris.to_julian_day(birth.datetime)
     raw_planets = ephemeris.planet_longitudes(jd)
 
-    # Houses/Ascendant/Midheaven need a birth location — planet positions don't.
-    # Without lat/lon, skip house computation entirely rather than guessing.
+    # Houses/Ascendant/Midheaven need a birth location AND a real birth time —
+    # planet sign/degree don't. Without lat/lon, or with a guessed birth time,
+    # skip house computation entirely rather than returning numbers that look
+    # precise but aren't.
     has_location = birth.latitude is not None and birth.longitude is not None
     cusps: list[float] | None = None
     ascendant: float | None = None
     midheaven: float | None = None
-    if has_location:
+    if has_location and birth.time_known:
         cusps, ascendant, midheaven = ephemeris.house_cusps(
             jd, birth.latitude, birth.longitude, birth.house_system
         )

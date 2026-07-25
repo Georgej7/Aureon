@@ -77,3 +77,26 @@ def test_natal_chart_with_location_unchanged():
     assert chart.midheaven is not None
     sun = next(p for p in chart.planets if p.name == "Sun")
     assert sun.house is not None
+
+
+def test_natal_chart_with_unknown_time_still_gets_real_planet_signs():
+    # Location is known, but the birth time is only a guess (frontend sends a
+    # noon placeholder) — houses/Ascendant/Midheaven must still come back
+    # null, since a guessed time makes them meaningless rather than merely
+    # imprecise. Planet signs are unaffected either way.
+    birth = BirthData(
+        datetime="1993-03-14T12:00:00+04:00",
+        latitude=41.7151,
+        longitude=44.8271,
+        time_known=False,
+    )
+    chart = build_natal_chart(birth)
+
+    sun = next(p for p in chart.planets if p.name == "Sun")
+    assert sun.sign == "Pisces"
+    assert sun.house is None
+
+    assert chart.houses is None
+    assert chart.ascendant is None
+    assert chart.midheaven is None
+    assert isinstance(chart.aspects, list)

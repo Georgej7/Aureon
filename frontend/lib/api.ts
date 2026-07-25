@@ -44,6 +44,7 @@ export type NatalChartRequest = {
   datetime: string;
   latitude?: number;
   longitude?: number;
+  time_known?: boolean;
 };
 
 export type NumerologyRequest = {
