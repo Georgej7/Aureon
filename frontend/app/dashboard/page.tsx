@@ -42,7 +42,8 @@ export default function DashboardPage() {
 
   const sun = profile?.chart.planets.find((p) => p.name === "Sun");
   const sunSign = sun ? zodiacSign(sun.longitude) : null;
-  const risingSign = profile ? zodiacSign(profile.chart.ascendant) : null;
+  const risingSign =
+    profile && profile.chart.ascendant !== null ? zodiacSign(profile.chart.ascendant) : null;
 
   return (
     <section className="screen active" id="dashboard">
@@ -85,7 +86,7 @@ export default function DashboardPage() {
                   <div className="lbl">Sun</div>
                 </div>
                 <div className="stat">
-                  <div className="val">{risingSign}</div>
+                  <div className="val">{risingSign ?? "—"}</div>
                   <div className="lbl">Rising</div>
                 </div>
               </div>

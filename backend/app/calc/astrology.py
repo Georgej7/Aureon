@@ -57,9 +57,17 @@ def compute_aspects(planet_longitudes: dict[str, float]) -> list[Aspect]:
 def build_natal_chart(birth: BirthData) -> NatalChart:
     jd = ephemeris.to_julian_day(birth.datetime)
     raw_planets = ephemeris.planet_longitudes(jd)
-    cusps, ascendant, midheaven = ephemeris.house_cusps(
-        jd, birth.latitude, birth.longitude, birth.house_system
-    )
+
+    # Houses/Ascendant/Midheaven need a birth location — planet positions don't.
+    # Without lat/lon, skip house computation entirely rather than guessing.
+    has_location = birth.latitude is not None and birth.longitude is not None
+    cusps: list[float] | None = None
+    ascendant: float | None = None
+    midheaven: float | None = None
+    if has_location:
+        cusps, ascendant, midheaven = ephemeris.house_cusps(
+            jd, birth.latitude, birth.longitude, birth.house_system
+        )
 
     planets = []
     for name, (longitude, retrograde) in raw_planets.items():
@@ -70,17 +78,19 @@ def build_natal_chart(birth: BirthData) -> NatalChart:
                 longitude=longitude,
                 sign=sign,
                 sign_degree=sign_degree,
-                house=assign_house(longitude, cusps),
+                house=assign_house(longitude, cusps) if cusps is not None else None,
                 retrograde=retrograde,
             )
         )
 
-    houses = []
-    for i, cusp_longitude in enumerate(cusps):
-        sign, sign_degree = longitude_to_sign(cusp_longitude)
-        houses.append(
-            HouseCusp(house=i + 1, longitude=cusp_longitude, sign=sign, sign_degree=sign_degree)
-        )
+    houses = None
+    if cusps is not None:
+        houses = []
+        for i, cusp_longitude in enumerate(cusps):
+            sign, sign_degree = longitude_to_sign(cusp_longitude)
+            houses.append(
+                HouseCusp(house=i + 1, longitude=cusp_longitude, sign=sign, sign_degree=sign_degree)
+            )
 
     aspects = compute_aspects({name: lon for name, (lon, _retro) in raw_planets.items()})
 

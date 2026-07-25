@@ -4,8 +4,9 @@ these UTC timestamps are published by USNO/timeanddate to the minute, and were
 cross-checked against the engine's own output before being written here (see
 session notes): all four land within 0.001 deg of the expected boundary."""
 
-from app.calc.astrology import assign_house, longitude_to_sign
+from app.calc.astrology import assign_house, build_natal_chart, longitude_to_sign
 from app.calc.ephemeris import planet_longitudes, to_julian_day
+from app.calc.models import BirthData
 
 # (label, iso datetime UTC, expected Sun ecliptic longitude)
 EQUINOX_SOLSTICE_CASES = [
@@ -43,3 +44,36 @@ def test_assign_house_normal_and_wrapping_ranges():
     assert assign_house(5, wrapping_cusps) == 12
     assert assign_house(355, wrapping_cusps) == 12
     assert assign_house(15, wrapping_cusps) == 1
+
+
+def test_natal_chart_without_location_still_gets_real_planet_signs():
+    # A few minutes after the 2024 March equinox instant, comfortably past the
+    # Pisces/Aries boundary — Sun should read as early Aries regardless of birth
+    # location, since planet positions don't depend on where on Earth someone
+    # was born.
+    birth = BirthData(datetime="2024-03-20T04:00:00+00:00", latitude=None, longitude=None)
+    chart = build_natal_chart(birth)
+
+    sun = next(p for p in chart.planets if p.name == "Sun")
+    assert sun.sign == "Aries"
+    assert sun.sign_degree < 1.0
+    assert sun.house is None
+
+    assert chart.houses is None
+    assert chart.ascendant is None
+    assert chart.midheaven is None
+    # Aspects don't depend on location either — still computed.
+    assert isinstance(chart.aspects, list)
+
+
+def test_natal_chart_with_location_unchanged():
+    birth = BirthData(
+        datetime="1993-03-14T04:12:00+04:00", latitude=41.7151, longitude=44.8271
+    )
+    chart = build_natal_chart(birth)
+
+    assert chart.houses is not None and len(chart.houses) == 12
+    assert chart.ascendant is not None
+    assert chart.midheaven is not None
+    sun = next(p for p in chart.planets if p.name == "Sun")
+    assert sun.house is not None

@@ -53,9 +53,9 @@ function topicsForProfile(chart: NatalChart, numerology: NumerologyProfile): str
   for (const planet of chart.planets) {
     topics.add(planet.name);
     topics.add(planet.sign);
-    topics.add(`House ${planet.house}`);
+    if (planet.house !== null) topics.add(`House ${planet.house}`);
   }
-  if (chart.houses[0]) topics.add(chart.houses[0].sign); // ascendant sign
+  if (chart.houses && chart.houses[0]) topics.add(chart.houses[0].sign); // ascendant sign
   for (const aspect of chart.aspects) topics.add(aspect.aspect_type);
   for (const value of [
     numerology.life_path,

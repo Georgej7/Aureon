@@ -26,14 +26,16 @@ export default function OnboardingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const hasLocation = latitude.trim() !== "" && longitude.trim() !== "";
+  const locationValid =
+    (latitude.trim() === "" || !Number.isNaN(Number(latitude))) &&
+    (longitude.trim() === "" || !Number.isNaN(Number(longitude)));
+
   const canSubmit =
     fullName.trim() !== "" &&
     birthDate !== "" &&
     birthTime !== "" &&
-    latitude.trim() !== "" &&
-    longitude.trim() !== "" &&
-    !Number.isNaN(Number(latitude)) &&
-    !Number.isNaN(Number(longitude)) &&
+    locationValid &&
     !Number.isNaN(Number(utcOffset));
 
   async function handleSubmit() {
@@ -53,7 +55,10 @@ export default function OnboardingPage() {
 
       const datetime = `${birthDate}T${birthTime}:00${offsetToIso(Number(utcOffset))}`;
       const [chart, numerology] = await Promise.all([
-        postNatalChart({ datetime, latitude: Number(latitude), longitude: Number(longitude) }),
+        postNatalChart({
+          datetime,
+          ...(hasLocation ? { latitude: Number(latitude), longitude: Number(longitude) } : {}),
+        }),
         postNumerology({ full_name: fullName, date: birthDate }),
       ]);
 
@@ -63,8 +68,8 @@ export default function OnboardingPage() {
         birth_date: birthDate,
         birth_time: birthTime,
         birth_location: birthLocation,
-        latitude: Number(latitude),
-        longitude: Number(longitude),
+        latitude: hasLocation ? Number(latitude) : null,
+        longitude: hasLocation ? Number(longitude) : null,
         utc_offset: Number(utcOffset),
         chart,
         numerology,
@@ -121,7 +126,7 @@ export default function OnboardingPage() {
           </div>
           <div className="row2">
             <div className="field">
-              <label>Latitude</label>
+              <label>Latitude (optional)</label>
               <input
                 type="number"
                 step="0.0001"
@@ -131,7 +136,7 @@ export default function OnboardingPage() {
               />
             </div>
             <div className="field">
-              <label>Longitude</label>
+              <label>Longitude (optional)</label>
               <input
                 type="number"
                 step="0.0001"
@@ -141,6 +146,10 @@ export default function OnboardingPage() {
               />
             </div>
           </div>
+          <p className="sub" style={{ marginTop: -8, marginBottom: 16, textAlign: "left" }}>
+            Don&apos;t know your exact birth coordinates? Leave these blank — you&apos;ll still get
+            accurate planets and numerology, just without house placements like your Rising sign.
+          </p>
           <div className="field">
             <label>UTC offset at birth (e.g. -5, 4, 5.5)</label>
             <input

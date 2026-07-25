@@ -5,7 +5,7 @@ export type PlanetPlacement = {
   longitude: number;
   sign: string;
   sign_degree: number;
-  house: number;
+  house: number | null;
   retrograde: boolean;
 };
 
@@ -26,9 +26,9 @@ export type Aspect = {
 
 export type NatalChart = {
   planets: PlanetPlacement[];
-  houses: HouseCusp[];
-  ascendant: number;
-  midheaven: number;
+  houses: HouseCusp[] | null;
+  ascendant: number | null;
+  midheaven: number | null;
   aspects: Aspect[];
 };
 
@@ -42,8 +42,8 @@ export type NumerologyProfile = {
 
 export type NatalChartRequest = {
   datetime: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
 };
 
 export type NumerologyRequest = {
