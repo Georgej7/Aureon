@@ -11,10 +11,6 @@ export function createAdminClient() {
       "Supabase admin client requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY"
     );
   }
-  console.log("DIAG service role key", {
-    length: serviceRoleKey.length,
-    codes: Array.from(serviceRoleKey.slice(0, 15)).map((c) => c.charCodeAt(0)),
-  });
   return createSupabaseClient(url, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
