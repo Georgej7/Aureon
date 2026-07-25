@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createAdminClient();
+  let dbError: { message: string } | null = null;
 
   switch (event.eventType) {
     case EventName.SubscriptionCreated: {
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
       const userId = subscription.customData?.supabase_user_id as string | undefined;
       if (userId) {
         const { tier, status } = mapSubscriptionStatus(subscription.status);
-        await supabase
+        const { error } = await supabase
           .from("profiles")
           .update({
             subscription_tier: tier,
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
             paddle_subscription_id: subscription.id,
           })
           .eq("id", userId);
+        dbError = error;
       }
       break;
     }
@@ -68,7 +70,7 @@ export async function POST(request: NextRequest) {
     case EventName.SubscriptionUpdated: {
       const subscription = event.data;
       const { tier, status } = mapSubscriptionStatus(subscription.status);
-      await supabase
+      const { error } = await supabase
         .from("profiles")
         .update({
           subscription_tier: tier,
@@ -76,12 +78,13 @@ export async function POST(request: NextRequest) {
           paddle_subscription_id: tier === "free" ? null : subscription.id,
         })
         .eq("paddle_customer_id", subscription.customerId);
+      dbError = error;
       break;
     }
 
     case EventName.SubscriptionCanceled: {
       const subscription = event.data;
-      await supabase
+      const { error } = await supabase
         .from("profiles")
         .update({
           subscription_tier: "free",
@@ -89,11 +92,17 @@ export async function POST(request: NextRequest) {
           paddle_subscription_id: null,
         })
         .eq("paddle_customer_id", subscription.customerId);
+      dbError = error;
       break;
     }
 
     default:
       break;
+  }
+
+  if (dbError) {
+    console.error("Paddle webhook: Supabase update failed", dbError);
+    return NextResponse.json({ error: `Database update failed: ${dbError.message}` }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
