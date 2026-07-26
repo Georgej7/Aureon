@@ -67,6 +67,7 @@ function topicsForProfile(chart: NatalChart, numerology: NumerologyProfile): str
     topics.add(planet.name);
     topics.add(planet.sign);
     if (planet.house !== null) topics.add(`House ${planet.house}`);
+    if (planet.retrograde) topics.add(`${planet.name} Retrograde`);
   }
   if (chart.houses && chart.houses[0]) topics.add(chart.houses[0].sign); // ascendant sign
   for (const aspect of chart.aspects) topics.add(aspect.aspect_type);
