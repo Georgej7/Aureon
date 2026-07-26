@@ -24,6 +24,7 @@ CONTENT_FILES = [
     "western_astrology/transiting_planets.json",
     "western_astrology/moon_phases.json",
     "western_astrology/synastry_aspects.json",
+    "western_astrology/chart_patterns.json",
     "numerology/numbers.json",
 ]
 

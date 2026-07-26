@@ -169,6 +169,18 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+          {profile && profile.chart.patterns.length > 0 && (
+            <div className="card">
+              <div className="label">Chart patterns</div>
+              {profile.chart.patterns.map((pattern, i) => (
+                <p key={i} style={{ margin: i === 0 ? "0 0 6px" : "6px 0" }}>
+                  <strong style={{ color: "var(--text)" }}>{pattern.pattern_type}</strong> —{" "}
+                  {pattern.planets.join(", ")}
+                  {pattern.apex && ` (apex: ${pattern.apex})`}
+                </p>
+              ))}
+            </div>
+          )}
           <div className="card">
             <div className="label">Moon phase</div>
             <h3>

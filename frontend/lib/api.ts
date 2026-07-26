@@ -24,12 +24,19 @@ export type Aspect = {
   orb: number;
 };
 
+export type ChartPattern = {
+  pattern_type: string;
+  planets: string[];
+  apex: string | null;
+};
+
 export type NatalChart = {
   planets: PlanetPlacement[];
   houses: HouseCusp[] | null;
   ascendant: number | null;
   midheaven: number | null;
   aspects: Aspect[];
+  patterns: ChartPattern[];
 };
 
 export type NumerologyProfile = {

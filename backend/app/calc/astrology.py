@@ -4,6 +4,7 @@ from app.calc import ephemeris
 from app.calc.models import (
     Aspect,
     BirthData,
+    ChartPattern,
     HouseCusp,
     MoonPhase,
     NatalChart,
@@ -20,12 +21,19 @@ SIGNS = [
     "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
 ]
 
-# (name, exact angle, orb) — standard major aspects
+# (name, exact angle, orb) — 5 major aspects (wider orbs, considered stronger)
+# plus 4 minor aspects (tighter orbs, considered subtler/weaker). Angles are
+# spaced far enough apart relative to their orbs that no two definitions can
+# ever both match the same angular difference — order doesn't affect results.
 ASPECT_DEFINITIONS = [
     ("Conjunction", 0, 8),
+    ("Semisextile", 30, 2),
+    ("Semisquare", 45, 2),
     ("Sextile", 60, 6),
     ("Square", 90, 8),
     ("Trine", 120, 8),
+    ("Sesquiquadrate", 135, 2),
+    ("Quincunx", 150, 3),
     ("Opposition", 180, 8),
 ]
 
@@ -74,6 +82,105 @@ def compute_aspects(planet_longitudes: dict[str, float]) -> list[Aspect]:
     return aspects
 
 
+def _aspect_pairs(aspects: list[Aspect], aspect_type: str) -> set[frozenset[str]]:
+    return {frozenset((a.planet_a, a.planet_b)) for a in aspects if a.aspect_type == aspect_type}
+
+
+def _all_planet_names(aspects: list[Aspect]) -> list[str]:
+    return sorted({name for a in aspects for name in (a.planet_a, a.planet_b)})
+
+
+def detect_stelliums(planets: list[PlanetPlacement]) -> list[ChartPattern]:
+    """3+ planets sharing a sign — sign-based (not house-based) so this works
+    even without a known birth time/location, same reasoning as planet signs
+    generally not depending on houses elsewhere in this module."""
+    by_sign: dict[str, list[str]] = {}
+    for p in planets:
+        by_sign.setdefault(p.sign, []).append(p.name)
+    return [
+        ChartPattern(pattern_type="Stellium", planets=names)
+        for names in by_sign.values()
+        if len(names) >= 3
+    ]
+
+
+def detect_grand_trines(aspects: list[Aspect]) -> list[ChartPattern]:
+    """3 planets mutually trine — a closed triangle in the trine graph."""
+    trines = _aspect_pairs(aspects, "Trine")
+    planets = sorted({p for pair in trines for p in pair})
+    patterns = []
+    for i in range(len(planets)):
+        for j in range(i + 1, len(planets)):
+            for k in range(j + 1, len(planets)):
+                a, b, c = planets[i], planets[j], planets[k]
+                if {frozenset((a, b)), frozenset((b, c)), frozenset((a, c))} <= trines:
+                    patterns.append(ChartPattern(pattern_type="Grand Trine", planets=[a, b, c]))
+    return patterns
+
+
+def detect_t_squares(aspects: list[Aspect]) -> list[ChartPattern]:
+    """An opposition pair both square to a third planet (the apex)."""
+    oppositions = _aspect_pairs(aspects, "Opposition")
+    squares = _aspect_pairs(aspects, "Square")
+    all_planets = _all_planet_names(aspects)
+    patterns = []
+    for opp in oppositions:
+        a, b = tuple(opp)
+        for c in all_planets:
+            if c in (a, b):
+                continue
+            if frozenset((a, c)) in squares and frozenset((b, c)) in squares:
+                patterns.append(ChartPattern(pattern_type="T-Square", planets=[a, b, c], apex=c))
+    return patterns
+
+
+def detect_grand_crosses(aspects: list[Aspect]) -> list[ChartPattern]:
+    """Two opposition pairs (4 distinct planets) that are also all mutually square."""
+    oppositions = list(_aspect_pairs(aspects, "Opposition"))
+    squares = _aspect_pairs(aspects, "Square")
+    patterns = []
+    for i in range(len(oppositions)):
+        for j in range(i + 1, len(oppositions)):
+            a, b = tuple(oppositions[i])
+            c, d = tuple(oppositions[j])
+            if {a, b} & {c, d}:
+                continue  # must be 4 distinct planets
+            if (
+                frozenset((a, c)) in squares
+                and frozenset((a, d)) in squares
+                and frozenset((b, c)) in squares
+                and frozenset((b, d)) in squares
+            ):
+                patterns.append(ChartPattern(pattern_type="Grand Cross", planets=[a, b, c, d]))
+    return patterns
+
+
+def detect_yods(aspects: list[Aspect]) -> list[ChartPattern]:
+    """Two planets in sextile, both quincunx to a third planet (the apex)."""
+    sextiles = _aspect_pairs(aspects, "Sextile")
+    quincunxes = _aspect_pairs(aspects, "Quincunx")
+    all_planets = _all_planet_names(aspects)
+    patterns = []
+    for sext in sextiles:
+        a, b = tuple(sext)
+        for c in all_planets:
+            if c in (a, b):
+                continue
+            if frozenset((a, c)) in quincunxes and frozenset((b, c)) in quincunxes:
+                patterns.append(ChartPattern(pattern_type="Yod", planets=[a, b, c], apex=c))
+    return patterns
+
+
+def detect_chart_patterns(planets: list[PlanetPlacement], aspects: list[Aspect]) -> list[ChartPattern]:
+    return (
+        detect_stelliums(planets)
+        + detect_grand_trines(aspects)
+        + detect_t_squares(aspects)
+        + detect_grand_crosses(aspects)
+        + detect_yods(aspects)
+    )
+
+
 def build_natal_chart(birth: BirthData) -> NatalChart:
     jd = ephemeris.to_julian_day(birth.datetime)
     raw_planets = ephemeris.planet_longitudes(jd)
@@ -115,6 +222,7 @@ def build_natal_chart(birth: BirthData) -> NatalChart:
             )
 
     aspects = compute_aspects({name: lon for name, (lon, _retro) in raw_planets.items()})
+    patterns = detect_chart_patterns(planets, aspects)
 
     return NatalChart(
         planets=planets,
@@ -122,6 +230,7 @@ def build_natal_chart(birth: BirthData) -> NatalChart:
         ascendant=ascendant,
         midheaven=midheaven,
         aspects=aspects,
+        patterns=patterns,
     )
 
 

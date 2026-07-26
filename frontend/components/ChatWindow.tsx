@@ -93,6 +93,7 @@ function topicsForProfile(
   }
   if (chart.houses && chart.houses[0]) topics.add(chart.houses[0].sign); // ascendant sign
   for (const aspect of chart.aspects) topics.add(aspect.aspect_type);
+  for (const pattern of chart.patterns) topics.add(pattern.pattern_type);
   for (const value of [
     numerology.life_path,
     numerology.expression,

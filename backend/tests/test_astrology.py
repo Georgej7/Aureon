@@ -7,15 +7,21 @@ session notes): all four land within 0.001 deg of the expected boundary."""
 from app.calc.astrology import (
     assign_house,
     build_natal_chart,
+    compute_aspects,
     compute_synastry,
     compute_synastry_aspects,
     compute_transit_aspects,
     compute_transits,
+    detect_grand_crosses,
+    detect_grand_trines,
+    detect_stelliums,
+    detect_t_squares,
+    detect_yods,
     longitude_to_sign,
     moon_phase,
 )
 from app.calc.ephemeris import planet_longitudes, to_julian_day
-from app.calc.models import BirthData
+from app.calc.models import BirthData, PlanetPlacement
 
 # (label, iso datetime UTC, expected Sun ecliptic longitude)
 EQUINOX_SOLSTICE_CASES = [
@@ -178,3 +184,72 @@ def test_compute_synastry_returns_both_full_charts_and_no_fabricated_score():
     assert result.person_b.houses is not None
     assert isinstance(result.aspects, list)
     assert not hasattr(result, "compatibility_score")
+
+
+def test_compute_aspects_finds_minor_aspects():
+    # 30 deg apart -> Semisextile; 45 -> Semisquare; 135 -> Sesquiquadrate; 150 -> Quincunx
+    longitudes = {"A": 0.0, "B": 30.0, "C": 75.0, "F": 135.0, "E": 150.0}
+    aspects = compute_aspects(longitudes)
+    by_pair = {frozenset((a.planet_a, a.planet_b)): a.aspect_type for a in aspects}
+    assert by_pair[frozenset(("A", "B"))] == "Semisextile"  # 30 deg
+    assert by_pair[frozenset(("B", "C"))] == "Semisquare"  # 45 deg
+    assert by_pair[frozenset(("A", "F"))] == "Sesquiquadrate"  # 135 deg
+    assert by_pair[frozenset(("A", "E"))] == "Quincunx"  # 150 deg
+
+
+def test_detect_stelliums_requires_at_least_three_in_same_sign():
+    planets = [
+        PlanetPlacement(name="Sun", longitude=5, sign="Aries", sign_degree=5, house=None, retrograde=False),
+        PlanetPlacement(name="Mercury", longitude=10, sign="Aries", sign_degree=10, house=None, retrograde=False),
+        PlanetPlacement(name="Venus", longitude=15, sign="Aries", sign_degree=15, house=None, retrograde=False),
+        PlanetPlacement(name="Mars", longitude=100, sign="Cancer", sign_degree=10, house=None, retrograde=False),
+        PlanetPlacement(name="Jupiter", longitude=105, sign="Cancer", sign_degree=15, house=None, retrograde=False),
+    ]
+    patterns = detect_stelliums(planets)
+    assert len(patterns) == 1
+    assert patterns[0].pattern_type == "Stellium"
+    assert set(patterns[0].planets) == {"Sun", "Mercury", "Venus"}
+
+
+def test_detect_grand_trine_finds_closed_triangle():
+    aspects = compute_aspects({"A": 0.0, "B": 120.0, "C": 240.0})
+    patterns = detect_grand_trines(aspects)
+    assert len(patterns) == 1
+    assert patterns[0].pattern_type == "Grand Trine"
+    assert set(patterns[0].planets) == {"A", "B", "C"}
+
+
+def test_detect_t_square_finds_apex():
+    aspects = compute_aspects({"A": 0.0, "B": 180.0, "C": 90.0})
+    patterns = detect_t_squares(aspects)
+    assert len(patterns) == 1
+    assert patterns[0].pattern_type == "T-Square"
+    assert patterns[0].apex == "C"
+    assert set(patterns[0].planets) == {"A", "B", "C"}
+
+
+def test_detect_grand_cross_finds_four_planet_configuration():
+    aspects = compute_aspects({"A": 0.0, "B": 180.0, "C": 90.0, "D": 270.0})
+    patterns = detect_grand_crosses(aspects)
+    assert len(patterns) == 1
+    assert patterns[0].pattern_type == "Grand Cross"
+    assert set(patterns[0].planets) == {"A", "B", "C", "D"}
+
+
+def test_detect_yod_finds_apex():
+    aspects = compute_aspects({"A": 0.0, "B": 60.0, "C": 210.0})
+    patterns = detect_yods(aspects)
+    assert len(patterns) == 1
+    assert patterns[0].pattern_type == "Yod"
+    assert patterns[0].apex == "C"
+    assert set(patterns[0].planets) == {"A", "B", "C"}
+
+
+def test_natal_chart_includes_patterns_field():
+    birth = BirthData(datetime="1993-03-14T04:12:00+04:00", latitude=41.7151, longitude=44.8271)
+    chart = build_natal_chart(birth)
+    assert isinstance(chart.patterns, list)
+    # every detected pattern must reference real planet names from this chart
+    planet_names = {p.name for p in chart.planets}
+    for pattern in chart.patterns:
+        assert set(pattern.planets) <= planet_names

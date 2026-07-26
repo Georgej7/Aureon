@@ -52,12 +52,23 @@ class Aspect(BaseModel):
     orb: float
 
 
+class ChartPattern(BaseModel):
+    """A configuration formed by multiple aspects across 3+ planets (a
+    stellium, grand trine, T-square, grand cross, or yod). `apex` is set
+    only for patterns with a single focal planet (T-square, yod)."""
+
+    pattern_type: str
+    planets: list[str]
+    apex: str | None = None
+
+
 class NatalChart(BaseModel):
     planets: list[PlanetPlacement]
     houses: list[HouseCusp] | None
     ascendant: float | None
     midheaven: float | None
     aspects: list[Aspect]
+    patterns: list[ChartPattern]
 
 
 class NatalPlanetLongitude(BaseModel):
