@@ -41,12 +41,13 @@ export default function DashboardPage() {
     async function load() {
       const supabase = createClient();
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
         if (!cancelled) setProfile(null);
         return;
       }
+      const user = session.user;
       const { data } = await supabase
         .from("profiles")
         .select("chart, numerology, subscription_tier")
@@ -57,12 +58,15 @@ export default function DashboardPage() {
       if (!cancelled) setProfile(loadedProfile);
       if (loadedProfile) {
         try {
-          const result = await postTransits({
-            natal_planets: loadedProfile.chart.planets.map((p) => ({
-              name: p.name,
-              longitude: p.longitude,
-            })),
-          });
+          const result = await postTransits(
+            {
+              natal_planets: loadedProfile.chart.planets.map((p) => ({
+                name: p.name,
+                longitude: p.longitude,
+              })),
+            },
+            session.access_token
+          );
           if (!cancelled) setTransits(result);
         } catch {
           if (!cancelled) setTransits(null);

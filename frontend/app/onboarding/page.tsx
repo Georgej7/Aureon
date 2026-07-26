@@ -38,22 +38,26 @@ export default function OnboardingPage() {
     try {
       const supabase = createClient();
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
         setError("You need to be signed in to generate a profile.");
         setSubmitting(false);
         return;
       }
+      const user = session.user;
 
       const datetime = `${birthDate}T${hasTime ? birthTime : "12:00"}:00${offsetToIso(Number(utcOffset))}`;
       const [chart, numerology] = await Promise.all([
-        postNatalChart({
-          datetime,
-          time_known: hasTime,
-          ...(hasLocation ? { latitude: Number(latitude), longitude: Number(longitude) } : {}),
-        }),
-        postNumerology({ full_name: fullName, date: birthDate }),
+        postNatalChart(
+          {
+            datetime,
+            time_known: hasTime,
+            ...(hasLocation ? { latitude: Number(latitude), longitude: Number(longitude) } : {}),
+          },
+          session.access_token
+        ),
+        postNumerology({ full_name: fullName, date: birthDate }, session.access_token),
       ]);
 
       const { error: upsertError } = await supabase.from("profiles").upsert({

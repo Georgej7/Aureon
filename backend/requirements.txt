@@ -5,3 +5,4 @@ pytest
 anthropic
 python-dotenv
 httpx
+slowapi

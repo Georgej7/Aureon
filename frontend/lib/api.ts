@@ -139,20 +139,20 @@ async function postJson<TResponse>(path: string, body: unknown, token?: string):
   return res.json() as Promise<TResponse>;
 }
 
-export function postNatalChart(payload: NatalChartRequest): Promise<NatalChart> {
-  return postJson<NatalChart>("/api/chart/natal", payload);
+export function postNatalChart(payload: NatalChartRequest, token: string): Promise<NatalChart> {
+  return postJson<NatalChart>("/api/chart/natal", payload, token);
 }
 
-export function postNumerology(payload: NumerologyRequest): Promise<NumerologyProfile> {
-  return postJson<NumerologyProfile>("/api/numerology", payload);
+export function postNumerology(payload: NumerologyRequest, token: string): Promise<NumerologyProfile> {
+  return postJson<NumerologyProfile>("/api/numerology", payload, token);
 }
 
-export function postTransits(payload: TransitsRequest): Promise<Transits> {
-  return postJson<Transits>("/api/chart/transits", payload);
+export function postTransits(payload: TransitsRequest, token: string): Promise<Transits> {
+  return postJson<Transits>("/api/chart/transits", payload, token);
 }
 
-export function postSynastry(payload: SynastryRequest): Promise<Synastry> {
-  return postJson<Synastry>("/api/chart/synastry", payload);
+export function postSynastry(payload: SynastryRequest, token: string): Promise<Synastry> {
+  return postJson<Synastry>("/api/chart/synastry", payload, token);
 }
 
 export type ChatReplyMessage = { role: "user" | "assistant"; content: string };

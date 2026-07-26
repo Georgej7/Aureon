@@ -141,15 +141,16 @@ export default function ChatWindow() {
     async function load() {
       const supabase = createClient();
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
+        data: { session: authSession },
+      } = await supabase.auth.getSession();
+      if (!authSession) {
         if (!cancelled) {
           setLoadError("You need to be signed in to chat.");
           setLoading(false);
         }
         return;
       }
+      const user = authSession.user;
 
       const { data: profileRow } = await supabase
         .from("profiles")
@@ -169,12 +170,15 @@ export default function ChatWindow() {
         setTier((profileRow.subscription_tier as "free" | "premium" | "vip") ?? "free");
       }
       try {
-        const result = await postTransits({
-          natal_planets: profileRow.chart.planets.map((p: { name: string; longitude: number }) => ({
-            name: p.name,
-            longitude: p.longitude,
-          })),
-        });
+        const result = await postTransits(
+          {
+            natal_planets: profileRow.chart.planets.map((p: { name: string; longitude: number }) => ({
+              name: p.name,
+              longitude: p.longitude,
+            })),
+          },
+          authSession.access_token
+        );
         if (!cancelled) setTransits(result);
       } catch {
         // Non-fatal — chat still works with natal-only knowledge if transits fail to load.

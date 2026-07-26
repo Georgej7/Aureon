@@ -1,19 +1,21 @@
-"""Server-side auth verification and free-tier rate limiting for endpoints
-that proxy to a paid API (currently just /api/chat/reply). Deliberately uses
-only the public SUPABASE_ANON_KEY, never the service_role key — this backend
-verifies the caller's own session and reads data through their own RLS
-policies, rather than holding a key powerful enough to bypass RLS entirely.
+"""Server-side auth verification, used by every route that shouldn't be
+callable by anyone who finds the API URL, plus free-tier message-count
+limiting specific to /api/chat/reply (the only endpoint proxying to a paid
+API). Deliberately uses only the public SUPABASE_ANON_KEY, never the
+service_role key — this backend verifies the caller's own session and reads
+data through their own RLS policies, rather than holding a key powerful
+enough to bypass RLS entirely.
 
-Without this, anyone who knows the API URL could call /api/chat/reply
-directly with unlimited requests — the "3 free messages/day" limit shown in
-the frontend is only a client-side display, easily bypassed by calling the
-API directly rather than through the UI."""
+Without enforce_free_tier_limit, anyone who knows the API URL could call
+/api/chat/reply directly with unlimited requests — the "3 free messages/day"
+limit shown in the frontend is only a client-side display, easily bypassed
+by calling the API directly rather than through the UI."""
 
 import os
 from datetime import datetime, timezone
 
 import httpx
-from fastapi import HTTPException
+from fastapi import Header, HTTPException
 
 FREE_DAILY_MESSAGE_LIMIT = 3
 
@@ -51,6 +53,14 @@ def verify_supabase_user(authorization: str | None) -> str:
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid session response")
     return user_id
+
+
+def require_user(authorization: str | None = Header(default=None)) -> str:
+    """FastAPI dependency form of verify_supabase_user, for routes that only
+    need to confirm the caller is signed in (chart/numerology calculations
+    don't need the user's identity, just that they're not open to anyone who
+    finds the API URL)."""
+    return verify_supabase_user(authorization)
 
 
 def enforce_free_tier_limit(user_id: str, token: str) -> None:

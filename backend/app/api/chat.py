@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Header, Request
 from pydantic import BaseModel, Field
 
 from app.ai.claude import generate_reply
 from app.auth import enforce_free_tier_limit, verify_supabase_user
+from app.rate_limit import limiter
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -25,16 +26,19 @@ class ChatReplyResponse(BaseModel):
 
 
 @router.post("/reply", response_model=ChatReplyResponse)
-def chat_reply(request: ChatReplyRequest, authorization: str | None = Header(default=None)) -> ChatReplyResponse:
+@limiter.limit("10/minute")
+def chat_reply(
+    request: Request, body: ChatReplyRequest, authorization: str | None = Header(default=None)
+) -> ChatReplyResponse:
     user_id = verify_supabase_user(authorization)
     token = authorization.removeprefix("Bearer ")  # verify_supabase_user already validated this is present
     enforce_free_tier_limit(user_id, token)
 
     reply = generate_reply(
-        request.chart,
-        request.numerology,
-        request.knowledge,
-        [m.model_dump() for m in request.messages],
-        request.transits,
+        body.chart,
+        body.numerology,
+        body.knowledge,
+        [m.model_dump() for m in body.messages],
+        body.transits,
     )
     return ChatReplyResponse(reply=reply)

@@ -165,15 +165,27 @@ export default function CompatibilityPage() {
     setError(null);
     setResult(null);
     try {
-      const synastry = await postSynastry({
-        person_a: toBirthDataPayload(personA),
-        person_b: toBirthDataPayload(personB),
-      });
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        setError("You need to be signed in to compare charts.");
+        setSubmitting(false);
+        return;
+      }
+
+      const synastry = await postSynastry(
+        {
+          person_a: toBirthDataPayload(personA),
+          person_b: toBirthDataPayload(personB),
+        },
+        session.access_token
+      );
       setResult(synastry);
 
       const aspectTypes = Array.from(new Set(synastry.aspects.map((a) => `Synastry ${a.aspect_type}`)));
       if (aspectTypes.length > 0) {
-        const supabase = createClient();
         const { data: entries } = await supabase
           .from("knowledge_base")
           .select(
