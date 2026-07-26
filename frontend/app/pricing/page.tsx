@@ -9,6 +9,7 @@ export default function PricingPage() {
   const router = useRouter();
   const [paddle, setPaddle] = useState<Paddle>();
   const [error, setError] = useState<string | null>(null);
+  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
 
   useEffect(() => {
     const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
@@ -27,9 +28,16 @@ export default function PricingPage() {
 
   async function goPremium() {
     setError(null);
-    const priceId = process.env.NEXT_PUBLIC_PADDLE_PREMIUM_PRICE_ID;
+    const priceId =
+      billing === "annual"
+        ? process.env.NEXT_PUBLIC_PADDLE_PREMIUM_ANNUAL_PRICE_ID
+        : process.env.NEXT_PUBLIC_PADDLE_PREMIUM_PRICE_ID;
     if (!paddle || !priceId) {
-      setError("Billing isn't configured yet.");
+      setError(
+        billing === "annual"
+          ? "Annual billing isn't available yet — try monthly for now."
+          : "Billing isn't configured yet."
+      );
       return;
     }
 
@@ -54,6 +62,20 @@ export default function PricingPage() {
 
   return (
     <section className="screen active" id="pricing">
+      <div className="billing-toggle">
+        <button
+          className={billing === "monthly" ? "active" : ""}
+          onClick={() => setBilling("monthly")}
+        >
+          Monthly
+        </button>
+        <button
+          className={billing === "annual" ? "active" : ""}
+          onClick={() => setBilling("annual")}
+        >
+          Annual <span className="save-tag">Save 17%</span>
+        </button>
+      </div>
       <div className="price-grid">
         <div className="plan">
           <div className="tier">Free</div>
@@ -68,9 +90,18 @@ export default function PricingPage() {
         <div className="plan featured">
           <div className="badge">Most popular</div>
           <div className="tier">Premium</div>
-          <div className="price">
-            $14.99 <span>/ month</span>
-          </div>
+          {billing === "annual" ? (
+            <>
+              <div className="price">
+                $149 <span>/ year</span>
+              </div>
+              <p className="price-note">Just $12.42/mo billed annually — 2 months free</p>
+            </>
+          ) : (
+            <div className="price">
+              $14.99 <span>/ month</span>
+            </div>
+          )}
           <ul>
             <li>Unlimited AI conversations</li>
             <li>Full reports — love, career, money</li>
