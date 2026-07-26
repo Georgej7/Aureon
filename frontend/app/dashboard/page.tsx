@@ -9,10 +9,13 @@ import { createClient } from "@/lib/supabase/client";
 type Profile = {
   chart: NatalChart;
   numerology: NumerologyProfile;
+  subscription_tier: "free" | "premium" | "vip";
 };
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
+  const [manageLoading, setManageLoading] = useState<"payment" | "cancel" | null>(null);
+  const [manageError, setManageError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -27,7 +30,7 @@ export default function DashboardPage() {
       }
       const { data } = await supabase
         .from("profiles")
-        .select("chart, numerology")
+        .select("chart, numerology, subscription_tier")
         .eq("id", user.id)
         .maybeSingle();
       if (!cancelled) {
@@ -39,6 +42,23 @@ export default function DashboardPage() {
       cancelled = true;
     };
   }, []);
+
+  async function openManageUrl(kind: "payment" | "cancel") {
+    setManageError(null);
+    setManageLoading(kind);
+    try {
+      const res = await fetch("/api/subscription/manage");
+      if (!res.ok) throw new Error();
+      const { updatePaymentMethod, cancel } = await res.json();
+      const url = kind === "payment" ? updatePaymentMethod : cancel;
+      if (!url) throw new Error();
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      setManageError("Couldn't open the subscription portal. Try again in a moment.");
+    } finally {
+      setManageLoading(null);
+    }
+  }
 
   const sun = profile?.chart.planets.find((p) => p.name === "Sun");
   const sunSign = sun ? zodiacSign(sun.longitude) : null;
@@ -103,6 +123,32 @@ export default function DashboardPage() {
               in your own timeline.
             </p>
           </div>
+          {profile?.subscription_tier === "premium" && (
+            <div className="card">
+              <div className="label">Subscription</div>
+              <h3>Aureon Premium</h3>
+              <p style={{ marginBottom: 14 }}>Manage your payment method or cancel anytime.</p>
+              {manageError && (
+                <p style={{ color: "#c96a4a", fontSize: 13, margin: "0 0 10px" }}>{manageError}</p>
+              )}
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <button
+                  className="btn"
+                  onClick={() => openManageUrl("payment")}
+                  disabled={manageLoading !== null}
+                >
+                  {manageLoading === "payment" ? "Opening…" : "Update payment method"}
+                </button>
+                <button
+                  className="btn"
+                  onClick={() => openManageUrl("cancel")}
+                  disabled={manageLoading !== null}
+                >
+                  {manageLoading === "cancel" ? "Opening…" : "Cancel subscription"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </section>
