@@ -109,7 +109,10 @@ export default function TermsPage() {
         </p>
 
         <h2>12. Contact</h2>
-        <p>Questions about these Terms? Contact us at [YOUR CONTACT EMAIL].</p>
+        <p>
+          Questions about these Terms? Contact us at{" "}
+          <a href="mailto:georgejermizashvili@gmail.com">georgejermizashvili@gmail.com</a>.
+        </p>
       </div>
     </section>
   );

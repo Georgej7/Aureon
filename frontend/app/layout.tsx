@@ -40,6 +40,7 @@ export default function RootLayout({
           <span>© {new Date().getFullYear()} Aureon</span>
           <Link href="/terms">Terms</Link>
           <Link href="/privacy">Privacy</Link>
+          <a href="mailto:georgejermizashvili@gmail.com">Support</a>
         </footer>
       </body>
     </html>

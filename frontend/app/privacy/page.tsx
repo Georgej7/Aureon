@@ -89,8 +89,9 @@ export default function PrivacyPage() {
           <li>Object to or restrict certain processing</li>
         </ul>
         <p>
-          To exercise any of these rights, contact us at [YOUR CONTACT EMAIL]. We&apos;ll respond
-          within a reasonable timeframe.
+          To exercise any of these rights, contact us at{" "}
+          <a href="mailto:georgejermizashvili@gmail.com">georgejermizashvili@gmail.com</a>. We&apos;ll
+          respond within a reasonable timeframe.
         </p>
 
         <h2>7. Children&apos;s privacy</h2>
@@ -112,7 +113,10 @@ export default function PrivacyPage() {
         </p>
 
         <h2>10. Contact</h2>
-        <p>Questions about this policy or your data? Contact us at [YOUR CONTACT EMAIL].</p>
+        <p>
+          Questions about this policy or your data? Contact us at{" "}
+          <a href="mailto:georgejermizashvili@gmail.com">georgejermizashvili@gmail.com</a>.
+        </p>
       </div>
     </section>
   );
