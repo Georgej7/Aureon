@@ -267,8 +267,10 @@ footer.note{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);co
   transition:opacity .5s ease;
 }
 .landing-gate-point{
-  width:14px;height:14px;border-radius:50%;border:none;cursor:pointer;padding:0;
-  background:radial-gradient(circle,#fff7e1 0%,var(--gold) 55%,transparent 75%);
+  /* Actual hit area is 44px (WCAG tap-target minimum) — the visible glow
+     stays small via the gradient's own stops, not the box size. */
+  width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;padding:0;
+  background:radial-gradient(circle,#fff7e1 0%,var(--gold) 16%,transparent 32%);
   box-shadow:0 0 24px 6px rgba(201,162,74,0.55);
   animation:gatePulse 2.4s ease-in-out infinite;
 }
