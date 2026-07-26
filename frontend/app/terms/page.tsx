@@ -104,8 +104,8 @@ export default function TermsPage() {
 
         <h2>11. Governing law</h2>
         <p>
-          These Terms are governed by the laws of [YOUR JURISDICTION], without regard to conflict
-          of law principles.
+          These Terms are governed by the laws of Georgia, without regard to conflict of law
+          principles.
         </p>
 
         <h2>12. Contact</h2>
