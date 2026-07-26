@@ -137,7 +137,7 @@ export default function TopicGallery() {
     const tiles = tileRefs.current.filter((t): t is HTMLDivElement => t !== null);
     const center = (tiles.length - 1) / 2;
     const angleStep = 15;
-    const radius = 480;
+    const maxThetaRad = (center * angleStep * Math.PI) / 180;
     let sway = 0;
     const thetas: number[] = new Array(tiles.length).fill(0);
     const zs: number[] = new Array(tiles.length).fill(0);
@@ -145,6 +145,11 @@ export default function TopicGallery() {
     function layout() {
       const wrapW = wrap!.clientWidth;
       const centerX = wrapW / 2;
+      // radius was a fixed 480px regardless of viewport width, so the fan of
+      // tiles overflowed badly below ~900px wide (extreme tiles land off the
+      // left/right edge of the screen). Cap it so the outermost tile's edge
+      // never exceeds the wrap's own width, at any viewport size.
+      const radius = Math.min(480, Math.max(80, (wrapW / 2 - 74) / Math.sin(maxThetaRad)));
       tiles.forEach((tile, i) => {
         const offset = i - center;
         const theta = offset * angleStep;
