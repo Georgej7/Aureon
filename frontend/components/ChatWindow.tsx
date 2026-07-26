@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { postChatReply, postTransits } from "@/lib/api";
+import { ApiError, postChatReply, postTransits } from "@/lib/api";
 import type { NatalChart, NumerologyProfile, Transits } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
@@ -278,31 +278,59 @@ export default function ChatWindow() {
       ]);
       const knowledge = dedupeKnowledge([...(topicMatches ?? []), ...(searchMatches ?? [])]);
 
-      const { reply } = await postChatReply({
-        chart: profile.chart,
-        numerology: profile.numerology,
-        knowledge,
-        messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
-        transits,
-      });
+      // Fetched fresh right before the call (not read from earlier state) so a stale or
+      // just-expired session can't silently slip through — the backend verifies this
+      // token itself and enforces the free-tier daily limit server-side.
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        setSendError("Your session expired — please sign in again.");
+        return;
+      }
 
-      const { data: assistantRow } = await supabase
+      const { reply } = await postChatReply(
+        {
+          chart: profile.chart,
+          numerology: profile.numerology,
+          knowledge,
+          messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
+          transits,
+        },
+        session.access_token
+      );
+
+      const { data: assistantRow, error: assistantInsertError } = await supabase
         .from("chat_messages")
         .insert({ session_id: sessionId, role: "assistant", content: reply })
         .select("id, role, content, created_at")
         .single();
 
-      await supabase
+      const { error: sessionUpdateError } = await supabase
         .from("chat_sessions")
         .update({ updated_at: new Date().toISOString() })
         .eq("id", sessionId);
+      if (sessionUpdateError) {
+        console.error("Failed to bump chat_sessions.updated_at", sessionUpdateError);
+      }
 
+      if (assistantInsertError) {
+        throw assistantInsertError;
+      }
       if (assistantRow) {
         setMessages((m) => [...m, assistantRow as Message]);
         scrollToBottom();
       }
-    } catch {
-      setSendError("Aureon couldn't reply just now — is the backend running?");
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 429) {
+        setSendError(
+          `You've used your ${FREE_DAILY_MESSAGE_LIMIT} free messages for today — upgrade to Premium for unlimited conversations.`
+        );
+      } else if (err instanceof ApiError && err.status === 401) {
+        setSendError("Your session expired — please sign in again.");
+      } else {
+        setSendError("Aureon couldn't reply just now — is the backend running?");
+      }
     } finally {
       setSending(false);
     }

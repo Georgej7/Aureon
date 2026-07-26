@@ -4,3 +4,4 @@ pyswisseph
 pytest
 anthropic
 python-dotenv
+httpx

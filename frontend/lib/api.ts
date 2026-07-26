@@ -110,14 +110,31 @@ export type Transits = {
   moon_phase: MoonPhase;
 };
 
-async function postJson<TResponse>(path: string, body: unknown): Promise<TResponse> {
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
+
+async function postJson<TResponse>(path: string, body: unknown, token?: string): Promise<TResponse> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    throw new Error(`${path} failed with status ${res.status}`);
+    let detail = "";
+    try {
+      detail = (await res.json())?.detail ?? "";
+    } catch {
+      // response wasn't JSON — fall back to the generic message below
+    }
+    throw new ApiError(res.status, detail || `${path} failed with status ${res.status}`);
   }
   return res.json() as Promise<TResponse>;
 }
@@ -166,6 +183,6 @@ export type ChatReplyRequest = {
   messages: ChatReplyMessage[];
 };
 
-export function postChatReply(payload: ChatReplyRequest): Promise<{ reply: string }> {
-  return postJson<{ reply: string }>("/api/chat/reply", payload);
+export function postChatReply(payload: ChatReplyRequest, token: string): Promise<{ reply: string }> {
+  return postJson<{ reply: string }>("/api/chat/reply", payload, token);
 }
