@@ -283,4 +283,10 @@ footer.note{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);co
 
   .onboard-card{padding:24px;}
   .legal-page h1{font-size:26px;}
+
+  /* Chat window was a fixed 460px regardless of phone height — fine on a
+     tall phone, cramped on a short one (iPhone SE-class), oddly short on a
+     tall one. Scale with the viewport instead, clamped so it never gets
+     uncomfortably small or swallows the whole screen. */
+  .chat-window{height:clamp(380px, calc(100dvh - 300px), 620px);}
 }
