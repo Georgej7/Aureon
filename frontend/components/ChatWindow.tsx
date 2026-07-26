@@ -10,6 +10,24 @@ type Message = { id: string; role: "user" | "assistant"; content: string; create
 
 const FREE_DAILY_MESSAGE_LIMIT = 3;
 
+const KNOWLEDGE_COLUMNS =
+  "system, category, topic, definition, traditional_interpretation, modern_interpretation, psychological_interpretation, positive_aspects, challenges, career_meaning, relationship_meaning, growth_meaning, sources, confidence_level, context_notes";
+
+type KnowledgeRow = { system: string; category: string; topic: string };
+
+function dedupeKnowledge<T extends KnowledgeRow>(rows: T[]): T[] {
+  const seen = new Set<string>();
+  const result: T[] = [];
+  for (const row of rows) {
+    const key = `${row.system}|${row.category}|${row.topic}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(row);
+    }
+  }
+  return result;
+}
+
 function isToday(isoTimestamp: string): boolean {
   const d = new Date(isoTimestamp);
   const now = new Date();
@@ -247,17 +265,22 @@ export default function ChatWindow() {
 
     try {
       const topics = topicsForProfile(profile.chart, profile.numerology, transits);
-      const { data: knowledge } = await supabase
-        .from("knowledge_base")
-        .select(
-          "system, category, topic, definition, traditional_interpretation, modern_interpretation, psychological_interpretation, positive_aspects, challenges, career_meaning, relationship_meaning, growth_meaning, sources, confidence_level, context_notes"
-        )
-        .in("topic", topics);
+      const [{ data: topicMatches }, { data: searchMatches }] = await Promise.all([
+        supabase.from("knowledge_base").select(KNOWLEDGE_COLUMNS).in("topic", topics),
+        // Full-text search on the user's actual message, so a freeform question can surface
+        // relevant content even when it doesn't name one of the known topics above exactly.
+        supabase
+          .from("knowledge_base")
+          .select(KNOWLEDGE_COLUMNS)
+          .textSearch("search_vector", text, { type: "websearch", config: "english" })
+          .limit(5),
+      ]);
+      const knowledge = dedupeKnowledge([...(topicMatches ?? []), ...(searchMatches ?? [])]);
 
       const { reply } = await postChatReply({
         chart: profile.chart,
         numerology: profile.numerology,
-        knowledge: knowledge ?? [],
+        knowledge,
         messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
         transits,
       });
