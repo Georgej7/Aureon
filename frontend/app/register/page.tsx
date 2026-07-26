@@ -75,6 +75,17 @@ export default function RegisterPage() {
               >
                 {submitting ? "Creating account…" : "Create account"}
               </button>
+              <p className="sub" style={{ marginTop: 12, fontSize: 12 }}>
+                By creating an account you agree to our{" "}
+                <Link href="/terms" style={{ color: "var(--gold)" }}>
+                  Terms
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" style={{ color: "var(--gold)" }}>
+                  Privacy Policy
+                </Link>
+                .
+              </p>
               <p className="sub" style={{ marginTop: 16 }}>
                 Already have an account?{" "}
                 <Link href="/login" style={{ color: "var(--gold)" }}>

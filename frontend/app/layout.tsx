@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
 import "./globals.css";
+import Link from "next/link";
 import Starfield from "@/components/Starfield";
 import TopNav from "@/components/TopNav";
 
@@ -35,6 +36,11 @@ export default function RootLayout({
           <TopNav />
           {children}
         </div>
+        <footer className="site-footer">
+          <span>© {new Date().getFullYear()} Aureon</span>
+          <Link href="/terms">Terms</Link>
+          <Link href="/privacy">Privacy</Link>
+        </footer>
       </body>
     </html>
   );
