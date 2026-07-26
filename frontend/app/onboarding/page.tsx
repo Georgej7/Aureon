@@ -3,15 +3,8 @@
 import { useRef, useState } from "react";
 import ChartReveal, { ChartRevealHandle } from "@/components/ChartReveal";
 import { postNatalChart, postNumerology } from "@/lib/api";
+import { offsetToIso } from "@/lib/astrology";
 import { createClient } from "@/lib/supabase/client";
-
-function offsetToIso(offsetHours: number): string {
-  const sign = offsetHours < 0 ? "-" : "+";
-  const abs = Math.abs(offsetHours);
-  const hh = String(Math.floor(abs)).padStart(2, "0");
-  const mm = String(Math.round((abs - Math.floor(abs)) * 60)).padStart(2, "0");
-  return `${sign}${hh}:${mm}`;
-}
 
 export default function OnboardingPage() {
   const chartRevealRef = useRef<ChartRevealHandle | null>(null);

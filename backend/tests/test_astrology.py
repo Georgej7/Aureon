@@ -7,6 +7,8 @@ session notes): all four land within 0.001 deg of the expected boundary."""
 from app.calc.astrology import (
     assign_house,
     build_natal_chart,
+    compute_synastry,
+    compute_synastry_aspects,
     compute_transit_aspects,
     compute_transits,
     longitude_to_sign,
@@ -147,3 +149,32 @@ def test_compute_transits_returns_all_ten_transiting_planets_and_moon_phase():
         "New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous",
         "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent",
     }
+
+
+def test_compute_synastry_aspects_checks_every_directional_pair():
+    person_a = {"Sun": 10.0, "Venus": 100.0}
+    person_b = {"Moon": 12.0, "Mars": 200.0}
+
+    aspects = compute_synastry_aspects(person_a, person_b)
+
+    hit = next(a for a in aspects if a.person_a_planet == "Sun" and a.person_b_planet == "Moon")
+    assert hit.aspect_type == "Conjunction"
+    assert hit.orb == 2.0
+
+    pairs = {(a.person_a_planet, a.person_b_planet) for a in aspects}
+    assert ("Sun", "Moon") in pairs
+    assert ("Moon", "Sun") not in pairs  # "Moon" was never a person_a input here
+
+
+def test_compute_synastry_returns_both_full_charts_and_no_fabricated_score():
+    birth_a = BirthData(datetime="1993-03-14T04:12:00+04:00", latitude=41.7151, longitude=44.8271)
+    birth_b = BirthData(datetime="1990-07-20T10:00:00+00:00", latitude=51.5072, longitude=-0.1276)
+
+    result = compute_synastry(birth_a, birth_b)
+
+    assert len(result.person_a.planets) == 10
+    assert len(result.person_b.planets) == 10
+    assert result.person_a.houses is not None  # both have full location+time
+    assert result.person_b.houses is not None
+    assert isinstance(result.aspects, list)
+    assert not hasattr(result, "compatibility_score")

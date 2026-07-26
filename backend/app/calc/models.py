@@ -100,6 +100,25 @@ class TransitsResponse(BaseModel):
     moon_phase: MoonPhase
 
 
+class SynastryRequest(BaseModel):
+    person_a: BirthData
+    person_b: BirthData
+
+
+class SynastryAspect(BaseModel):
+    person_a_planet: str
+    person_b_planet: str
+    aspect_type: str
+    angle: float
+    orb: float
+
+
+class SynastryResponse(BaseModel):
+    person_a: NatalChart
+    person_b: NatalChart
+    aspects: list[SynastryAspect]
+
+
 class NumerologyRequest(BaseModel):
     full_name: str
     date: str  # "YYYY-MM-DD"

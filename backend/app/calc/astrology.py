@@ -8,6 +8,8 @@ from app.calc.models import (
     MoonPhase,
     NatalChart,
     PlanetPlacement,
+    SynastryAspect,
+    SynastryResponse,
     TransitAspect,
     TransitPlanet,
     TransitsResponse,
@@ -123,33 +125,63 @@ def build_natal_chart(birth: BirthData) -> NatalChart:
     )
 
 
-def compute_transit_aspects(
-    transiting_longitudes: dict[str, float], natal_longitudes: dict[str, float]
-) -> list[TransitAspect]:
-    """Aspects between today's planet positions and a natal chart's. Unlike
-    compute_aspects() (which compares planets within one chart and only checks
-    each pair once), this checks every transiting/natal pair independently —
-    transiting Mars to natal Sun is a different aspect from transiting Sun to
-    natal Mars, and both are checked."""
-    aspects: list[TransitAspect] = []
-    for t_name, t_lon in transiting_longitudes.items():
-        for n_name, n_lon in natal_longitudes.items():
-            diff = abs(t_lon - n_lon) % 360
+def _cross_aspects(
+    set_a: dict[str, float], set_b: dict[str, float]
+) -> list[tuple[str, str, str, float, float]]:
+    """Aspects between two independent sets of planet longitudes, checking
+    every (a, b) pair independently — unlike compute_aspects() (which compares
+    planets within a single chart and only checks each pair once), planet X
+    from set_a to planet Y from set_b is a different result from Y to X, and
+    both are checked. Shared by transits (today's sky vs. a natal chart) and
+    synastry (one person's chart vs. another's) — the aspect math is
+    identical, only what the two sets represent differs.
+    Returns (name_a, name_b, aspect_type, angle, orb) tuples."""
+    results: list[tuple[str, str, str, float, float]] = []
+    for name_a, lon_a in set_a.items():
+        for name_b, lon_b in set_b.items():
+            diff = abs(lon_a - lon_b) % 360
             diff = min(diff, 360 - diff)
             for aspect_type, angle, orb in ASPECT_DEFINITIONS:
                 delta = abs(diff - angle)
                 if delta <= orb:
-                    aspects.append(
-                        TransitAspect(
-                            transiting_planet=t_name,
-                            natal_planet=n_name,
-                            aspect_type=aspect_type,
-                            angle=diff,
-                            orb=delta,
-                        )
-                    )
+                    results.append((name_a, name_b, aspect_type, diff, delta))
                     break
-    return aspects
+    return results
+
+
+def compute_transit_aspects(
+    transiting_longitudes: dict[str, float], natal_longitudes: dict[str, float]
+) -> list[TransitAspect]:
+    """Aspects between today's planet positions and a natal chart's."""
+    return [
+        TransitAspect(transiting_planet=a, natal_planet=b, aspect_type=t, angle=angle, orb=orb)
+        for a, b, t, angle, orb in _cross_aspects(transiting_longitudes, natal_longitudes)
+    ]
+
+
+def compute_synastry_aspects(
+    person_a_longitudes: dict[str, float], person_b_longitudes: dict[str, float]
+) -> list[SynastryAspect]:
+    """Aspects between two different people's natal charts."""
+    return [
+        SynastryAspect(person_a_planet=a, person_b_planet=b, aspect_type=t, angle=angle, orb=orb)
+        for a, b, t, angle, orb in _cross_aspects(person_a_longitudes, person_b_longitudes)
+    ]
+
+
+def compute_synastry(birth_a: BirthData, birth_b: BirthData) -> SynastryResponse:
+    """Two independent natal charts plus the inter-aspects between them —
+    no fabricated 'compatibility score': astrology has no single agreed
+    formula for reducing a chart comparison to one number, so this surfaces
+    the real computed aspects and leaves interpretation to the knowledge
+    base / AI chat, same principle as the rest of the calc engine."""
+    chart_a = build_natal_chart(birth_a)
+    chart_b = build_natal_chart(birth_b)
+    aspects = compute_synastry_aspects(
+        {p.name: p.longitude for p in chart_a.planets},
+        {p.name: p.longitude for p in chart_b.planets},
+    )
+    return SynastryResponse(person_a=chart_a, person_b=chart_b, aspects=aspects)
 
 
 def moon_phase(sun_longitude: float, moon_longitude: float) -> tuple[str, float]:

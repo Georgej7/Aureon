@@ -11,6 +11,7 @@ const TABS = [
   { href: "/onboarding", label: "Onboarding" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/chat", label: "AI chat" },
+  { href: "/compatibility", label: "Compatibility" },
   { href: "/pricing", label: "Pricing" },
 ];
 

@@ -57,6 +57,25 @@ export type TransitsRequest = {
   natal_planets: { name: string; longitude: number }[];
 };
 
+export type SynastryRequest = {
+  person_a: NatalChartRequest;
+  person_b: NatalChartRequest;
+};
+
+export type SynastryAspect = {
+  person_a_planet: string;
+  person_b_planet: string;
+  aspect_type: string;
+  angle: number;
+  orb: number;
+};
+
+export type Synastry = {
+  person_a: NatalChart;
+  person_b: NatalChart;
+  aspects: SynastryAspect[];
+};
+
 export type TransitPlanet = {
   name: string;
   longitude: number;
@@ -106,6 +125,10 @@ export function postNumerology(payload: NumerologyRequest): Promise<NumerologyPr
 
 export function postTransits(payload: TransitsRequest): Promise<Transits> {
   return postJson<Transits>("/api/chart/transits", payload);
+}
+
+export function postSynastry(payload: SynastryRequest): Promise<Synastry> {
+  return postJson<Synastry>("/api/chart/synastry", payload);
 }
 
 export type ChatReplyMessage = { role: "user" | "assistant"; content: string };

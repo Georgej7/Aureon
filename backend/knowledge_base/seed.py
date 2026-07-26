@@ -23,6 +23,7 @@ CONTENT_FILES = [
     "western_astrology/retrogrades.json",
     "western_astrology/transiting_planets.json",
     "western_astrology/moon_phases.json",
+    "western_astrology/synastry_aspects.json",
     "numerology/numbers.json",
 ]
 
