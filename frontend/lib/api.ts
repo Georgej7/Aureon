@@ -53,6 +53,37 @@ export type NumerologyRequest = {
   target_year?: number;
 };
 
+export type TransitsRequest = {
+  natal_planets: { name: string; longitude: number }[];
+};
+
+export type TransitPlanet = {
+  name: string;
+  longitude: number;
+  sign: string;
+  sign_degree: number;
+  retrograde: boolean;
+};
+
+export type TransitAspect = {
+  transiting_planet: string;
+  natal_planet: string;
+  aspect_type: string;
+  angle: number;
+  orb: number;
+};
+
+export type MoonPhase = {
+  name: string;
+  angle: number;
+};
+
+export type Transits = {
+  transiting_planets: TransitPlanet[];
+  aspects: TransitAspect[];
+  moon_phase: MoonPhase;
+};
+
 async function postJson<TResponse>(path: string, body: unknown): Promise<TResponse> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
@@ -71,6 +102,10 @@ export function postNatalChart(payload: NatalChartRequest): Promise<NatalChart> 
 
 export function postNumerology(payload: NumerologyRequest): Promise<NumerologyProfile> {
   return postJson<NumerologyProfile>("/api/numerology", payload);
+}
+
+export function postTransits(payload: TransitsRequest): Promise<Transits> {
+  return postJson<Transits>("/api/chart/transits", payload);
 }
 
 export type ChatReplyMessage = { role: "user" | "assistant"; content: string };
@@ -97,6 +132,7 @@ export type ChatReplyRequest = {
   chart: NatalChart;
   numerology: NumerologyProfile;
   knowledge: KnowledgeEntry[];
+  transits?: Transits | null;
   messages: ChatReplyMessage[];
 };
 

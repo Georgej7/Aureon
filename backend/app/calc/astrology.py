@@ -1,5 +1,17 @@
+from datetime import datetime, timezone
+
 from app.calc import ephemeris
-from app.calc.models import Aspect, BirthData, HouseCusp, NatalChart, PlanetPlacement
+from app.calc.models import (
+    Aspect,
+    BirthData,
+    HouseCusp,
+    MoonPhase,
+    NatalChart,
+    PlanetPlacement,
+    TransitAspect,
+    TransitPlanet,
+    TransitsResponse,
+)
 
 SIGNS = [
     "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
@@ -13,6 +25,12 @@ ASPECT_DEFINITIONS = [
     ("Square", 90, 8),
     ("Trine", 120, 8),
     ("Opposition", 180, 8),
+]
+
+# Sun-Moon angle divided into 8 equal 45-degree slices, starting at New Moon (0 deg).
+MOON_PHASE_NAMES = [
+    "New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous",
+    "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent",
 ]
 
 
@@ -102,4 +120,69 @@ def build_natal_chart(birth: BirthData) -> NatalChart:
         ascendant=ascendant,
         midheaven=midheaven,
         aspects=aspects,
+    )
+
+
+def compute_transit_aspects(
+    transiting_longitudes: dict[str, float], natal_longitudes: dict[str, float]
+) -> list[TransitAspect]:
+    """Aspects between today's planet positions and a natal chart's. Unlike
+    compute_aspects() (which compares planets within one chart and only checks
+    each pair once), this checks every transiting/natal pair independently —
+    transiting Mars to natal Sun is a different aspect from transiting Sun to
+    natal Mars, and both are checked."""
+    aspects: list[TransitAspect] = []
+    for t_name, t_lon in transiting_longitudes.items():
+        for n_name, n_lon in natal_longitudes.items():
+            diff = abs(t_lon - n_lon) % 360
+            diff = min(diff, 360 - diff)
+            for aspect_type, angle, orb in ASPECT_DEFINITIONS:
+                delta = abs(diff - angle)
+                if delta <= orb:
+                    aspects.append(
+                        TransitAspect(
+                            transiting_planet=t_name,
+                            natal_planet=n_name,
+                            aspect_type=aspect_type,
+                            angle=diff,
+                            orb=delta,
+                        )
+                    )
+                    break
+    return aspects
+
+
+def moon_phase(sun_longitude: float, moon_longitude: float) -> tuple[str, float]:
+    angle = (moon_longitude - sun_longitude) % 360
+    index = int(angle // 45) % 8
+    return MOON_PHASE_NAMES[index], angle
+
+
+def compute_transits(natal_longitudes: dict[str, float]) -> TransitsResponse:
+    """Today's planet positions compared against an already-known natal
+    chart. Always uses the current moment — transits are inherently a 'right
+    now' reading, not something tied to a specific requested instant."""
+    now_iso = datetime.now(timezone.utc).isoformat()
+    jd = ephemeris.to_julian_day(now_iso)
+    raw_planets = ephemeris.planet_longitudes(jd)
+
+    transiting_planets = []
+    for name, (longitude, retrograde) in raw_planets.items():
+        sign, sign_degree = longitude_to_sign(longitude)
+        transiting_planets.append(
+            TransitPlanet(
+                name=name, longitude=longitude, sign=sign, sign_degree=sign_degree, retrograde=retrograde
+            )
+        )
+
+    aspects = compute_transit_aspects(
+        {name: lon for name, (lon, _retro) in raw_planets.items()}, natal_longitudes
+    )
+
+    phase_name, phase_angle = moon_phase(raw_planets["Sun"][0], raw_planets["Moon"][0])
+
+    return TransitsResponse(
+        transiting_planets=transiting_planets,
+        aspects=aspects,
+        moon_phase=MoonPhase(name=phase_name, angle=phase_angle),
     )

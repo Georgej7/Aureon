@@ -60,6 +60,46 @@ class NatalChart(BaseModel):
     aspects: list[Aspect]
 
 
+class NatalPlanetLongitude(BaseModel):
+    """Minimal planet identity needed to compute transits against a chart
+    the caller already has — just name + longitude, not the full
+    PlanetPlacement (sign/house/retrograde aren't needed for aspect math)."""
+
+    name: str
+    longitude: float
+
+
+class TransitsRequest(BaseModel):
+    natal_planets: list[NatalPlanetLongitude]
+
+
+class TransitPlanet(BaseModel):
+    name: str
+    longitude: float
+    sign: str
+    sign_degree: float
+    retrograde: bool
+
+
+class TransitAspect(BaseModel):
+    transiting_planet: str
+    natal_planet: str
+    aspect_type: str
+    angle: float
+    orb: float
+
+
+class MoonPhase(BaseModel):
+    name: str
+    angle: float  # Sun-Moon angle in degrees, 0-360
+
+
+class TransitsResponse(BaseModel):
+    transiting_planets: list[TransitPlanet]
+    aspects: list[TransitAspect]
+    moon_phase: MoonPhase
+
+
 class NumerologyRequest(BaseModel):
     full_name: str
     date: str  # "YYYY-MM-DD"

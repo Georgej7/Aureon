@@ -12,6 +12,7 @@ SYSTEM_PROMPT_TEMPLATE = (
     "numerology knowledge — it's been reviewed for accuracy and matches this product's voice.\n\n"
     "The user's natal chart:\n{chart_summary}\n\n"
     "The user's numerology profile: {numerology_summary}\n\n"
+    "Today's sky (transits) relative to this user's chart:\n{transits_summary}\n\n"
     "Reference material for this user's actual placements:\n{knowledge_summary}"
 )
 
@@ -40,6 +41,24 @@ def summarize_numerology(numerology: dict) -> str:
         f"Soul Urge {numerology.get('soul_urge')}, Personality {numerology.get('personality')}, "
         f"Personal Year {numerology.get('personal_year')}"
     )
+
+
+def summarize_transits(transits: dict | None) -> str:
+    if not transits:
+        return "(not available)"
+
+    moon_phase = transits.get("moon_phase", {})
+    aspect_lines = [
+        f"transiting {a['transiting_planet']} {a['aspect_type']} natal {a['natal_planet']} "
+        f"(orb {a['orb']:.1f}°)"
+        for a in transits.get("aspects", [])[:8]
+    ]
+    parts = [f"Moon phase: {moon_phase.get('name', 'unknown')}"]
+    if aspect_lines:
+        parts.append("Active transiting aspects: " + "; ".join(aspect_lines))
+    else:
+        parts.append("No major transiting aspects are currently exact.")
+    return "\n".join(parts)
 
 
 def summarize_knowledge(knowledge: list[dict]) -> str:
@@ -77,7 +96,13 @@ def _stub_reply(messages: list[dict], knowledge: list[dict]) -> str:
     )
 
 
-def generate_reply(chart: dict, numerology: dict, knowledge: list[dict], messages: list[dict]) -> str:
+def generate_reply(
+    chart: dict,
+    numerology: dict,
+    knowledge: list[dict],
+    messages: list[dict],
+    transits: dict | None = None,
+) -> str:
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         return _stub_reply(messages, knowledge)
@@ -90,6 +115,7 @@ def generate_reply(chart: dict, numerology: dict, knowledge: list[dict], message
     system_prompt = SYSTEM_PROMPT_TEMPLATE.format(
         chart_summary=summarize_chart(chart),
         numerology_summary=summarize_numerology(numerology),
+        transits_summary=summarize_transits(transits),
         knowledge_summary=summarize_knowledge(knowledge),
     )
 

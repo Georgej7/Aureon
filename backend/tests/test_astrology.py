@@ -4,7 +4,14 @@ these UTC timestamps are published by USNO/timeanddate to the minute, and were
 cross-checked against the engine's own output before being written here (see
 session notes): all four land within 0.001 deg of the expected boundary."""
 
-from app.calc.astrology import assign_house, build_natal_chart, longitude_to_sign
+from app.calc.astrology import (
+    assign_house,
+    build_natal_chart,
+    compute_transit_aspects,
+    compute_transits,
+    longitude_to_sign,
+    moon_phase,
+)
 from app.calc.ephemeris import planet_longitudes, to_julian_day
 from app.calc.models import BirthData
 
@@ -100,3 +107,43 @@ def test_natal_chart_with_unknown_time_still_gets_real_planet_signs():
     assert chart.ascendant is None
     assert chart.midheaven is None
     assert isinstance(chart.aspects, list)
+
+
+def test_compute_transit_aspects_finds_conjunction_and_directionality():
+    transiting = {"Mars": 10.0, "Venus": 100.0}
+    natal = {"Sun": 12.0, "Moon": 200.0}
+
+    aspects = compute_transit_aspects(transiting, natal)
+
+    # transiting Mars (10 deg) is within orb of natal Sun (12 deg) -> conjunction
+    hit = next(a for a in aspects if a.transiting_planet == "Mars" and a.natal_planet == "Sun")
+    assert hit.aspect_type == "Conjunction"
+    assert hit.orb == 2.0
+
+    # every transiting/natal pair is checked independently (2x2 = up to 4 results,
+    # not deduplicated like within-chart aspects), confirming directionality is preserved
+    pairs = {(a.transiting_planet, a.natal_planet) for a in aspects}
+    assert ("Mars", "Sun") in pairs
+    assert ("Sun", "Mars") not in pairs  # "Sun" was never a transiting input here
+
+
+def test_moon_phase_boundaries():
+    assert moon_phase(sun_longitude=0, moon_longitude=0) == ("New Moon", 0)
+    assert moon_phase(sun_longitude=0, moon_longitude=90) == ("First Quarter", 90)
+    assert moon_phase(sun_longitude=0, moon_longitude=180) == ("Full Moon", 180)
+    assert moon_phase(sun_longitude=10, moon_longitude=5) == ("Waning Crescent", 355)
+
+
+def test_compute_transits_returns_all_ten_transiting_planets_and_moon_phase():
+    natal_longitudes = {"Sun": 45.0, "Moon": 200.0}
+    result = compute_transits(natal_longitudes)
+
+    assert len(result.transiting_planets) == 10
+    assert {p.name for p in result.transiting_planets} == {
+        "Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto",
+    }
+    assert isinstance(result.aspects, list)
+    assert result.moon_phase.name in {
+        "New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous",
+        "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent",
+    }

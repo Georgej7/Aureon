@@ -16,6 +16,7 @@ class ChatReplyRequest(BaseModel):
     numerology: dict
     knowledge: list[dict] = []
     messages: list[ChatMessage]
+    transits: dict | None = None
 
 
 class ChatReplyResponse(BaseModel):
@@ -29,5 +30,6 @@ def chat_reply(request: ChatReplyRequest) -> ChatReplyResponse:
         request.numerology,
         request.knowledge,
         [m.model_dump() for m in request.messages],
+        request.transits,
     )
     return ChatReplyResponse(reply=reply)

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { postChatReply } from "@/lib/api";
-import type { NatalChart, NumerologyProfile } from "@/lib/api";
+import { postChatReply, postTransits } from "@/lib/api";
+import type { NatalChart, NumerologyProfile, Transits } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
 type Message = { id: string; role: "user" | "assistant"; content: string; created_at: string };
@@ -58,10 +58,14 @@ const SpeakIcon = () => (
   </svg>
 );
 
-/** Every knowledge_base topic relevant to this user's actual chart + numerology —
- * exact structured lookups, not semantic search, since a chart is a fully known
- * set of placements. */
-function topicsForProfile(chart: NatalChart, numerology: NumerologyProfile): string[] {
+/** Every knowledge_base topic relevant to this user's actual chart + numerology,
+ * plus today's active transits — exact structured lookups, not semantic search,
+ * since a chart (and today's sky) is a fully known set of placements. */
+function topicsForProfile(
+  chart: NatalChart,
+  numerology: NumerologyProfile,
+  transits?: Transits | null
+): string[] {
   const topics = new Set<string>();
   for (const planet of chart.planets) {
     topics.add(planet.name);
@@ -80,6 +84,13 @@ function topicsForProfile(chart: NatalChart, numerology: NumerologyProfile): str
   ]) {
     topics.add(`Number ${value}`);
   }
+  if (transits) {
+    for (const aspect of transits.aspects) {
+      topics.add(`Transiting ${aspect.transiting_planet}`);
+      topics.add(aspect.aspect_type);
+    }
+    topics.add(transits.moon_phase.name);
+  }
   return Array.from(topics);
 }
 
@@ -89,6 +100,7 @@ export default function ChatWindow() {
   const [profile, setProfile] = useState<{ chart: NatalChart; numerology: NumerologyProfile } | null>(
     null
   );
+  const [transits, setTransits] = useState<Transits | null>(null);
   const [tier, setTier] = useState<"free" | "premium" | "vip">("free");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -136,6 +148,17 @@ export default function ChatWindow() {
       if (!cancelled) {
         setProfile({ chart: profileRow.chart, numerology: profileRow.numerology });
         setTier((profileRow.subscription_tier as "free" | "premium" | "vip") ?? "free");
+      }
+      try {
+        const result = await postTransits({
+          natal_planets: profileRow.chart.planets.map((p: { name: string; longitude: number }) => ({
+            name: p.name,
+            longitude: p.longitude,
+          })),
+        });
+        if (!cancelled) setTransits(result);
+      } catch {
+        // Non-fatal — chat still works with natal-only knowledge if transits fail to load.
       }
 
       let { data: session } = await supabase
@@ -223,7 +246,7 @@ export default function ChatWindow() {
     setSending(true);
 
     try {
-      const topics = topicsForProfile(profile.chart, profile.numerology);
+      const topics = topicsForProfile(profile.chart, profile.numerology, transits);
       const { data: knowledge } = await supabase
         .from("knowledge_base")
         .select(
@@ -236,6 +259,7 @@ export default function ChatWindow() {
         numerology: profile.numerology,
         knowledge: knowledge ?? [],
         messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
+        transits,
       });
 
       const { data: assistantRow } = await supabase

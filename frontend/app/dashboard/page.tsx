@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { NatalChart, NumerologyProfile } from "@/lib/api";
+import type { NatalChart, NumerologyProfile, Transits, TransitAspect } from "@/lib/api";
+import { postTransits } from "@/lib/api";
 import { zodiacSign } from "@/lib/astrology";
 import { createClient } from "@/lib/supabase/client";
 
@@ -12,8 +13,26 @@ type Profile = {
   subscription_tier: "free" | "premium" | "vip";
 };
 
+// Slow-moving planets define a multi-week/month "theme"; fast ones define today's tone.
+const SLOW_TRANSIT_PLANETS = new Set(["Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]);
+const FAST_TRANSIT_PLANETS = new Set(["Sun", "Moon", "Mercury", "Venus", "Mars"]);
+
+const ASPECT_VERBS: Record<string, string> = {
+  Conjunction: "meeting",
+  Sextile: "opening an opportunity with",
+  Square: "challenging",
+  Trine: "supporting",
+  Opposition: "in tension with",
+};
+
+function describeAspect(a: TransitAspect): string {
+  const verb = ASPECT_VERBS[a.aspect_type] ?? a.aspect_type.toLowerCase();
+  return `Transiting ${a.transiting_planet} is ${verb} your natal ${a.natal_planet} right now.`;
+}
+
 export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
+  const [transits, setTransits] = useState<Transits | null | undefined>(undefined);
   const [manageLoading, setManageLoading] = useState<"payment" | "cancel" | null>(null);
   const [manageError, setManageError] = useState<string | null>(null);
 
@@ -33,8 +52,21 @@ export default function DashboardPage() {
         .select("chart, numerology, subscription_tier")
         .eq("id", user.id)
         .maybeSingle();
-      if (!cancelled) {
-        setProfile(data && data.chart && data.numerology ? (data as Profile) : null);
+      const loadedProfile =
+        data && data.chart && data.numerology ? (data as Profile) : null;
+      if (!cancelled) setProfile(loadedProfile);
+      if (loadedProfile) {
+        try {
+          const result = await postTransits({
+            natal_planets: loadedProfile.chart.planets.map((p) => ({
+              name: p.name,
+              longitude: p.longitude,
+            })),
+          });
+          if (!cancelled) setTransits(result);
+        } catch {
+          if (!cancelled) setTransits(null);
+        }
       }
     }
     load();
@@ -42,6 +74,10 @@ export default function DashboardPage() {
       cancelled = true;
     };
   }, []);
+
+  const weeklyAspect = transits?.aspects.find((a) => SLOW_TRANSIT_PLANETS.has(a.transiting_planet));
+  const dailyAspect = transits?.aspects.find((a) => FAST_TRANSIT_PLANETS.has(a.transiting_planet));
+  const transitingMoon = transits?.transiting_planets.find((p) => p.name === "Moon");
 
   async function openManageUrl(kind: "payment" | "cancel") {
     setManageError(null);
@@ -71,16 +107,37 @@ export default function DashboardPage() {
         <div>
           <div className="card">
             <div className="label">This week&apos;s theme</div>
-            <h3>Structure before speed</h3>
-            <p>
-              Your Saturn transit and Personal Year 8 are both asking for patience right now — a
-              rare alignment worth planning around rather than pushing past.
-            </p>
+            {weeklyAspect ? (
+              <>
+                <h3>
+                  {weeklyAspect.transiting_planet} {weeklyAspect.aspect_type} {weeklyAspect.natal_planet}
+                </h3>
+                <p>{describeAspect(weeklyAspect)}</p>
+              </>
+            ) : (
+              <>
+                <h3>A quiet stretch</h3>
+                <p>No major slow-moving transits are active right now — a good window for steady, unremarkable progress.</p>
+              </>
+            )}
           </div>
           <div className="card">
             <div className="label">Daily insight · Today</div>
-            <h3>Moon in Taurus</h3>
-            <p>A grounded, low-drama day. Good for finishing what you started rather than beginning something new.</p>
+            {dailyAspect ? (
+              <>
+                <h3>
+                  {dailyAspect.transiting_planet} {dailyAspect.aspect_type} {dailyAspect.natal_planet}
+                </h3>
+                <p>{describeAspect(dailyAspect)}</p>
+              </>
+            ) : transitingMoon ? (
+              <>
+                <h3>Moon in {transitingMoon.sign}</h3>
+                <p>No fast-moving aspects are exact today — a fairly even, low-drama day to work with.</p>
+              </>
+            ) : (
+              <h3>—</h3>
+            )}
           </div>
         </div>
         <div>
@@ -116,12 +173,9 @@ export default function DashboardPage() {
             <div className="label">Moon phase</div>
             <h3>
               <span className="moon" />
-              Waxing gibbous
+              {transits?.moon_phase.name ?? "—"}
             </h3>
-            <p>
-              Full moon in 4 days — a good window to notice what&apos;s building toward completion
-              in your own timeline.
-            </p>
+            {transitingMoon && <p>The Moon is currently in {transitingMoon.sign}.</p>}
           </div>
           {profile?.subscription_tier === "premium" && (
             <div className="card">
