@@ -2,6 +2,26 @@ import { NextResponse, type NextRequest } from "next/server";
 import { EventName } from "@paddle/paddle-node-sdk";
 import { getPaddleClient } from "@/lib/paddle/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendEmail } from "@/lib/email/resend";
+import { subscriptionCanceledEmail, resubscribedEmail } from "@/lib/email/templates";
+
+// Best-effort — a failed notification email should never fail webhook
+// processing, which is what actually keeps billing state correct.
+async function notifyUser(
+  supabase: ReturnType<typeof createAdminClient>,
+  userId: string,
+  build: (params: { appUrl: string }) => { subject: string; html: string }
+) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://aureon-frontend.onrender.com";
+  try {
+    const { data, error } = await supabase.auth.admin.getUserById(userId);
+    if (error || !data.user?.email) return;
+    const { subject, html } = build({ appUrl });
+    await sendEmail({ to: data.user.email, subject, html });
+  } catch (err) {
+    console.error("Paddle webhook: notification email failed", err);
+  }
+}
 
 function mapSubscriptionStatus(status: string): {
   tier: "free" | "premium";
@@ -70,6 +90,13 @@ export async function POST(request: NextRequest) {
     case EventName.SubscriptionUpdated: {
       const subscription = event.data;
       const { tier, status } = mapSubscriptionStatus(subscription.status);
+
+      const { data: existing } = await supabase
+        .from("profiles")
+        .select("id, subscription_status")
+        .eq("paddle_customer_id", subscription.customerId)
+        .single();
+
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -79,11 +106,23 @@ export async function POST(request: NextRequest) {
         })
         .eq("paddle_customer_id", subscription.customerId);
       dbError = error;
+
+      const isReactivation = existing?.subscription_status === "canceled" && status === "active";
+      if (!error && isReactivation && existing?.id) {
+        await notifyUser(supabase, existing.id, resubscribedEmail);
+      }
       break;
     }
 
     case EventName.SubscriptionCanceled: {
       const subscription = event.data;
+
+      const { data: existing } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("paddle_customer_id", subscription.customerId)
+        .single();
+
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -93,6 +132,10 @@ export async function POST(request: NextRequest) {
         })
         .eq("paddle_customer_id", subscription.customerId);
       dbError = error;
+
+      if (!error && existing?.id) {
+        await notifyUser(supabase, existing.id, subscriptionCanceledEmail);
+      }
       break;
     }
 

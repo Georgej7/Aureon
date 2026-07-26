@@ -24,6 +24,15 @@ export default function RegisterPage() {
       setError(signUpError.message);
       return;
     }
+
+    // Best-effort, fire-and-forget — a failed welcome email should never
+    // block a successful signup from completing.
+    fetch("/api/emails/welcome", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    }).catch(() => {});
+
     if (data.session) {
       // Email confirmation is disabled on this project — session is active immediately.
       router.push("/onboarding");
