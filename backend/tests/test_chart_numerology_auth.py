@@ -109,3 +109,20 @@ def test_kua_succeeds_with_valid_auth(client, monkeypatch):
     body = resp.json()
     assert "kua_number" in body
     assert "sheng_chi" in body
+
+
+def test_bagua_requires_authorization(client):
+    resp = client.post("/api/feng-shui/bagua", json={"facing_direction": "N"})
+    assert resp.status_code == 401
+
+
+def test_bagua_succeeds_with_valid_auth(client, monkeypatch):
+    monkeypatch.setattr(httpx, "get", lambda *a, **k: FakeResponse(200, {"id": "user-123"}))
+    resp = client.post(
+        "/api/feng-shui/bagua",
+        json={"facing_direction": "N"},
+        headers={"Authorization": "Bearer valid-token"},
+    )
+    assert resp.status_code == 200
+    zones = resp.json()["zones"]
+    assert len(zones) == 9

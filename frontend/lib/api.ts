@@ -199,6 +199,27 @@ export function postKua(payload: KuaRequest, token: string): Promise<KuaProfile>
   return postJson<KuaProfile>("/api/feng-shui/kua", payload, token);
 }
 
+export type Compass = "N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW";
+
+export type BaguaRequest = {
+  facing_direction: Compass;
+};
+
+export type BaguaZone = {
+  position: string;
+  zone: string;
+  element: string;
+  direction: Compass | null;
+};
+
+export type BaguaResponse = {
+  zones: BaguaZone[];
+};
+
+export function postBagua(payload: BaguaRequest, token: string): Promise<BaguaResponse> {
+  return postJson<BaguaResponse>("/api/feng-shui/bagua", payload, token);
+}
+
 export type ChatReplyMessage = { role: "user" | "assistant"; content: string };
 
 export type KnowledgeEntry = {

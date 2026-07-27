@@ -5,6 +5,7 @@ substitution rules and direction-table completeness."""
 
 import pytest
 
+from app.calc.bagua import BAGUA_GRID, COMPASS, bagua_zones
 from app.calc.feng_shui import KUA_DATA, kua_number
 
 EAST_GROUP = {1, 3, 4, 9}
@@ -99,3 +100,63 @@ def test_kua_eight_directions_match_published_reference():
         "group": "West", "element": "Earth",
         "sheng_chi": "Southwest", "tien_yi": "Northwest", "nien_yen": "West", "fu_wei": "Northeast",
     }
+
+
+# ---- Bagua (BTB) grid ----
+
+def test_bagua_grid_has_nine_positions_matching_published_layout():
+    # Verified identically against two independent published sources
+    # (lawoffengshui.com, easternsage.com) before implementation.
+    assert BAGUA_GRID["top_left"]["zone"] == "Wealth & Fortune"
+    assert BAGUA_GRID["top_center"]["zone"] == "Fame & Reputation"
+    assert BAGUA_GRID["top_right"]["zone"] == "Love & Relationships"
+    assert BAGUA_GRID["middle_left"]["zone"] == "Family"
+    assert BAGUA_GRID["center"]["zone"] == "Health & Well-Being"
+    assert BAGUA_GRID["middle_right"]["zone"] == "Children & Creativity"
+    assert BAGUA_GRID["bottom_left"]["zone"] == "Knowledge & Wisdom"
+    assert BAGUA_GRID["bottom_center"]["zone"] == "Career & Life Path"
+    assert BAGUA_GRID["bottom_right"]["zone"] == "Helpful People & Travel"
+
+
+def test_bagua_facing_north_matches_hand_verified_directions():
+    # Hand-derived via top-down floor-plan reasoning before writing the
+    # implementation (see session notes) -- this is the case that reasoning
+    # was checked against, not just re-deriving the same formula.
+    zones = {z["position"]: z["direction"] for z in bagua_zones("N")}
+    assert zones == {
+        "top_left": "NW", "top_center": "N", "top_right": "NE",
+        "middle_left": "W", "center": None, "middle_right": "E",
+        "bottom_left": "SW", "bottom_center": "S", "bottom_right": "SE",
+    }
+
+
+def test_bagua_entrance_wall_is_always_career_row_regardless_of_facing():
+    # The defining BTB rule: bottom row (nearest the entrance) is always
+    # Knowledge/Career/Helpful People -- true independent of which way the
+    # entrance actually points, since BTB doesn't rotate the grid itself,
+    # only the compass-direction overlay this implementation adds on top.
+    for direction in COMPASS:
+        zones = {z["position"]: z["zone"] for z in bagua_zones(direction)}
+        assert zones["bottom_left"] == "Knowledge & Wisdom"
+        assert zones["bottom_center"] == "Career & Life Path"
+        assert zones["bottom_right"] == "Helpful People & Travel"
+
+
+def test_bagua_opposite_zones_are_always_180_degrees_apart():
+    for direction in COMPASS:
+        zones = {z["position"]: z["direction"] for z in bagua_zones(direction)}
+        pairs = [
+            ("top_left", "bottom_right"),
+            ("top_center", "bottom_center"),
+            ("top_right", "bottom_left"),
+        ]
+        for a, b in pairs:
+            idx_a = COMPASS.index(zones[a])
+            idx_b = COMPASS.index(zones[b])
+            assert (idx_a - idx_b) % 8 == 4  # 4 steps of 45deg = 180deg apart
+
+
+def test_bagua_center_has_no_direction():
+    for direction in COMPASS:
+        zones = {z["position"]: z["direction"] for z in bagua_zones(direction)}
+        assert zones["center"] is None

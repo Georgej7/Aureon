@@ -104,6 +104,24 @@ class KuaProfile(BaseModel):
     fu_wei: str  # personal growth/stability direction
 
 
+Compass = Literal["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+
+
+class BaguaRequest(BaseModel):
+    facing_direction: Compass  # direction faced when walking in through the entrance
+
+
+class BaguaZone(BaseModel):
+    position: str  # e.g. "top_left", "center"
+    zone: str  # e.g. "Wealth & Fortune"
+    element: str
+    direction: Compass | None  # null for center — no wall to be oriented toward
+
+
+class BaguaResponse(BaseModel):
+    zones: list[BaguaZone]
+
+
 class VedicChart(BaseModel):
     """Sidereal (Lahiri ayanamsa) chart — a genuinely different reference
     frame from NatalChart's tropical zodiac, not a re-labeling of the same

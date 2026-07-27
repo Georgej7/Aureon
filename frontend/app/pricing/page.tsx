@@ -9,6 +9,7 @@ export default function PricingPage() {
   const router = useRouter();
   const [paddle, setPaddle] = useState<Paddle>();
   const [error, setError] = useState<string | null>(null);
+  const [vipError, setVipError] = useState<string | null>(null);
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
 
   useEffect(() => {
@@ -26,14 +27,15 @@ export default function PricingPage() {
     }).then(setPaddle);
   }, [router]);
 
-  async function goPremium() {
-    setError(null);
-    const priceId =
-      billing === "annual"
-        ? process.env.NEXT_PUBLIC_PADDLE_PREMIUM_ANNUAL_PRICE_ID
-        : process.env.NEXT_PUBLIC_PADDLE_PREMIUM_PRICE_ID;
+  async function openCheckout(
+    monthlyEnvVar: string | undefined,
+    annualEnvVar: string | undefined,
+    setErrorFn: (msg: string | null) => void
+  ) {
+    setErrorFn(null);
+    const priceId = billing === "annual" ? annualEnvVar : monthlyEnvVar;
     if (!paddle || !priceId) {
-      setError(
+      setErrorFn(
         billing === "annual"
           ? "Annual billing isn't available yet — try monthly for now."
           : "Billing isn't configured yet."
@@ -58,6 +60,22 @@ export default function PricingPage() {
       ...(user.email && { customer: { email: user.email } }),
       customData: { supabase_user_id: user.id },
     });
+  }
+
+  function goPremium() {
+    return openCheckout(
+      process.env.NEXT_PUBLIC_PADDLE_PREMIUM_PRICE_ID,
+      process.env.NEXT_PUBLIC_PADDLE_PREMIUM_ANNUAL_PRICE_ID,
+      setError
+    );
+  }
+
+  function goVip() {
+    return openCheckout(
+      process.env.NEXT_PUBLIC_PADDLE_VIP_PRICE_ID,
+      process.env.NEXT_PUBLIC_PADDLE_VIP_ANNUAL_PRICE_ID,
+      setVipError
+    );
   }
 
   return (
@@ -115,18 +133,27 @@ export default function PricingPage() {
         </div>
         <div className="plan">
           <div className="tier">VIP</div>
-          <div className="price">
-            $59 <span>/ month</span>
-          </div>
+          {billing === "annual" ? (
+            <>
+              <div className="price">
+                $590 <span>/ year</span>
+              </div>
+              <p className="price-note">Just $49.17/mo billed annually — 2 months free</p>
+            </>
+          ) : (
+            <div className="price">
+              $59 <span>/ month</span>
+            </div>
+          )}
           <ul>
             <li>Everything in Premium</li>
-            <li>Yearly personalized planning</li>
-            <li>Priority AI response</li>
-            <li>Advanced multi-system reports</li>
+            <li>Personal room feng shui — Bagua zone mapping</li>
+            <li>Cross-referenced with your own Kua directions</li>
           </ul>
-          <button className="btn btn-ghost" disabled title="Coming soon">
-            Coming soon
+          <button className="btn btn-gold" onClick={goVip}>
+            Go VIP
           </button>
+          {vipError && <p style={{ color: "#c96a4a", fontSize: 13, marginTop: 8 }}>{vipError}</p>}
         </div>
       </div>
       <footer className="note">

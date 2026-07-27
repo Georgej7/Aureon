@@ -23,16 +23,44 @@ async function notifyUser(
   }
 }
 
-function mapSubscriptionStatus(status: string): {
-  tier: "free" | "premium";
+// Which tier a purchase grants is determined by which price was actually
+// bought, not just the subscription's status -- a status of "active" alone
+// can't distinguish a Premium purchase from a VIP one. Unknown/unrecognized
+// price IDs fail safe to "free" rather than silently granting access.
+function tierForPriceId(priceId: string | null | undefined): "free" | "premium" | "vip" {
+  const vipPriceIds = [
+    process.env.NEXT_PUBLIC_PADDLE_VIP_PRICE_ID,
+    process.env.NEXT_PUBLIC_PADDLE_VIP_ANNUAL_PRICE_ID,
+  ];
+  const premiumPriceIds = [
+    process.env.NEXT_PUBLIC_PADDLE_PREMIUM_PRICE_ID,
+    process.env.NEXT_PUBLIC_PADDLE_PREMIUM_ANNUAL_PRICE_ID,
+  ];
+  if (priceId && vipPriceIds.includes(priceId)) return "vip";
+  if (priceId && premiumPriceIds.includes(priceId)) return "premium";
+  return "free";
+}
+
+// Structural type covering both SubscriptionCreatedNotification and
+// SubscriptionUpdatedNotification (the two payload shapes this is called
+// with) — only the fields actually read here, rather than the full
+// Subscription entity class those notification types don't fully match.
+type SubscriptionLike = {
+  status: string;
+  items: { price?: { id?: string | null } | null }[];
+};
+
+function mapSubscriptionStatus(subscription: SubscriptionLike): {
+  tier: "free" | "premium" | "vip";
   status: "active" | "past_due" | "canceled" | "incomplete";
 } {
-  switch (status) {
+  const purchasedTier = tierForPriceId(subscription.items[0]?.price?.id);
+  switch (subscription.status) {
     case "active":
     case "trialing":
-      return { tier: "premium", status: "active" };
+      return { tier: purchasedTier, status: "active" };
     case "past_due":
-      return { tier: "premium", status: "past_due" };
+      return { tier: purchasedTier, status: "past_due" };
     default:
       // paused, canceled
       return { tier: "free", status: "canceled" };
@@ -72,7 +100,7 @@ export async function POST(request: NextRequest) {
       const subscription = event.data;
       const userId = subscription.customData?.supabase_user_id as string | undefined;
       if (userId) {
-        const { tier, status } = mapSubscriptionStatus(subscription.status);
+        const { tier, status } = mapSubscriptionStatus(subscription);
         const { error } = await supabase
           .from("profiles")
           .update({
@@ -89,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     case EventName.SubscriptionUpdated: {
       const subscription = event.data;
-      const { tier, status } = mapSubscriptionStatus(subscription.status);
+      const { tier, status } = mapSubscriptionStatus(subscription);
 
       const { data: existing } = await supabase
         .from("profiles")
