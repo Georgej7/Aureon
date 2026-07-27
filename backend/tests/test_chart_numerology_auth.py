@@ -91,3 +91,21 @@ def test_numerology_succeeds_with_valid_auth(client, monkeypatch):
     )
     assert resp.status_code == 200
     assert resp.json()["life_path"] == 8
+
+
+def test_kua_requires_authorization(client):
+    resp = client.post("/api/feng-shui/kua", json={"birth_year": 1990, "gender": "female"})
+    assert resp.status_code == 401
+
+
+def test_kua_succeeds_with_valid_auth(client, monkeypatch):
+    monkeypatch.setattr(httpx, "get", lambda *a, **k: FakeResponse(200, {"id": "user-123"}))
+    resp = client.post(
+        "/api/feng-shui/kua",
+        json={"birth_year": 1990, "gender": "female"},
+        headers={"Authorization": "Bearer valid-token"},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "kua_number" in body
+    assert "sheng_chi" in body

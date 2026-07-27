@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -85,6 +87,21 @@ class Mahadasha(BaseModel):
     lord: str
     start: str
     end: str
+
+
+class KuaRequest(BaseModel):
+    birth_year: int = Field(ge=1900, le=2100)
+    gender: Literal["male", "female"]  # the two categories the Kua formula itself distinguishes
+
+
+class KuaProfile(BaseModel):
+    kua_number: int
+    group: str  # "East" | "West"
+    element: str
+    sheng_chi: str  # success/prosperity direction
+    tien_yi: str  # health direction
+    nien_yen: str  # relationships/harmony direction
+    fu_wei: str  # personal growth/stability direction
 
 
 class VedicChart(BaseModel):

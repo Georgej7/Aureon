@@ -13,6 +13,7 @@ const TABS = [
   { href: "/chat", label: "AI chat" },
   { href: "/compatibility", label: "Compatibility" },
   { href: "/vedic", label: "Vedic" },
+  { href: "/feng-shui", label: "Feng shui" },
   { href: "/pricing", label: "Pricing" },
 ];
 

@@ -180,6 +180,25 @@ export function postVedicChart(payload: NatalChartRequest, token: string): Promi
   return postJson<VedicChart>("/api/chart/vedic", payload, token);
 }
 
+export type KuaRequest = {
+  birth_year: number;
+  gender: "male" | "female";
+};
+
+export type KuaProfile = {
+  kua_number: number;
+  group: string;
+  element: string;
+  sheng_chi: string;
+  tien_yi: string;
+  nien_yen: string;
+  fu_wei: string;
+};
+
+export function postKua(payload: KuaRequest, token: string): Promise<KuaProfile> {
+  return postJson<KuaProfile>("/api/feng-shui/kua", payload, token);
+}
+
 export type ChatReplyMessage = { role: "user" | "assistant"; content: string };
 
 export type KnowledgeEntry = {

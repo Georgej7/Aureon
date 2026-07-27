@@ -30,6 +30,7 @@ CONTENT_FILES = [
     "vedic_astrology/nakshatras.json",
     "vedic_astrology/nodes.json",
     "vedic_astrology/dashas.json",
+    "feng_shui/kua_numbers.json",
 ]
 
 
