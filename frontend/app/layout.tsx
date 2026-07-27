@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import BfcacheGuard from "@/components/BfcacheGuard";
 import Starfield from "@/components/Starfield";
 import TopNav from "@/components/TopNav";
 
@@ -30,6 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${fraunces.variable} ${manrope.variable}`}>
       <body>
+        <BfcacheGuard />
         <Starfield />
         <div className="vignette" />
         <div className="app">
