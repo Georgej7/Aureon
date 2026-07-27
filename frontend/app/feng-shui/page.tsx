@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import KnowledgeDetail from "@/components/KnowledgeDetail";
 import type { KnowledgeEntry, KuaProfile } from "@/lib/api";
 import { postKua } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
@@ -101,6 +102,12 @@ export default function FengShuiPage() {
               </h3>
               {content && <p>{content.definition}</p>}
             </div>
+            {content && (
+              <div className="card">
+                <div className="label">What this means</div>
+                <KnowledgeDetail entry={content} />
+              </div>
+            )}
           </div>
           <div>
             <div className="card">

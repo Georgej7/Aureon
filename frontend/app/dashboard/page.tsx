@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { NatalChart, NumerologyProfile, Transits, TransitAspect } from "@/lib/api";
+import KnowledgeDetail from "@/components/KnowledgeDetail";
+import type { KnowledgeEntry, NatalChart, NumerologyProfile, Transits, TransitAspect } from "@/lib/api";
 import { postTransits } from "@/lib/api";
 import { birthstoneForSign, zodiacSign } from "@/lib/astrology";
 import { createClient } from "@/lib/supabase/client";
@@ -33,7 +34,7 @@ function describeAspect(a: TransitAspect): string {
 export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [transits, setTransits] = useState<Transits | null | undefined>(undefined);
-  const [birthstoneBlurb, setBirthstoneBlurb] = useState<string | null>(null);
+  const [birthstoneEntry, setBirthstoneEntry] = useState<KnowledgeEntry | null>(null);
   const [manageLoading, setManageLoading] = useState<"payment" | "cancel" | null>(null);
   const [manageError, setManageError] = useState<string | null>(null);
 
@@ -77,12 +78,14 @@ export default function DashboardPage() {
         if (loadedSun) {
           const { data: stoneRow } = await supabase
             .from("knowledge_base")
-            .select("definition")
+            .select(
+              "system, category, topic, definition, traditional_interpretation, modern_interpretation, psychological_interpretation, positive_aspects, challenges, career_meaning, relationship_meaning, growth_meaning, sources, confidence_level, context_notes"
+            )
             .eq("system", "western_astrology")
             .eq("category", "birthstone")
             .eq("topic", `${loadedSun.sign} Birthstone`)
             .maybeSingle();
-          if (!cancelled) setBirthstoneBlurb(stoneRow?.definition ?? null);
+          if (!cancelled) setBirthstoneEntry((stoneRow as KnowledgeEntry) ?? null);
         }
       }
     }
@@ -190,7 +193,13 @@ export default function DashboardPage() {
             <div className="card">
               <div className="label">Birthstone</div>
               <h3>{birthstoneForSign(sunSign) ?? "—"}</h3>
-              {birthstoneBlurb && <p>{birthstoneBlurb}</p>}
+              {birthstoneEntry && <p>{birthstoneEntry.definition}</p>}
+            </div>
+          )}
+          {birthstoneEntry && (
+            <div className="card">
+              <div className="label">About your birthstone</div>
+              <KnowledgeDetail entry={birthstoneEntry} />
             </div>
           )}
           {profile && profile.chart.patterns.length > 0 && (

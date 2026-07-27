@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import KnowledgeDetail from "@/components/KnowledgeDetail";
 import type { KnowledgeEntry, VedicChart } from "@/lib/api";
 import { postVedicChart } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
@@ -181,6 +182,12 @@ export default function VedicPage() {
             </p>
             {moonContent && <p>{moonContent.definition}</p>}
           </div>
+          {moonContent && (
+            <div className="card">
+              <div className="label">About {chart.moon_nakshatra.name}</div>
+              <KnowledgeDetail entry={moonContent} />
+            </div>
+          )}
 
           {chart.ascendant_sign && chart.ascendant_nakshatra && (
             <div className="card">
@@ -191,6 +198,12 @@ export default function VedicPage() {
                 {chart.ascendant_nakshatra.ruling_planet}
               </p>
               {ascContent && <p>{ascContent.definition}</p>}
+            </div>
+          )}
+          {ascContent && (
+            <div className="card">
+              <div className="label">About {chart.ascendant_nakshatra?.name}</div>
+              <KnowledgeDetail entry={ascContent} />
             </div>
           )}
 
@@ -211,6 +224,12 @@ export default function VedicPage() {
             </p>
             {dashaContent && <p>{dashaContent.definition}</p>}
           </div>
+          {dashaContent && (
+            <div className="card">
+              <div className="label">About your {chart.current_mahadasha.lord} period</div>
+              <KnowledgeDetail entry={dashaContent} />
+            </div>
+          )}
 
           <div className="card">
             <div className="label">Sidereal planets</div>

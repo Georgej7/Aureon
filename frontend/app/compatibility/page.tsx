@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import KnowledgeDetail from "@/components/KnowledgeDetail";
 import type { KnowledgeEntry, Synastry } from "@/lib/api";
 import { postSynastry } from "@/lib/api";
 import { offsetToIso, zodiacSign } from "@/lib/astrology";
@@ -280,7 +281,7 @@ export default function CompatibilityPage() {
               <div className="card" key={aspectType}>
                 <div className="label">{aspectType}</div>
                 {content && <p style={{ marginBottom: 12 }}>{content.definition}</p>}
-                <ul style={{ margin: 0, paddingLeft: 18, color: "var(--text-dim)", fontSize: 14 }}>
+                <ul style={{ margin: "0 0 16px", paddingLeft: 18, color: "var(--text-dim)", fontSize: 14 }}>
                   {aspects.map((a, i) => (
                     <li key={i}>
                       {personA.name || "Person A"}&apos;s {a.person_a_planet} — {personB.name || "Person B"}
@@ -288,6 +289,7 @@ export default function CompatibilityPage() {
                     </li>
                   ))}
                 </ul>
+                {content && <KnowledgeDetail entry={content} />}
               </div>
             );
           })}
