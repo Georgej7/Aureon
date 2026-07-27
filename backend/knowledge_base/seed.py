@@ -19,6 +19,7 @@ CONTENT_FILES = [
     "western_astrology/planets.json",
     "western_astrology/signs.json",
     "western_astrology/houses.json",
+    "western_astrology/birthstones.json",
     "western_astrology/aspects.json",
     "western_astrology/retrogrades.json",
     "western_astrology/transiting_planets.json",

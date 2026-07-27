@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { NatalChart, NumerologyProfile, Transits, TransitAspect } from "@/lib/api";
 import { postTransits } from "@/lib/api";
-import { zodiacSign } from "@/lib/astrology";
+import { birthstoneForSign, zodiacSign } from "@/lib/astrology";
 import { createClient } from "@/lib/supabase/client";
 
 type Profile = {
@@ -33,6 +33,7 @@ function describeAspect(a: TransitAspect): string {
 export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [transits, setTransits] = useState<Transits | null | undefined>(undefined);
+  const [birthstoneBlurb, setBirthstoneBlurb] = useState<string | null>(null);
   const [manageLoading, setManageLoading] = useState<"payment" | "cancel" | null>(null);
   const [manageError, setManageError] = useState<string | null>(null);
 
@@ -70,6 +71,18 @@ export default function DashboardPage() {
           if (!cancelled) setTransits(result);
         } catch {
           if (!cancelled) setTransits(null);
+        }
+
+        const loadedSun = loadedProfile.chart.planets.find((p) => p.name === "Sun");
+        if (loadedSun) {
+          const { data: stoneRow } = await supabase
+            .from("knowledge_base")
+            .select("definition")
+            .eq("system", "western_astrology")
+            .eq("category", "birthstone")
+            .eq("topic", `${loadedSun.sign} Birthstone`)
+            .maybeSingle();
+          if (!cancelled) setBirthstoneBlurb(stoneRow?.definition ?? null);
         }
       }
     }
@@ -173,6 +186,13 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+          {profile && sunSign && (
+            <div className="card">
+              <div className="label">Birthstone</div>
+              <h3>{birthstoneForSign(sunSign) ?? "—"}</h3>
+              {birthstoneBlurb && <p>{birthstoneBlurb}</p>}
+            </div>
+          )}
           {profile && profile.chart.patterns.length > 0 && (
             <div className="card">
               <div className="label">Chart patterns</div>

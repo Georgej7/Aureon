@@ -91,6 +91,8 @@ function topicsForProfile(
     if (planet.house !== null) topics.add(`House ${planet.house}`);
     if (planet.retrograde) topics.add(`${planet.name} Retrograde`);
   }
+  const sun = chart.planets.find((p) => p.name === "Sun");
+  if (sun) topics.add(`${sun.sign} Birthstone`);
   if (chart.houses && chart.houses[0]) topics.add(chart.houses[0].sign); // ascendant sign
   for (const aspect of chart.aspects) topics.add(aspect.aspect_type);
   for (const pattern of chart.patterns) topics.add(pattern.pattern_type);
