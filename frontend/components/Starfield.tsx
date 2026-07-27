@@ -147,10 +147,10 @@ export default function Starfield() {
         const zx = zR * Math.cos(zAng) * Math.cos(rot) - zR * 0.34 * Math.sin(zAng) * Math.sin(rot);
         const zy = zR * Math.cos(zAng) * Math.sin(rot) + zR * 0.34 * Math.sin(zAng) * Math.cos(rot);
         ctx.fillStyle = "rgba(201,162,74,0.4)";
-        // U+FE0E forces the plain-text glyph — several zodiac symbols default
-        // to full-color emoji presentation on iOS/Safari otherwise, which
-        // rendered as small colored badges instead of gold text on the ring.
-        ctx.fillText(ZODIAC[i] + "︎", cx + zx, cy + zy);
+        // Deliberately no U+FE0E text-presentation selector here — the
+        // colorful emoji rendering on iOS/Safari is preferred over plain
+        // gold text for these symbols (confirmed after seeing both).
+        ctx.fillText(ZODIAC[i], cx + zx, cy + zy);
       }
 
       const sunR = scale * 0.03;
