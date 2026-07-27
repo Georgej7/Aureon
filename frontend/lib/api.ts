@@ -155,6 +155,31 @@ export function postSynastry(payload: SynastryRequest, token: string): Promise<S
   return postJson<Synastry>("/api/chart/synastry", payload, token);
 }
 
+export type Nakshatra = {
+  name: string;
+  ruling_planet: string;
+  elapsed_fraction: number;
+};
+
+export type Mahadasha = {
+  lord: string;
+  start: string;
+  end: string;
+};
+
+export type VedicChart = {
+  planets: PlanetPlacement[];
+  ascendant: number | null;
+  ascendant_sign: string | null;
+  ascendant_nakshatra: Nakshatra | null;
+  moon_nakshatra: Nakshatra;
+  current_mahadasha: Mahadasha;
+};
+
+export function postVedicChart(payload: NatalChartRequest, token: string): Promise<VedicChart> {
+  return postJson<VedicChart>("/api/chart/vedic", payload, token);
+}
+
 export type ChatReplyMessage = { role: "user" | "assistant"; content: string };
 
 export type KnowledgeEntry = {

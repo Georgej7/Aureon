@@ -48,6 +48,23 @@ def test_natal_chart_succeeds_with_valid_auth(client, monkeypatch):
     assert "planets" in resp.json()
 
 
+def test_vedic_chart_requires_authorization(client):
+    resp = client.post("/api/chart/vedic", json=_valid_birth())
+    assert resp.status_code == 401
+
+
+def test_vedic_chart_succeeds_with_valid_auth(client, monkeypatch):
+    monkeypatch.setattr(httpx, "get", lambda *a, **k: FakeResponse(200, {"id": "user-123"}))
+    resp = client.post(
+        "/api/chart/vedic", json=_valid_birth(), headers={"Authorization": "Bearer valid-token"}
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "planets" in body
+    assert "moon_nakshatra" in body
+    assert "current_mahadasha" in body
+
+
 def test_transits_requires_authorization(client):
     resp = client.post("/api/chart/transits", json={"natal_planets": []})
     assert resp.status_code == 401

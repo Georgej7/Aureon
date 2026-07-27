@@ -71,6 +71,39 @@ class NatalChart(BaseModel):
     patterns: list[ChartPattern]
 
 
+class Nakshatra(BaseModel):
+    name: str
+    ruling_planet: str
+    elapsed_fraction: float  # 0-1, how far through this nakshatra
+
+
+class Mahadasha(BaseModel):
+    """The current major planetary period (Vimshottari dasha) — not a
+    prediction, a deterministic timeline position computed from the Moon's
+    birth nakshatra. start/end are ISO 8601 UTC datetimes."""
+
+    lord: str
+    start: str
+    end: str
+
+
+class VedicChart(BaseModel):
+    """Sidereal (Lahiri ayanamsa) chart — a genuinely different reference
+    frame from NatalChart's tropical zodiac, not a re-labeling of the same
+    numbers. planets includes Rahu and Ketu (the lunar nodes), central to
+    Vedic astrology but absent from Western charts. ascendant/ascendant_sign/
+    ascendant_nakshatra are null without a known birth location and time,
+    same rule as NatalChart's houses — moon_nakshatra and current_mahadasha
+    need only the Moon's position, so they're always present."""
+
+    planets: list[PlanetPlacement]
+    ascendant: float | None
+    ascendant_sign: str | None
+    ascendant_nakshatra: Nakshatra | None
+    moon_nakshatra: Nakshatra
+    current_mahadasha: Mahadasha
+
+
 class NatalPlanetLongitude(BaseModel):
     """Minimal planet identity needed to compute transits against a chart
     the caller already has — just name + longitude, not the full

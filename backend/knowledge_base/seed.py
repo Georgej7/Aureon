@@ -27,6 +27,9 @@ CONTENT_FILES = [
     "western_astrology/synastry_aspects.json",
     "western_astrology/chart_patterns.json",
     "numerology/numbers.json",
+    "vedic_astrology/nakshatras.json",
+    "vedic_astrology/nodes.json",
+    "vedic_astrology/dashas.json",
 ]
 
 

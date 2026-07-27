@@ -6,7 +6,9 @@ from app.calc.models import (
     BirthData,
     ChartPattern,
     HouseCusp,
+    Mahadasha,
     MoonPhase,
+    Nakshatra,
     NatalChart,
     PlanetPlacement,
     SynastryAspect,
@@ -14,7 +16,9 @@ from app.calc.models import (
     TransitAspect,
     TransitPlanet,
     TransitsResponse,
+    VedicChart,
 )
+from app.calc.vedic import current_mahadasha, nakshatra_for_longitude
 
 SIGNS = [
     "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
@@ -231,6 +235,64 @@ def build_natal_chart(birth: BirthData) -> NatalChart:
         midheaven=midheaven,
         aspects=aspects,
         patterns=patterns,
+    )
+
+
+def build_vedic_chart(birth: BirthData) -> VedicChart:
+    jd = ephemeris.to_julian_day(birth.datetime)
+    raw_planets = ephemeris.sidereal_longitudes(jd)
+    rahu_longitude, rahu_retrograde = raw_planets["Rahu"]
+    raw_planets["Ketu"] = ((rahu_longitude + 180) % 360, rahu_retrograde)
+
+    has_location = birth.latitude is not None and birth.longitude is not None
+    ascendant: float | None = None
+    ascendant_sign_index: int | None = None
+    if has_location and birth.time_known:
+        ascendant = ephemeris.sidereal_ascendant(jd, birth.latitude, birth.longitude)
+        ascendant_sign_index = int((ascendant % 360) // 30)
+
+    planets = []
+    for name, (longitude, retrograde) in raw_planets.items():
+        sign, sign_degree = longitude_to_sign(longitude)
+        house = None
+        if ascendant_sign_index is not None:
+            # Whole-sign houses: house = how many signs ahead of the
+            # ascendant's sign this planet's sign is, wrapping at 12.
+            planet_sign_index = int(longitude // 30) % 12
+            house = ((planet_sign_index - ascendant_sign_index) % 12) + 1
+        planets.append(
+            PlanetPlacement(
+                name=name, longitude=longitude, sign=sign, sign_degree=sign_degree,
+                house=house, retrograde=retrograde,
+            )
+        )
+
+    moon_longitude, _retro = raw_planets["Moon"]
+    moon_nak_name, moon_nak_lord, moon_nak_fraction = nakshatra_for_longitude(moon_longitude)
+    moon_nakshatra = Nakshatra(
+        name=moon_nak_name, ruling_planet=moon_nak_lord, elapsed_fraction=moon_nak_fraction
+    )
+
+    ascendant_sign: str | None = None
+    ascendant_nakshatra: Nakshatra | None = None
+    if ascendant is not None:
+        ascendant_sign, _degree = longitude_to_sign(ascendant)
+        asc_nak_name, asc_nak_lord, asc_nak_fraction = nakshatra_for_longitude(ascendant)
+        ascendant_nakshatra = Nakshatra(
+            name=asc_nak_name, ruling_planet=asc_nak_lord, elapsed_fraction=asc_nak_fraction
+        )
+
+    birth_dt = datetime.fromisoformat(birth.datetime).astimezone(timezone.utc)
+    now = datetime.now(timezone.utc)
+    dasha = current_mahadasha(moon_longitude, birth_dt, now)
+
+    return VedicChart(
+        planets=planets,
+        ascendant=ascendant,
+        ascendant_sign=ascendant_sign,
+        ascendant_nakshatra=ascendant_nakshatra,
+        moon_nakshatra=moon_nakshatra,
+        current_mahadasha=Mahadasha(lord=dasha["lord"], start=dasha["start"], end=dasha["end"]),
     )
 
 

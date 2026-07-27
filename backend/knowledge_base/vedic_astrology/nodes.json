@@ -1,0 +1,34 @@
+[
+  {
+    "system": "vedic_astrology",
+    "category": "lunar_node",
+    "topic": "Rahu",
+    "definition": "The North Lunar Node — not a physical body but the point where the Moon's orbit crosses the ecliptic moving northward. Central to Vedic astrology, absent from Western tropical charts, Rahu represents worldly desire, ambition, and the direction a person is pulled toward growing.",
+    "traditional_interpretation": "Classical Jyotish depicts Rahu as the severed head of a demon who tasted immortality, forever hungry and unsatisfied — a placement associated with obsession, amplification, and an intense, sometimes unrestrained pull toward whatever it touches.",
+    "modern_interpretation": "Modern Vedic practice reads Rahu less as malefic and more as the growth edge of this incarnation — the unfamiliar territory a person is being pushed to develop, often outside their natural comfort zone.",
+    "psychological_interpretation": "Rahu represents desire that hasn't yet been integrated with wisdom — wanting something intensely before fully understanding it, which is exactly how genuine new capacity gets built.",
+    "positive_aspects": "Drive, ambition, and the capacity to break into genuinely new territory rather than staying confined to what's already familiar and safe.",
+    "challenges": "Obsession, an insatiable hunger that isn't satisfied even by achieving what it wanted, and a tendency toward excess in its area of focus.",
+    "career_meaning": "Often points toward unconventional or foreign fields, and can indicate sudden, dramatic success in an area outside one's traditional background.",
+    "relationship_meaning": "Can draw a person toward relationships that feel intensely magnetic but unfamiliar — worth examining whether that pull is genuine growth or simply obsession.",
+    "growth_meaning": "Growth means pursuing Rahu's pull consciously, with enough self-awareness to recognize when desire has outrun wisdom.",
+    "sources": ["B.V. Raman, \"Three Hundred Important Combinations\"", "Komilla Sutton, \"The Nakshatras: The Lunar Mansions of Vedic Astrology\""],
+    "confidence_level": "low"
+  },
+  {
+    "system": "vedic_astrology",
+    "category": "lunar_node",
+    "topic": "Ketu",
+    "definition": "The South Lunar Node, positioned exactly opposite Rahu — the point where the Moon's orbit crosses the ecliptic moving southward. Ketu represents detachment, past-life familiarity, and the area of life a person is meant to release rather than chase.",
+    "traditional_interpretation": "Classical Jyotish depicts Ketu as the demon's headless body, associated with detachment, spiritual liberation, and a lack of worldly appetite in whatever area it occupies — the mirror opposite of Rahu's hunger.",
+    "modern_interpretation": "Modern Vedic practice reads Ketu as innate, almost effortless mastery paired with a lack of genuine interest in pursuing it further — skill already developed in a past context, now available but not the growth priority this time around.",
+    "psychological_interpretation": "Ketu represents wisdom that's already integrated but can become isolating if overused as an escape from the harder work Rahu represents.",
+    "positive_aspects": "Natural spiritual insight, effortless skill in its associated area, and a genuine capacity for non-attachment and letting go.",
+    "challenges": "Can manifest as disinterest, isolation, or using detachment to avoid full engagement with life.",
+    "career_meaning": "Often points toward areas of natural, almost inherited talent that nonetheless don't hold the person's long-term motivation.",
+    "relationship_meaning": "Can create emotional distance or a sense of already having 'been here before,' which benefits from conscious effort toward genuine presence rather than habitual detachment.",
+    "growth_meaning": "Growth means using Ketu's wisdom to support engagement with Rahu's growth edge, rather than retreating into detachment as an escape.",
+    "sources": ["B.V. Raman, \"Three Hundred Important Combinations\"", "Komilla Sutton, \"The Nakshatras: The Lunar Mansions of Vedic Astrology\""],
+    "confidence_level": "low"
+  }
+]

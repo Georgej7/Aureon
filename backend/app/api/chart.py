@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 
 from app.auth import require_user
-from app.calc.astrology import build_natal_chart, compute_synastry, compute_transits
+from app.calc.astrology import build_natal_chart, build_vedic_chart, compute_synastry, compute_transits
 from app.calc.models import (
     BirthData,
     NatalChart,
@@ -9,6 +9,7 @@ from app.calc.models import (
     SynastryResponse,
     TransitsRequest,
     TransitsResponse,
+    VedicChart,
 )
 from app.rate_limit import limiter
 
@@ -19,6 +20,12 @@ router = APIRouter(prefix="/api/chart", tags=["chart"])
 @limiter.limit("20/minute")
 def natal_chart(request: Request, birth: BirthData, _user_id: str = Depends(require_user)) -> NatalChart:
     return build_natal_chart(birth)
+
+
+@router.post("/vedic", response_model=VedicChart)
+@limiter.limit("20/minute")
+def vedic_chart(request: Request, birth: BirthData, _user_id: str = Depends(require_user)) -> VedicChart:
+    return build_vedic_chart(birth)
 
 
 @router.post("/transits", response_model=TransitsResponse)
