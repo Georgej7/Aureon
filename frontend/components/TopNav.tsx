@@ -43,7 +43,7 @@ export default function TopNav() {
 
   return (
     <div className="topnav">
-      <div className="brand">
+      <Link href="/" className="brand">
         <svg className="brand-mark" viewBox="0 0 40 40">
           <circle cx="20" cy="20" r="18" fill="none" stroke="#c9a24a" strokeWidth="1.2" />
           <circle cx="20" cy="20" r="4" fill="#c9a24a" />
@@ -52,7 +52,7 @@ export default function TopNav() {
           <circle cx="30" cy="10" r="1.2" fill="#8a7440" />
         </svg>
         <span className="brand-name">Aureon</span>
-      </div>
+      </Link>
       <div className="tabs">
         {TABS.map((tab) => (
           <Link
