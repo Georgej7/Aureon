@@ -81,3 +81,70 @@ export function resubscribedEmail(params: { appUrl: string }): { subject: string
     ),
   };
 }
+
+// Win-back / lapsed-user sequence — three touches, day 14 / 30 / 60 of no
+// return visit. Deliberately gentle at every step: no fake urgency, no
+// scarcity, no guilt ("we miss you 😢") — the brand voice rules out
+// manipulative retention tactics explicitly, and this category (spiritual
+// self-development) carries real trust stakes if it reads as manufactured
+// neediness. Each step gets quieter and lower-pressure than the last, not
+// more insistent — the opposite of a typical win-back escalation.
+
+function greet(fullName?: string): string {
+  return fullName?.trim() ? `${fullName.trim().split(" ")[0]}, ` : "";
+}
+
+export function winBackDay14Email(params: { appUrl: string; fullName?: string }): {
+  subject: string;
+  html: string;
+} {
+  return {
+    subject: "Your chart's still here",
+    html: wrapper(
+      heading(`${greet(params.fullName)}your chart's still here.`) +
+        paragraph(
+          "It's been a couple of weeks. Nothing's changed on our end — your profile, your numbers, and any conversation history are exactly where you left them."
+        ) +
+        paragraph(
+          "No pressure to have a reason to come back. If something's on your mind, that's usually reason enough."
+        ) +
+        button("Open your dashboard", `${params.appUrl}/dashboard`)
+    ),
+  };
+}
+
+export function winBackDay30Email(params: { appUrl: string; fullName?: string }): {
+  subject: string;
+  html: string;
+} {
+  return {
+    subject: "A month's a real amount of sky to catch up on",
+    html: wrapper(
+      heading(`${greet(params.fullName)}a month's a real amount of sky to catch up on.`) +
+        paragraph(
+          "The transits haven't stopped moving just because you stepped away — there's a real gap now between what your chart was tracking a month ago and what it's tracking today."
+        ) +
+        paragraph(
+          "Worth five minutes if you're curious what's shifted. Worth nothing at all if you're not — either way, we're not going anywhere."
+        ) +
+        button("See what's current", `${params.appUrl}/dashboard`)
+    ),
+  };
+}
+
+export function winBackDay60Email(params: { appUrl: string; fullName?: string }): {
+  subject: string;
+  html: string;
+} {
+  return {
+    subject: "Still here whenever that's useful",
+    html: wrapper(
+      heading(`${greet(params.fullName)}still here whenever that's useful.`) +
+        paragraph(
+          "This is the last one of these you'll get for a while — not because we're giving up, just because three nudges is enough. Your account and history aren't going anywhere."
+        ) +
+        paragraph("If now's genuinely not the right time, that's a completely fine answer.") +
+        button("Come back anytime", `${params.appUrl}/dashboard`)
+    ),
+  };
+}
