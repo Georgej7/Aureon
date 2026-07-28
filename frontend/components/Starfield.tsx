@@ -39,6 +39,69 @@ export default function Starfield() {
     let mx = 0,
       my = 0;
 
+    // Real asterisms, not decorative sparkle -- fixed screen-fraction
+    // positions (roughly true to each shape) so the sky reads as charted,
+    // not generated. Placed clear of the solar-system HUD's centered orbit.
+    const CONSTELLATIONS: { name: string; points: [number, number][]; lines: [number, number][] }[] = [
+      {
+        name: "Ursa Major",
+        points: [
+          [0.06, 0.1],
+          [0.09, 0.16],
+          [0.14, 0.19],
+          [0.17, 0.14],
+          [0.21, 0.16],
+          [0.24, 0.2],
+          [0.27, 0.25],
+        ],
+        lines: [
+          [0, 1],
+          [1, 2],
+          [2, 3],
+          [3, 0],
+          [3, 4],
+          [4, 5],
+          [5, 6],
+        ],
+      },
+      {
+        name: "Cassiopeia",
+        points: [
+          [0.66, 0.14],
+          [0.72, 0.05],
+          [0.79, 0.13],
+          [0.85, 0.06],
+          [0.92, 0.15],
+        ],
+        lines: [
+          [0, 1],
+          [1, 2],
+          [2, 3],
+          [3, 4],
+        ],
+      },
+      {
+        name: "Orion",
+        points: [
+          [0.08, 0.6],
+          [0.25, 0.62],
+          [0.14, 0.74],
+          [0.18, 0.76],
+          [0.22, 0.78],
+          [0.1, 0.9],
+          [0.27, 0.9],
+        ],
+        lines: [
+          [0, 2],
+          [1, 4],
+          [2, 3],
+          [3, 4],
+          [2, 5],
+          [4, 6],
+        ],
+      },
+    ];
+
     function resize() {
       if (!canvas) return;
       w = canvas.width = window.innerWidth;
@@ -371,9 +434,9 @@ export default function Starfield() {
       ctx.rotate(-0.45);
       const grad = ctx.createLinearGradient(0, -bandWidth / 2, 0, bandWidth / 2);
       grad.addColorStop(0, "rgba(226,214,196,0)");
-      grad.addColorStop(0.28, "rgba(226,214,196,0.11)");
-      grad.addColorStop(0.5, "rgba(205,196,222,0.19)");
-      grad.addColorStop(0.72, "rgba(226,214,196,0.11)");
+      grad.addColorStop(0.28, "rgba(226,214,196,0.15)");
+      grad.addColorStop(0.5, "rgba(205,196,222,0.26)");
+      grad.addColorStop(0.72, "rgba(226,214,196,0.15)");
       grad.addColorStop(1, "rgba(226,214,196,0)");
       ctx.fillStyle = grad;
       ctx.fillRect(-bandLength / 2, -bandWidth / 2, bandLength, bandWidth);
@@ -397,6 +460,32 @@ export default function Starfield() {
       ctx.restore();
     }
 
+    function drawConstellations() {
+      if (!ctx) return;
+      for (const c of CONSTELLATIONS) {
+        const pts = c.points.map(([nx, ny]) => [nx * w + mx * 10, ny * h + my * 10]);
+        ctx.beginPath();
+        for (const [a, b] of c.lines) {
+          ctx.moveTo(pts[a][0], pts[a][1]);
+          ctx.lineTo(pts[b][0], pts[b][1]);
+        }
+        ctx.strokeStyle = "rgba(180,146,79,0.28)";
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
+        pts.forEach(([px, py], i) => {
+          const twinkle = 0.75 + Math.sin(t * 0.01 + i) * 0.15;
+          ctx.beginPath();
+          ctx.arc(px, py, 4, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(180,146,79,0.12)";
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(px, py, 1.6, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(232,224,210," + twinkle.toFixed(2) + ")";
+          ctx.fill();
+        });
+      }
+    }
+
     function frame() {
       if (!ctx) return;
       t += 1;
@@ -404,6 +493,7 @@ export default function Starfield() {
 
       drawMilkyWay();
       drawMilkyWayStars();
+      drawConstellations();
 
       for (const n of nebulas) {
         const nx = n.x + mx * 30 * n.depth;
