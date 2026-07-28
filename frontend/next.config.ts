@@ -8,7 +8,12 @@ const CSP = [
   "default-src 'self'",
   // 'unsafe-inline' on scripts is scoped to Paddle's own loader needing it;
   // Next.js's hydration scripts also rely on it without a nonce setup.
-  `script-src 'self' 'unsafe-inline' https://cdn.paddle.com`,
+  // 'unsafe-eval' is added only in dev — React's dev-mode debugging tools
+  // (fast refresh, stack-trace reconstruction) use eval(); the production
+  // build never does, so prod stays locked down.
+  `script-src 'self' 'unsafe-inline' https://cdn.paddle.com${
+    process.env.NODE_ENV !== "production" ? " 'unsafe-eval'" : ""
+  }`,
   // Inline style={{}} props are used throughout the app — CSP's style-src
   // (and the style-src-attr it falls back to) needs 'unsafe-inline' or
   // every inline-styled element silently loses its styling.
