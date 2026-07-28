@@ -101,15 +101,19 @@ export async function POST(request: NextRequest) {
       const userId = subscription.customData?.supabase_user_id as string | undefined;
       if (userId) {
         const { tier, status } = mapSubscriptionStatus(subscription);
+        // upsert, not update: a user can complete checkout before ever finishing
+        // onboarding, in which case no profiles row exists yet -- an update()
+        // against zero matching rows isn't an error, it silently does nothing,
+        // which would leave a paying customer with no recorded tier at all.
         const { error } = await supabase
           .from("profiles")
-          .update({
+          .upsert({
+            id: userId,
             subscription_tier: tier,
             subscription_status: status,
             paddle_customer_id: subscription.customerId,
             paddle_subscription_id: subscription.id,
-          })
-          .eq("id", userId);
+          });
         dbError = error;
       }
       break;
