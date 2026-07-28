@@ -32,8 +32,10 @@ export default function Starfield() {
       color: string;
     };
     type Nebula = { x: number; y: number; r: number; color: string; depth: number };
+    type MilkyWayStar = { x: number; y: number; r: number; baseAlpha: number; phase: number; speed: number };
     let stars: Star[] = [];
     let nebulas: Nebula[] = [];
+    let milkyWayStars: MilkyWayStar[] = [];
     let mx = 0,
       my = 0;
 
@@ -64,6 +66,23 @@ export default function Starfield() {
         { x: w * 0.82, y: h * 0.15, r: Math.max(w, h) * 0.28, color: "111,95,140", depth: 0.25 },
         { x: w * 0.5, y: h * 0.85, r: Math.max(w, h) * 0.32, color: "111,95,140", depth: 0.1 },
       ];
+
+      // Extra pinpoint density inside the Milky Way band -- coordinates are
+      // local to drawMilkyWayStars' own rotated/translated context, matching
+      // drawMilkyWay's band dimensions. Triangular distribution on y (sum of
+      // two randoms) clusters stars toward the band's centerline rather than
+      // spreading evenly across its width, the way real star density falls
+      // off from the galactic plane.
+      const bandLength = Math.max(w, h) * 1.9;
+      const bandWidth = Math.max(w, h) * 0.36;
+      milkyWayStars = Array.from({ length: Math.round((w * h) / 3800) }, () => ({
+        x: (Math.random() - 0.5) * bandLength,
+        y: (Math.random() + Math.random() - 1) * bandWidth * 0.5,
+        r: Math.random() * 0.7 + 0.25,
+        baseAlpha: Math.random() * 0.35 + 0.15,
+        phase: Math.random() * Math.PI * 2,
+        speed: Math.random() * 0.02 + 0.006,
+      }));
     }
 
     function handleResize() {
@@ -336,10 +355,55 @@ export default function Starfield() {
       }
     }
 
+    // The diffuse diagonal band real dark skies actually show -- denser,
+    // paler starlight with a cooler dust-lane core, not evenly scattered
+    // dots. Drawn once as a soft gradient rather than repositioning the
+    // star field itself; cheap, and reads instantly as "galaxy" rather
+    // than more sparkle.
+    function drawMilkyWay() {
+      if (!ctx) return;
+      const cx = w * 0.5 + mx * 12;
+      const cy = h * 0.42 + my * 12;
+      const bandLength = Math.max(w, h) * 1.9;
+      const bandWidth = Math.max(w, h) * 0.36;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(-0.45);
+      const grad = ctx.createLinearGradient(0, -bandWidth / 2, 0, bandWidth / 2);
+      grad.addColorStop(0, "rgba(226,214,196,0)");
+      grad.addColorStop(0.28, "rgba(226,214,196,0.11)");
+      grad.addColorStop(0.5, "rgba(205,196,222,0.19)");
+      grad.addColorStop(0.72, "rgba(226,214,196,0.11)");
+      grad.addColorStop(1, "rgba(226,214,196,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(-bandLength / 2, -bandWidth / 2, bandLength, bandWidth);
+      ctx.restore();
+    }
+
+    function drawMilkyWayStars() {
+      if (!ctx) return;
+      const cx = w * 0.5 + mx * 12;
+      const cy = h * 0.42 + my * 12;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(-0.45);
+      for (const s of milkyWayStars) {
+        const twinkle = s.baseAlpha + Math.sin(t * s.speed + s.phase) * 0.2;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(232,224,210," + Math.max(0, twinkle).toFixed(2) + ")";
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
     function frame() {
       if (!ctx) return;
       t += 1;
       ctx.clearRect(0, 0, w, h);
+
+      drawMilkyWay();
+      drawMilkyWayStars();
 
       for (const n of nebulas) {
         const nx = n.x + mx * 30 * n.depth;
