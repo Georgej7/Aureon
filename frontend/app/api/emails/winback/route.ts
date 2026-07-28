@@ -17,8 +17,12 @@ const TEMPLATES = {
  * it only ever fires from Gio's own manual outreach.
  */
 export async function POST(request: NextRequest) {
-  const secret = process.env.ADMIN_EMAIL_SECRET;
-  if (!secret || request.headers.get("x-admin-secret") !== secret) {
+  // .trim() on both sides — dashboard env-var UIs and clipboard copies
+  // routinely carry an invisible trailing newline/space that makes an
+  // otherwise-correct secret fail a strict === comparison.
+  const secret = process.env.ADMIN_EMAIL_SECRET?.trim();
+  const provided = request.headers.get("x-admin-secret")?.trim();
+  if (!secret || provided !== secret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
