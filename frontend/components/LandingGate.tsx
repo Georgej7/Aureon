@@ -122,7 +122,7 @@ export default function LandingGate({ children }: { children: React.ReactNode })
 
   return (
     <>
-      {children}
+      <div inert={phase !== "arrived"}>{children}</div>
       {phase !== "arrived" && (
         <div
           className="landing-gate-backdrop"
