@@ -42,7 +42,7 @@ export default function Starfield() {
     // Real asterisms, not decorative sparkle -- fixed screen-fraction
     // positions (roughly true to each shape) so the sky reads as charted,
     // not generated. Placed clear of the solar-system HUD's centered orbit.
-    const CONSTELLATIONS: { name: string; points: [number, number][]; lines: [number, number][] }[] = [
+    const CONSTELLATIONS: { name: string; points: [number, number][]; lines: [number, number][]; highlight?: number[] }[] = [
       {
         name: "Ursa Major",
         points: [
@@ -99,6 +99,9 @@ export default function Starfield() {
           [2, 5],
           [4, 6],
         ],
+        // The belt (indices 2-4) is the asterism's signature -- real Orion's
+        // belt stars are genuinely more prominent naked-eye than the rest.
+        highlight: [2, 3, 4],
       },
     ];
 
@@ -270,17 +273,17 @@ export default function Starfield() {
       }
 
       const sunGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, sunR * 5);
-      sunGrad.addColorStop(0, "rgba(238,212,150,0.95)");
-      sunGrad.addColorStop(0.35, "rgba(180,146,79,0.55)");
+      sunGrad.addColorStop(0, "rgba(238,212,150,0.55)");
+      sunGrad.addColorStop(0.35, "rgba(180,146,79,0.32)");
       sunGrad.addColorStop(1, "rgba(180,146,79,0)");
       ctx.beginPath();
       ctx.arc(cx, cy, sunR * 5, 0, Math.PI * 2);
       ctx.fillStyle = sunGrad;
       ctx.fill();
       const sunBody = ctx.createRadialGradient(cx, cy, 0, cx, cy, sunR);
-      sunBody.addColorStop(0, "rgba(255,247,225,1)");
-      sunBody.addColorStop(0.65, "rgba(250,235,195,1)");
-      sunBody.addColorStop(1, "rgba(224,182,120,0.9)");
+      sunBody.addColorStop(0, "rgba(250,235,205,0.85)");
+      sunBody.addColorStop(0.65, "rgba(240,218,175,0.85)");
+      sunBody.addColorStop(1, "rgba(210,170,112,0.8)");
       ctx.beginPath();
       ctx.arc(cx, cy, sunR, 0, Math.PI * 2);
       ctx.fillStyle = sunBody;
@@ -473,14 +476,17 @@ export default function Starfield() {
         ctx.lineWidth = 0.7;
         ctx.stroke();
         pts.forEach(([px, py], i) => {
-          const twinkle = 0.75 + Math.sin(t * 0.01 + i) * 0.15;
+          const isHighlight = c.highlight?.includes(i) ?? false;
+          const twinkle = (isHighlight ? 0.95 : 0.75) + Math.sin(t * 0.01 + i) * 0.15;
+          const glowR = isHighlight ? 6 : 4;
+          const starR = isHighlight ? 2.4 : 1.6;
           ctx.beginPath();
-          ctx.arc(px, py, 4, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(180,146,79,0.12)";
+          ctx.arc(px, py, glowR, 0, Math.PI * 2);
+          ctx.fillStyle = isHighlight ? "rgba(232,224,210,0.18)" : "rgba(180,146,79,0.12)";
           ctx.fill();
           ctx.beginPath();
-          ctx.arc(px, py, 1.6, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(232,224,210," + twinkle.toFixed(2) + ")";
+          ctx.arc(px, py, starR, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(232,224,210," + Math.min(1, twinkle).toFixed(2) + ")";
           ctx.fill();
         });
       }
