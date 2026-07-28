@@ -119,6 +119,11 @@ function topicsForProfile(
 export default function ChatWindow() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Distinct from loadError: "hasn't onboarded yet" is a normal, expected state
+  // (same condition Dashboard and Vedic show a message + CTA for), not a real
+  // failure -- rendering it as red error text was the one page treating it
+  // like something broken instead of a clear next step.
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [profile, setProfile] = useState<{ chart: NatalChart; numerology: NumerologyProfile } | null>(
     null
   );
@@ -163,6 +168,7 @@ export default function ChatWindow() {
 
       if (!profileRow?.chart || !profileRow?.numerology) {
         if (!cancelled) {
+          setNeedsOnboarding(true);
           setLoadError("Complete your profile before chatting — visit Onboarding first.");
           setLoading(false);
         }
@@ -404,7 +410,18 @@ export default function ChatWindow() {
           <>
             <div className="chat-body" id="chatBody" ref={chatBodyRef}>
               {loading && <p style={{ color: "var(--text-dim)", fontSize: 13 }}>Loading your conversation…</p>}
-              {loadError && <p style={{ color: "#c96a4a", fontSize: 13 }}>{loadError}</p>}
+              {needsOnboarding ? (
+                <div style={{ textAlign: "center", padding: "24px 12px" }}>
+                  <p style={{ color: "var(--text-dim)", fontSize: 13, marginBottom: 14 }}>
+                    Complete your profile to start chatting — Aureon reads from your chart and numerology.
+                  </p>
+                  <Link className="btn btn-gold" href="/onboarding">
+                    Create your profile
+                  </Link>
+                </div>
+              ) : (
+                loadError && <p style={{ color: "#c96a4a", fontSize: 13 }}>{loadError}</p>
+              )}
               {!loading &&
                 !loadError &&
                 messages.map((m) => (

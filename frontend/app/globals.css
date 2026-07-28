@@ -129,7 +129,10 @@ h1,h2,h3,.serif{font-family:var(--font-fraunces),serif;}
 /* ---- CHAT ---- */
 .chat-wrap{max-width:640px;margin:0 auto;}
 .chat-window{background:rgba(33,29,25,0.55);backdrop-filter:blur(10px);border:1px solid rgba(201,162,74,0.3);border-radius:16px;height:460px;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(201,162,74,0.06);}
-.chat-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+/* padding-top cleared to sit below the .hud-tag corner label (absolute,
+   top:10px) -- for VIP users the voice-call button pushed flush right by
+   .voice-cta's margin-left:auto used to land directly under "Session active". */
+.chat-head{padding:30px 20px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
 .chat-head .dot-live{width:7px;height:7px;border-radius:50%;background:#7cb87c;}
 .chat-body{flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
 .msg{max-width:80%;padding:12px 15px;border-radius:14px;font-size:14px;line-height:1.55;}

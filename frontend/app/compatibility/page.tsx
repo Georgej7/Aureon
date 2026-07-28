@@ -54,6 +54,7 @@ function PersonForm({
       <div className="field">
         <label>Name</label>
         <input
+          placeholder="Jordan Rivera"
           value={person.name}
           onChange={(e) => onChange({ ...person, name: e.target.value })}
         />

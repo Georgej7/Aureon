@@ -156,7 +156,10 @@ export default function DashboardPage() {
                 <p>No fast-moving aspects are exact today — a fairly even, low-drama day to work with.</p>
               </>
             ) : (
-              <h3>—</h3>
+              <>
+                <h3>Nothing to report yet</h3>
+                <p>Complete your profile to see today&apos;s transits here.</p>
+              </>
             )}
           </div>
         </div>
