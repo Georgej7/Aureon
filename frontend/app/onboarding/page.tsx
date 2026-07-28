@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import ChartReveal, { ChartRevealHandle } from "@/components/ChartReveal";
 import { postNatalChart, postNumerology } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { offsetToIso } from "@/lib/astrology";
 import { createClient } from "@/lib/supabase/client";
 
@@ -75,6 +76,7 @@ export default function OnboardingPage() {
       });
       if (upsertError) throw upsertError;
 
+      trackEvent("onboarding_complete");
       chartRevealRef.current?.reveal();
     } catch {
       setError("Couldn't generate your profile — is the backend running? Try again in a moment.");

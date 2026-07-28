@@ -11,7 +11,7 @@ const CSP = [
   // 'unsafe-eval' is added only in dev — React's dev-mode debugging tools
   // (fast refresh, stack-trace reconstruction) use eval(); the production
   // build never does, so prod stays locked down.
-  `script-src 'self' 'unsafe-inline' https://cdn.paddle.com${
+  `script-src 'self' 'unsafe-inline' https://cdn.paddle.com https://www.googletagmanager.com${
     process.env.NODE_ENV !== "production" ? " 'unsafe-eval'" : ""
   }`,
   // Inline style={{}} props are used throughout the app — CSP's style-src
@@ -20,7 +20,9 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data:",
   "font-src 'self' data:",
-  `connect-src 'self' ${BACKEND_ORIGIN} https://*.supabase.co https://*.paddle.com`,
+  // GA4 hits go to region-specific *.google-analytics.com / *.analytics.google.com
+  // endpoints, and the gtag.js loader itself calls back to googletagmanager.com.
+  `connect-src 'self' ${BACKEND_ORIGIN} https://*.supabase.co https://*.paddle.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com`,
   "frame-src https://*.paddle.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",

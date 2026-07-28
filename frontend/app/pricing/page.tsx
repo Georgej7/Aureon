@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 export default function PricingPage() {
@@ -28,6 +29,7 @@ export default function PricingPage() {
   }, [router]);
 
   async function openCheckout(
+    tier: "premium" | "vip",
     monthlyEnvVar: string | undefined,
     annualEnvVar: string | undefined,
     setErrorFn: (msg: string | null) => void
@@ -55,6 +57,7 @@ export default function PricingPage() {
       return;
     }
 
+    trackEvent("checkout_started", { tier, billing });
     paddle.Checkout.open({
       items: [{ priceId, quantity: 1 }],
       ...(user.email && { customer: { email: user.email } }),
@@ -64,6 +67,7 @@ export default function PricingPage() {
 
   function goPremium() {
     return openCheckout(
+      "premium",
       process.env.NEXT_PUBLIC_PADDLE_PREMIUM_PRICE_ID,
       process.env.NEXT_PUBLIC_PADDLE_PREMIUM_ANNUAL_PRICE_ID,
       setError
@@ -72,6 +76,7 @@ export default function PricingPage() {
 
   function goVip() {
     return openCheckout(
+      "vip",
       process.env.NEXT_PUBLIC_PADDLE_VIP_PRICE_ID,
       process.env.NEXT_PUBLIC_PADDLE_VIP_ANNUAL_PRICE_ID,
       setVipError

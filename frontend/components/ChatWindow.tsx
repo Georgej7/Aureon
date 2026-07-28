@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ApiError, postChatReply, postTransits } from "@/lib/api";
 import type { NatalChart, NumerologyProfile, Transits } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 type Message = { id: string; role: "user" | "assistant"; content: string; created_at: string };
@@ -265,6 +266,7 @@ export default function ChatWindow() {
       return;
     }
 
+    trackEvent("chat_message_sent");
     const nextMessages = [...messages, inserted as Message];
     setMessages(nextMessages);
     scrollToBottom();

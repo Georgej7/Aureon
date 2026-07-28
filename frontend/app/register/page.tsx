@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 export default function RegisterPage() {
@@ -24,6 +25,8 @@ export default function RegisterPage() {
       setError(signUpError.message);
       return;
     }
+
+    trackEvent("sign_up");
 
     // Best-effort, fire-and-forget — a failed welcome email should never
     // block a successful signup from completing.
