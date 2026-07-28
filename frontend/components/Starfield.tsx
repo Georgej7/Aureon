@@ -46,7 +46,7 @@ export default function Starfield() {
         const layer = Math.random();
         const tint = Math.random();
         const tintColor =
-          tint < 0.7 ? "242,237,226" : tint < 0.87 ? "198,213,235" : "242,214,170";
+          tint < 0.7 ? "242,237,226" : tint < 0.87 ? "168,220,232" : "212,180,130";
         return {
           x: Math.random() * w,
           y: Math.random() * h,
@@ -60,7 +60,7 @@ export default function Starfield() {
         };
       });
       nebulas = [
-        { x: w * 0.18, y: h * 0.25, r: Math.max(w, h) * 0.35, color: "201,162,74", depth: 0.15 },
+        { x: w * 0.18, y: h * 0.25, r: Math.max(w, h) * 0.35, color: "180,146,79", depth: 0.15 },
         { x: w * 0.82, y: h * 0.15, r: Math.max(w, h) * 0.28, color: "111,95,140", depth: 0.25 },
         { x: w * 0.5, y: h * 0.85, r: Math.max(w, h) * 0.32, color: "111,95,140", depth: 0.1 },
       ];
@@ -136,7 +136,7 @@ export default function Starfield() {
       const zR = scale * 0.47;
       ctx.beginPath();
       ctx.ellipse(cx, cy, zR, zR * 0.34, rot, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(201,162,74,0.15)";
+      ctx.strokeStyle = "rgba(180,146,79,0.15)";
       ctx.lineWidth = 0.6;
       ctx.stroke();
       ctx.font = scale * 0.016 + "px serif";
@@ -146,7 +146,7 @@ export default function Starfield() {
         const zAng = (i / 12) * Math.PI * 2 + t * 0.00004;
         const zx = zR * Math.cos(zAng) * Math.cos(rot) - zR * 0.34 * Math.sin(zAng) * Math.sin(rot);
         const zy = zR * Math.cos(zAng) * Math.sin(rot) + zR * 0.34 * Math.sin(zAng) * Math.cos(rot);
-        ctx.fillStyle = "rgba(201,162,74,0.4)";
+        ctx.fillStyle = "rgba(180,146,79,0.4)";
         // Deliberately no U+FE0E text-presentation selector here — the
         // colorful emoji rendering on iOS/Safari is preferred over plain
         // gold text for these symbols (confirmed after seeing both).
@@ -171,7 +171,7 @@ export default function Starfield() {
       for (const p of planets) {
         ctx.beginPath();
         ctx.ellipse(cx, cy, p.a, p.b, rot + p.dTilt, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(201,162,74,0.2)";
+        ctx.strokeStyle = "rgba(180,146,79,0.2)";
         ctx.lineWidth = 0.9;
         ctx.stroke();
       }
@@ -189,8 +189,8 @@ export default function Starfield() {
 
       const sunGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, sunR * 5);
       sunGrad.addColorStop(0, "rgba(238,212,150,0.95)");
-      sunGrad.addColorStop(0.35, "rgba(201,162,74,0.55)");
-      sunGrad.addColorStop(1, "rgba(201,162,74,0)");
+      sunGrad.addColorStop(0.35, "rgba(180,146,79,0.55)");
+      sunGrad.addColorStop(1, "rgba(180,146,79,0)");
       ctx.beginPath();
       ctx.arc(cx, cy, sunR * 5, 0, Math.PI * 2);
       ctx.fillStyle = sunGrad;
@@ -238,7 +238,7 @@ export default function Starfield() {
             ctx.beginPath();
             ctx.moveTo(positions[i].px, positions[i].py);
             ctx.lineTo(positions[j].px, positions[j].py);
-            ctx.strokeStyle = "rgba(201,162,74," + alpha.toFixed(2) + ")";
+            ctx.strokeStyle = "rgba(180,146,79," + alpha.toFixed(2) + ")";
             ctx.lineWidth = 0.6;
             ctx.stroke();
           }
@@ -324,7 +324,7 @@ export default function Starfield() {
           const my2 = py + moonOrbit * Math.cos(moonAng) * Math.sin(planetRot) + moonOrbit * 0.4 * Math.sin(moonAng) * Math.cos(planetRot);
           ctx.beginPath();
           ctx.ellipse(px, py, moonOrbit, moonOrbit * 0.4, planetRot, 0, Math.PI * 2);
-          ctx.strokeStyle = "rgba(201,162,74,0.16)";
+          ctx.strokeStyle = "rgba(180,146,79,0.16)";
           ctx.lineWidth = 0.6;
           ctx.stroke();
           ctx.beginPath();
@@ -366,7 +366,7 @@ export default function Starfield() {
         if (s.depth === 1 && twinkle > 0.55) {
           ctx.beginPath();
           ctx.arc(px, py, s.r * 2.6, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(201,162,74," + (twinkle * 0.12).toFixed(2) + ")";
+          ctx.fillStyle = "rgba(180,146,79," + (twinkle * 0.12).toFixed(2) + ")";
           ctx.fill();
         }
       }

@@ -36,19 +36,21 @@ export default function LandingPage() {
           <span className="hud-tag">Live synthesis</span>
           <div className="synthesis-row">
             <svg className="constellation-inline" viewBox="0 0 180 180">
-              <g stroke="#c9a24a" strokeWidth={0.6} opacity={0.6}>
+              <g stroke="var(--gold)" strokeWidth={0.6} opacity={0.6}>
                 <line x1="20" y1="30" x2="70" y2="60" />
                 <line x1="70" y1="60" x2="130" y2="40" />
                 <line x1="70" y1="60" x2="90" y2="120" />
               </g>
-              <circle cx="20" cy="30" r="2" fill="#c9a24a" />
-              <circle cx="70" cy="60" r="2.4" fill="#c9a24a" />
-              <circle cx="130" cy="40" r="2" fill="#c9a24a" />
-              <circle cx="90" cy="120" r="2" fill="#c9a24a" />
+              <circle cx="20" cy="30" r="2" fill="var(--gold)" />
+              <circle cx="70" cy="60" r="2.4" fill="var(--gold)" />
+              <circle cx="130" cy="40" r="2" fill="var(--gold)" />
+              <circle cx="90" cy="120" r="2" fill="var(--gold)" />
             </svg>
             <div>
               <p className="tag">This week&apos;s synthesis</p>
-              <h3>Saturn meets your Life Path 8</h3>
+              <h3>
+                Saturn meets your Life Path <span className="mono data-accent">8</span>
+              </h3>
               <p>
                 Your chart&apos;s push toward long-term structure lines up with a numerology cycle
                 that rewards patience over speed this month — worth sitting with before you make the
