@@ -1,15 +1,34 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 
 /**
  * Cinematic entrance for the landing page: a single glowing point in the
- * dark, click/keyboard-activated, that triggers a light-speed warp before
- * revealing the page (and the already-running Starfield behind it — the
- * warp fades the backdrop away rather than fading a new scene in, since
- * the real scene has been mounted and animating underneath the whole time).
+ * dark, click/keyboard-activated, that triggers a warp before revealing the
+ * page (and the already-running Starfield behind it — the warp fades the
+ * backdrop away rather than fading a new scene in, since the real scene has
+ * been mounted and animating underneath the whole time).
  * Shows once per browser session (sessionStorage), not on every visit.
+ *
+ * The warp itself is WebGL when available (LandingWarp.tsx -- a real
+ * flythrough past lit, shadowed planets toward the Sun) with the original
+ * 2D canvas light-streak burst kept as the fallback for browsers without
+ * WebGL2/WebGL and for prefers-reduced-motion. The WebGL bundle is only
+ * fetched on click, not on page load, so it never delays the initial gate.
  */
+
+const LandingWarp = dynamic(() => import("./LandingWarp"), { ssr: false });
+
+function supportsWebGL(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const canvas = document.createElement("canvas");
+    return !!(canvas.getContext("webgl2") || canvas.getContext("webgl"));
+  } catch {
+    return false;
+  }
+}
 
 type Phase = "gate" | "warping" | "arrived";
 
@@ -21,6 +40,7 @@ export default function LandingGate({ children }: { children: React.ReactNode })
   const [phase, setPhase] = useState<Phase>("gate");
   const [hintVisible, setHintVisible] = useState(false);
   const [backdropOpacity, setBackdropOpacity] = useState(1);
+  const [useCinematic, setUseCinematic] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const gateBtnRef = useRef<HTMLButtonElement | null>(null);
   const reducedMotionRef = useRef(false);
@@ -50,7 +70,7 @@ export default function LandingGate({ children }: { children: React.ReactNode })
   }, [phase]);
 
   useEffect(() => {
-    if (phase !== "warping") return;
+    if (phase !== "warping" || useCinematic) return;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) {
@@ -103,7 +123,7 @@ export default function LandingGate({ children }: { children: React.ReactNode })
     }
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [phase]);
+  }, [phase, useCinematic]);
 
   function finishWarp() {
     setBackdropOpacity(0);
@@ -117,6 +137,7 @@ export default function LandingGate({ children }: { children: React.ReactNode })
 
   function enter() {
     if (phase !== "gate") return;
+    setUseCinematic(!reducedMotionRef.current && supportsWebGL());
     setPhase("warping");
   }
 
@@ -149,7 +170,8 @@ export default function LandingGate({ children }: { children: React.ReactNode })
               </span>
             </>
           )}
-          {phase === "warping" && <canvas ref={canvasRef} className="landing-gate-canvas" />}
+          {phase === "warping" && useCinematic && <LandingWarp onComplete={finishWarp} />}
+          {phase === "warping" && !useCinematic && <canvas ref={canvasRef} className="landing-gate-canvas" />}
         </div>
       )}
     </>

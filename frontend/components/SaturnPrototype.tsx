@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Stars } from "@react-three/drei";
 import * as THREE from "three";
+import Atmosphere from "@/components/three/Atmosphere";
+import { makeBandedTexture, makeRingTexture } from "@/lib/three/planetMaterials";
 
 /**
  * WebGL proof-of-concept -- validates whether real shader lighting/shadows
@@ -14,105 +16,6 @@ import * as THREE from "three";
  * not downloaded imagery -- the win here is real lighting/shadow/rim-glow
  * on top of that, which canvas 2D can only ever fake.
  */
-
-function makeBandedTexture(bands: [number, string][], noiseAlpha = 0.06): THREE.CanvasTexture {
-  const w = 512,
-    h = 256;
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d")!;
-  const grad = ctx.createLinearGradient(0, 0, 0, h);
-  for (const [stop, color] of bands) grad.addColorStop(stop, color);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, w, h);
-  // Faint horizontal turbulence so bands don't read as flat printed stripes.
-  for (let i = 0; i < 900; i++) {
-    const y = Math.random() * h;
-    const x = Math.random() * w;
-    const len = 20 + Math.random() * 60;
-    ctx.strokeStyle = `rgba(255,255,255,${(Math.random() * noiseAlpha).toFixed(3)})`;
-    ctx.lineWidth = 1 + Math.random() * 1.5;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + len, y + (Math.random() - 0.5) * 4);
-    ctx.stroke();
-  }
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.wrapS = THREE.RepeatWrapping;
-  return tex;
-}
-
-function makeRingTexture(): THREE.CanvasTexture {
-  const w = 512,
-    h = 64;
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d")!;
-  const grad = ctx.createLinearGradient(0, 0, w, 0);
-  grad.addColorStop(0, "rgba(235,215,175,0)");
-  grad.addColorStop(0.08, "rgba(235,215,175,0.85)");
-  grad.addColorStop(0.3, "rgba(210,190,150,0.35)");
-  grad.addColorStop(0.42, "rgba(235,215,175,0.9)");
-  grad.addColorStop(0.55, "rgba(180,160,125,0.15)");
-  grad.addColorStop(0.7, "rgba(235,215,175,0.75)");
-  grad.addColorStop(0.9, "rgba(210,190,150,0.4)");
-  grad.addColorStop(1, "rgba(235,215,175,0)");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, w, h);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
-}
-
-// Fresnel rim-light -- brightens the silhouette edge where a real
-// atmosphere scatters sunlight at a grazing angle. This is the specific
-// effect canvas 2D radial gradients can only approximate; here it's an
-// actual per-pixel view-angle calculation.
-const atmosphereVertex = `
-  varying vec3 vNormal;
-  varying vec3 vViewDir;
-  void main() {
-    vNormal = normalize(normalMatrix * normal);
-    vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
-    vViewDir = normalize(-mvPos.xyz);
-    gl_Position = projectionMatrix * mvPos;
-  }
-`;
-const atmosphereFragment = `
-  varying vec3 vNormal;
-  varying vec3 vViewDir;
-  uniform vec3 uColor;
-  void main() {
-    float rim = 1.0 - max(dot(vNormal, vViewDir), 0.0);
-    float glow = pow(rim, 2.4);
-    gl_FragColor = vec4(uColor, glow * 0.9);
-  }
-`;
-
-function Atmosphere({ radius, color }: { radius: number; color: string }) {
-  const material = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        vertexShader: atmosphereVertex,
-        fragmentShader: atmosphereFragment,
-        uniforms: { uColor: { value: new THREE.Color(color) } },
-        transparent: true,
-        side: THREE.BackSide,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
-    [color]
-  );
-  return (
-    <mesh scale={1.12}>
-      <sphereGeometry args={[radius, 64, 64]} />
-      <primitive object={material} attach="material" />
-    </mesh>
-  );
-}
 
 function SaturnBody() {
   const groupRef = useRef<THREE.Group>(null);
