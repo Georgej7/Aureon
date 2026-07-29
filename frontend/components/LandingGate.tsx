@@ -137,7 +137,9 @@ export default function LandingGate({ children }: { children: React.ReactNode })
 
   function enter() {
     if (phase !== "gate") return;
-    setUseCinematic(!reducedMotionRef.current && supportsWebGL());
+    // Cinematic WebGL flythrough disabled pending a redo -- confirmed live
+    // and it wasn't good. Falls back to the proven 2D warp below.
+    setUseCinematic(false);
     setPhase("warping");
   }
 
