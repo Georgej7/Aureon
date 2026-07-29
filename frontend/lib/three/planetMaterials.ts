@@ -20,7 +20,7 @@ export function makeBandedTexture(bands: [number, string][], noiseAlpha = 0.06):
   for (const [stop, color] of bands) grad.addColorStop(stop, color);
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
-  for (let i = 0; i < 900; i++) {
+  for (let i = 0; i < 500; i++) {
     const y = Math.random() * h;
     const x = Math.random() * w;
     const len = 20 + Math.random() * 60;
@@ -62,6 +62,61 @@ export function makeRockyTexture(base: string, crater: string): THREE.CanvasText
   ctx.globalAlpha = 1;
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// Grayscale height map for bumpMap -- this, not the color texture, is what
+// actually stops a lit sphere from reading as a smooth plastic ball. A
+// flat-painted crater (a dark circle in the color map) looks like a sticker;
+// a crater in the BUMP map makes the renderer compute real per-pixel surface
+// normals, so light genuinely catches a rim and falls into a shadowed pit.
+export function makeBumpTexture(kind: "craters" | "bands", detail = 60): THREE.CanvasTexture {
+  const w = 512,
+    h = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#808080";
+  ctx.fillRect(0, 0, w, h);
+  // Fine grain everywhere so even "smooth" gas-giant cloud tops aren't
+  // mirror-flat -- real atmospheres have turbulent micro-structure.
+  for (let i = 0; i < 1800; i++) {
+    const x = Math.random() * w,
+      y = Math.random() * h;
+    const v = Math.round(95 + Math.random() * 65);
+    ctx.fillStyle = `rgb(${v},${v},${v})`;
+    ctx.fillRect(x, y, 1.4, 1.4);
+  }
+  if (kind === "craters") {
+    for (let i = 0; i < detail; i++) {
+      const x = Math.random() * w,
+        y = Math.random() * h;
+      const r = 4 + Math.random() * 16;
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+      grad.addColorStop(0, "rgb(55,55,55)"); // pit floor -- lower
+      grad.addColorStop(0.72, "rgb(70,70,70)");
+      grad.addColorStop(0.85, "rgb(180,180,180)"); // raised rim -- higher
+      grad.addColorStop(1, "rgb(128,128,128)");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else {
+    for (let i = 0; i < 45; i++) {
+      const y = Math.random() * h;
+      const grad = ctx.createLinearGradient(0, y - 7, 0, y + 7);
+      const v = Math.round(135 + Math.random() * 35);
+      grad.addColorStop(0, "rgba(128,128,128,0)");
+      grad.addColorStop(0.5, `rgba(${v},${v},${v},0.55)`);
+      grad.addColorStop(1, "rgba(128,128,128,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, y - 7, w, 14);
+    }
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
   return tex;
 }
 

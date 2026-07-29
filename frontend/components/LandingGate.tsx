@@ -60,6 +60,13 @@ export default function LandingGate({ children }: { children: React.ReactNode })
   useEffect(() => {
     reducedMotionRef.current =
       typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Warm the WebGL chunk while the visitor is looking at "Click to begin"
+    // instead of fetching/parsing/compiling it only once they've already
+    // clicked -- avoids that work landing on top of the animation's first
+    // frames, which reads as a stutter right when it matters most.
+    if (!reducedMotionRef.current && supportsWebGL()) {
+      import("./LandingWarp");
+    }
   }, []);
 
   useEffect(() => {

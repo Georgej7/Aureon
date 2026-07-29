@@ -5,7 +5,13 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
 import * as THREE from "three";
 import Atmosphere from "@/components/three/Atmosphere";
-import { makeBandedTexture, makeRingTexture, makeRockyTexture, makeSunMaterial } from "@/lib/three/planetMaterials";
+import {
+  makeBandedTexture,
+  makeBumpTexture,
+  makeRingTexture,
+  makeRockyTexture,
+  makeSunMaterial,
+} from "@/lib/three/planetMaterials";
 
 /**
  * Original cinematic entrance flythrough -- camera accelerates toward the
@@ -28,13 +34,14 @@ type PlanetDef = {
   color: string;
   craterColor?: string;
   atmosphere?: string;
+  roughness: number;
 };
 
 const PLANETS: PlanetDef[] = [
-  { position: [4.2, -1.1, 27], radius: 1.05, spin: 0.15, kind: "banded", color: "#c9a26a", atmosphere: "#e8cf9e" },
-  { position: [-3.6, 1.3, 19], radius: 1.3, spin: 0.1, kind: "ringed", color: "#d8c090", atmosphere: "#ecd8ab" },
-  { position: [-2.1, -1.7, 11], radius: 0.55, spin: 0.4, kind: "rocky", color: "#b8543a", craterColor: "#5a2a1c", atmosphere: "#ffb18f" },
-  { position: [3, 1.4, 5.5], radius: 0.42, spin: 0.35, kind: "rocky", color: "#4c78ad", craterColor: "#274764", atmosphere: "#a9d0ff" },
+  { position: [4.2, -1.1, 27], radius: 1.05, spin: 0.15, kind: "banded", color: "#c9a26a", atmosphere: "#e8cf9e", roughness: 0.8 },
+  { position: [-3.6, 1.3, 19], radius: 1.3, spin: 0.1, kind: "ringed", color: "#d8c090", atmosphere: "#ecd8ab", roughness: 0.8 },
+  { position: [-2.1, -1.7, 11], radius: 0.55, spin: 0.4, kind: "rocky", color: "#b8543a", craterColor: "#5a2a1c", atmosphere: "#ffb18f", roughness: 0.96 },
+  { position: [3, 1.4, 5.5], radius: 0.42, spin: 0.35, kind: "rocky", color: "#4c78ad", craterColor: "#274764", atmosphere: "#a9d0ff", roughness: 0.96 },
 ];
 
 function Planet({ def }: { def: PlanetDef }) {
@@ -57,6 +64,14 @@ function Planet({ def }: { def: PlanetDef }) {
       ]);
     return makeRockyTexture(def.color, def.craterColor ?? "#000");
   }, [def]);
+  // The color map alone is what read as "plastic" -- a perfectly smooth
+  // sphere with a pattern painted on it. This bump map gives the renderer
+  // real per-pixel height so light actually catches rims and falls into
+  // shadowed pits/turbulence instead of wrapping a flat glossy ball.
+  const bumpTexture = useMemo(
+    () => makeBumpTexture(def.kind === "rocky" ? "craters" : "bands", def.kind === "rocky" ? 55 : 40),
+    [def.kind]
+  );
   const ringTexture = useMemo(() => (def.kind === "ringed" ? makeRingTexture() : null), [def.kind]);
 
   useFrame((_, delta) => {
@@ -65,9 +80,15 @@ function Planet({ def }: { def: PlanetDef }) {
 
   return (
     <group ref={ref} position={def.position}>
-      <mesh castShadow receiveShadow>
+      <mesh>
         <sphereGeometry args={[def.radius, 48, 48]} />
-        <meshStandardMaterial map={texture} roughness={0.85} />
+        <meshStandardMaterial
+          map={texture}
+          bumpMap={bumpTexture}
+          bumpScale={def.radius * 0.06}
+          roughness={def.roughness}
+          metalness={0}
+        />
       </mesh>
       {def.atmosphere && <Atmosphere radius={def.radius} color={def.atmosphere} />}
       {ringTexture && (
@@ -133,7 +154,12 @@ function Flight({ onComplete }: { onComplete: () => void }) {
 export default function LandingWarp({ onComplete }: { onComplete: () => void }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "#020204" }}>
-      <Canvas shadows camera={{ position: [0, 0, 40], fov: 50 }} gl={{ antialias: true }}>
+      {/* No shadow pass -- the light never had castShadow set, so the earlier
+          version's castShadow/receiveShadow on the planets was dead weight,
+          not the source of the stutter it was blamed for. dpr is capped so a
+          high-DPI/Retina screen doesn't render 2-3x more pixels than needed
+          for a background flythrough nobody's meant to be scrutinizing. */}
+      <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 40], fov: 50 }} gl={{ antialias: true }}>
         <ambientLight intensity={0.22} />
         <Sun />
         <Stars radius={100} depth={50} count={4000} factor={3.5} fade speed={0.6} />

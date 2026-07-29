@@ -5,7 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Stars } from "@react-three/drei";
 import * as THREE from "three";
 import Atmosphere from "@/components/three/Atmosphere";
-import { makeBandedTexture, makeRingTexture } from "@/lib/three/planetMaterials";
+import { makeBandedTexture, makeBumpTexture, makeRingTexture } from "@/lib/three/planetMaterials";
 
 /**
  * WebGL proof-of-concept -- validates whether real shader lighting/shadows
@@ -34,6 +34,7 @@ function SaturnBody() {
       ]),
     []
   );
+  const bumpTexture = useMemo(() => makeBumpTexture("bands"), []);
   const ringTexture = useMemo(() => makeRingTexture(), []);
 
   useFrame((_, delta) => {
@@ -44,7 +45,13 @@ function SaturnBody() {
     <group ref={groupRef}>
       <mesh castShadow receiveShadow rotation={[0, 0, 0.02]}>
         <sphereGeometry args={[radius, 96, 96]} />
-        <meshStandardMaterial map={bodyTexture} roughness={0.85} metalness={0} />
+        <meshStandardMaterial
+          map={bodyTexture}
+          bumpMap={bumpTexture}
+          bumpScale={radius * 0.05}
+          roughness={0.85}
+          metalness={0}
+        />
       </mesh>
       <Atmosphere radius={radius} color="#ebd7af" />
       <mesh rotation={[Math.PI / 2.6, 0, 0]} castShadow receiveShadow>
