@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Ambient cosmos background: layered nebula glow, parallax starfield, occasional
@@ -9,8 +9,57 @@ import { useEffect, useRef } from "react";
  * Ported near-verbatim from the static prototype's script.js so the visual design
  * stays the reference — only the DOM/event plumbing changed to fit React lifecycle.
  */
+
+// Real-world scale is deliberately not used here -- true diameter/distance
+// ratios (Jupiter is ~28x Mercury's width; Neptune orbits ~30x farther out
+// than Earth) would either shrink the inner planets to invisible dots or
+// push the outer ones off-screen. Proportions stay stylized for legibility;
+// only the facts shown on click are the real numbers. Astro copy trimmed
+// from backend/knowledge_base/western_astrology/planets.json's definitions.
+const PLANET_INFO: Record<string, { real: string; astro: string }> = {
+  Mercury: {
+    real: "4,879 km diameter · 0.39 AU from the Sun · 88-day orbit",
+    astro: "Communication, reasoning, and how you process information.",
+  },
+  Venus: {
+    real: "12,104 km diameter · 0.72 AU from the Sun · 225-day orbit",
+    astro: "Attraction, values, and what you find beautiful.",
+  },
+  Earth: {
+    real: "12,742 km diameter · 1.00 AU from the Sun · 365-day orbit",
+    astro: "Home — the only known planet with life.",
+  },
+  Mars: {
+    real: "6,779 km diameter · 1.52 AU from the Sun · 687-day orbit",
+    astro: "Drive, assertion, and how you pursue what you want.",
+  },
+  Jupiter: {
+    real: "139,820 km diameter · 5.20 AU from the Sun · ~12-year orbit",
+    astro: "Growth, meaning, and expansion.",
+  },
+  Saturn: {
+    real: "116,460 km diameter · 9.58 AU from the Sun · ~29-year orbit",
+    astro: "Structure, responsibility, and earned mastery.",
+  },
+  Uranus: {
+    real: "50,724 km diameter · 19.2 AU from the Sun · ~84-year orbit",
+    astro: "Sudden change and breaking from convention.",
+  },
+  Neptune: {
+    real: "49,244 km diameter · 30.1 AU from the Sun · ~165-year orbit",
+    astro: "Imagination, spirituality, dissolving boundaries.",
+  },
+};
+
 export default function Starfield() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null);
+  const selectedRef = useRef<string | null>(null);
+  const latestPositionsRef = useRef<{ name: string; px: number; py: number; r: number }[]>([]);
+
+  useEffect(() => {
+    selectedRef.current = selectedPlanet;
+  }, [selectedPlanet]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -157,10 +206,38 @@ export default function Starfield() {
     function handleMouseMove(e: MouseEvent) {
       mx = e.clientX / w - 0.5;
       my = e.clientY / h - 0.5;
+      document.body.style.cursor = hitTestPlanet(e.clientX, e.clientY) ? "pointer" : "";
+    }
+
+    // #starfield sits behind .app in z-order, but .app's own layout boxes
+    // (section/div wrappers) are large and transparent -- they still win
+    // hit-testing for any point inside their box even where nothing is
+    // visually drawn, so the canvas rarely actually receives the click.
+    // Hit-testing against clientX/Y directly on a window-level listener
+    // works regardless of which element the browser resolved as the target.
+    function hitTestPlanet(clientX: number, clientY: number): string | null {
+      let hit: string | null = null;
+      let hitDist = Infinity;
+      for (const target of latestPositionsRef.current) {
+        const d = Math.hypot(target.px - clientX, target.py - clientY);
+        const threshold = Math.max(target.r * 1.6, 16);
+        if (d < threshold && d < hitDist) {
+          hit = target.name;
+          hitDist = d;
+        }
+      }
+      return hit;
+    }
+    function handleWindowClick(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      if (target.closest && target.closest("a,button,input,textarea,select,[role='button']")) return;
+      const hit = hitTestPlanet(e.clientX, e.clientY);
+      setSelectedPlanet((prev) => (hit ? (prev === hit ? null : hit) : null));
     }
 
     window.addEventListener("resize", handleResize);
     window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("click", handleWindowClick);
     resize();
 
     let t = 0;
@@ -168,6 +245,10 @@ export default function Starfield() {
     let nextCometAt = 90 + Math.random() * 180;
     const ZODIAC = ["♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓"];
     let rafId = 0;
+    // Selecting a planet freezes it in place rather than following its
+    // orbit -- easier to read the info panel against a moving target
+    // otherwise. Cleared the moment selection moves elsewhere.
+    const frozenAngles = new Map<string, number>();
 
     function drawComets() {
       if (!ctx) return;
@@ -208,14 +289,14 @@ export default function Starfield() {
       const rot = -0.32 + Math.sin(t * 0.0005) * 0.025;
 
       const planets = [
-        { name: "Mercury", a: scale * 0.075, b: scale * 0.025, speed: 0.00105, size: 0.0042, color: "176,170,160", phase: 0.4, dTilt: 0.008, retro: true, ring: false, hasMoon: false },
-        { name: "Venus", a: scale * 0.1, b: scale * 0.034, speed: 0.00078, size: 0.0068, color: "224,198,150", phase: 2.6, dTilt: -0.014, retro: false, ring: false, hasMoon: false },
-        { name: "Earth", a: scale * 0.13, b: scale * 0.044, speed: 0.00062, size: 0.0072, color: "118,160,182", phase: 4.4, dTilt: 0.011, retro: false, ring: false, hasMoon: true },
-        { name: "Mars", a: scale * 0.165, b: scale * 0.056, speed: 0.0005, size: 0.0056, color: "196,110,80", phase: 1.1, dTilt: -0.017, retro: false, ring: false, hasMoon: false },
-        { name: "Jupiter", a: scale * 0.235, b: scale * 0.08, speed: 0.00033, size: 0.0155, color: "214,178,132", phase: 3.3, dTilt: 0.02, retro: false, ring: false, hasMoon: false },
-        { name: "Saturn", a: scale * 0.3, b: scale * 0.102, speed: 0.00024, size: 0.0135, color: "222,198,148", phase: 5.2, dTilt: -0.023, retro: false, ring: true, hasMoon: false },
-        { name: "Uranus", a: scale * 0.355, b: scale * 0.121, speed: 0.00017, size: 0.0092, color: "160,206,206", phase: 0.9, dTilt: 0.026, retro: false, ring: false, hasMoon: false },
-        { name: "Neptune", a: scale * 0.41, b: scale * 0.14, speed: 0.00012, size: 0.0088, color: "96,120,196", phase: 2.2, dTilt: -0.03, retro: false, ring: false, hasMoon: false },
+        { name: "Mercury", a: scale * 0.075, b: scale * 0.025, speed: 0.00105, size: 0.0042, color: "168,162,152", phase: 0.4, dTilt: 0.008, retro: true, ring: false, hasMoon: false, banded: false },
+        { name: "Venus", a: scale * 0.1, b: scale * 0.034, speed: 0.00078, size: 0.0068, color: "232,214,168", phase: 2.6, dTilt: -0.014, retro: false, ring: false, hasMoon: false, banded: false },
+        { name: "Earth", a: scale * 0.13, b: scale * 0.044, speed: 0.00062, size: 0.0072, color: "94,144,192", phase: 4.4, dTilt: 0.011, retro: false, ring: false, hasMoon: true, banded: false },
+        { name: "Mars", a: scale * 0.165, b: scale * 0.056, speed: 0.0005, size: 0.0056, color: "193,99,63", phase: 1.1, dTilt: -0.017, retro: false, ring: false, hasMoon: false, banded: false },
+        { name: "Jupiter", a: scale * 0.235, b: scale * 0.08, speed: 0.00033, size: 0.0155, color: "205,172,132", phase: 3.3, dTilt: 0.02, retro: false, ring: false, hasMoon: false, banded: true },
+        { name: "Saturn", a: scale * 0.3, b: scale * 0.102, speed: 0.00024, size: 0.0135, color: "222,201,153", phase: 5.2, dTilt: -0.023, retro: false, ring: true, hasMoon: false, banded: false },
+        { name: "Uranus", a: scale * 0.355, b: scale * 0.121, speed: 0.00017, size: 0.0092, color: "172,222,222", phase: 0.9, dTilt: 0.026, retro: false, ring: false, hasMoon: false, banded: false },
+        { name: "Neptune", a: scale * 0.41, b: scale * 0.14, speed: 0.00012, size: 0.0088, color: "78,104,205", phase: 2.2, dTilt: -0.03, retro: false, ring: false, hasMoon: false, banded: false },
       ];
 
       const zR = scale * 0.47;
@@ -292,10 +373,17 @@ export default function Starfield() {
       const positions = [];
       for (const p of planets) {
         const planetRot = rot + p.dTilt;
-        let ang = t * p.speed + p.phase;
+        let ang: number;
+        if (selectedRef.current === p.name) {
+          if (!frozenAngles.has(p.name)) frozenAngles.set(p.name, t * p.speed + p.phase);
+          ang = frozenAngles.get(p.name)!;
+        } else {
+          frozenAngles.delete(p.name);
+          ang = t * p.speed + p.phase;
+        }
 
         let retroGlow = 0;
-        if (p.retro) {
+        if (p.retro && selectedRef.current !== p.name) {
           const cyc = 2400,
             ph = (t % cyc) / cyc;
           if (ph > 0.4 && ph < 0.6) {
@@ -330,9 +418,12 @@ export default function Starfield() {
         }
       }
 
+      const hitTargets: { name: string; px: number; py: number; r: number }[] = [];
       for (const { p, px, py, ang, planetRot, retroGlow } of positions) {
-        const behind = Math.sin(ang) > 0.15;
-        const r = scale * p.size;
+        const isSelected = selectedRef.current === p.name;
+        const behind = !isSelected && Math.sin(ang) > 0.15;
+        const r = scale * p.size * (isSelected ? 2.2 : 1);
+        hitTargets.push({ name: p.name, px, py, r: Math.max(r, 10) });
 
         ctx.globalAlpha = behind ? 0.5 : 1;
 
@@ -361,7 +452,34 @@ export default function Starfield() {
         shadow.addColorStop(1, "rgba(10,8,6,0)");
         ctx.fillStyle = shadow;
         ctx.fillRect(px - r * 1.5, py - r * 1.5, r * 3, r * 3);
+
+        // Jupiter's banding + Great Red Spot -- the one planet where a
+        // recognizable surface feature actually reads at this size.
+        if (p.banded) {
+          // Still inside the clip region established above -- no need to
+          // re-clip, the circle boundary is already active.
+          ctx.strokeStyle = "rgba(150,110,80,0.35)";
+          ctx.lineWidth = r * 0.16;
+          [-0.55, -0.1, 0.35].forEach((off) => {
+            ctx.beginPath();
+            ctx.moveTo(px - r * 1.3, py + off * r);
+            ctx.lineTo(px + r * 1.3, py + off * r * 0.9);
+            ctx.stroke();
+          });
+          ctx.beginPath();
+          ctx.ellipse(px + r * 0.35, py + r * 0.2, r * 0.22, r * 0.13, 0.3, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(196,110,80,0.55)";
+          ctx.fill();
+        }
         ctx.restore();
+
+        if (isSelected) {
+          ctx.beginPath();
+          ctx.arc(px, py, r * 1.5, 0, Math.PI * 2);
+          ctx.strokeStyle = "rgba(168,220,232,0.55)";
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        }
 
         if (p.ring) {
           ctx.beginPath();
@@ -406,6 +524,7 @@ export default function Starfield() {
         }
         ctx.globalAlpha = 1;
       }
+      latestPositionsRef.current = hitTargets;
     }
 
     // The diffuse diagonal band real dark skies actually show -- denser,
@@ -529,8 +648,31 @@ export default function Starfield() {
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("click", handleWindowClick);
+      document.body.style.cursor = "";
     };
   }, []);
 
-  return <canvas id="starfield" ref={canvasRef} />;
+  const info = selectedPlanet ? PLANET_INFO[selectedPlanet] : null;
+
+  return (
+    <>
+      <canvas id="starfield" ref={canvasRef} />
+      {info && selectedPlanet && (
+        <div className="planet-info-panel" onClick={(e) => e.stopPropagation()}>
+          <button
+            className="planet-info-close"
+            onClick={() => setSelectedPlanet(null)}
+            aria-label="Close"
+          >
+            ×
+          </button>
+          <p className="planet-info-label">Planet</p>
+          <h3>{selectedPlanet}</h3>
+          <p className="mono data-accent planet-info-real">{info.real}</p>
+          <p className="planet-info-astro">{info.astro}</p>
+        </div>
+      )}
+    </>
+  );
 }
