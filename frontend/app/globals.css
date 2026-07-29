@@ -31,6 +31,14 @@ h1,h2,h3,.serif{font-family:var(--font-fraunces),serif;}
 .mono{font-family:var(--font-mono),ui-monospace,monospace;letter-spacing:0.02em;}
 .data-accent{color:var(--starlight);}
 #starfield{position:fixed;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:0;}
+/* /prototype route only -- full-viewport WebGL scenes need to escape the
+   nav/footer entirely, not just out-z-index them (a fixed div's z-index
+   only wins inside its own ancestor's stacking context). */
+body.prototype-fullscreen #starfield,
+body.prototype-fullscreen .topnav,
+body.prototype-fullscreen .site-footer,
+body.prototype-fullscreen .vignette{display:none;}
+body.prototype-fullscreen{overflow:hidden;}
 /* Click-to-expand planet info -- hit-testing happens on a window-level
    listener in Starfield.tsx (clientX/Y math, independent of which DOM
    element the browser resolves as the click target), since .app's layout
