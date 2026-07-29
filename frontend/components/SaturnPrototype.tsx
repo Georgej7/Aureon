@@ -1,41 +1,37 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Stars } from "@react-three/drei";
+import { OrbitControls, Stars, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import Atmosphere from "@/components/three/Atmosphere";
-import { makeBandedTexture, makeBumpTexture, makeRingTexture } from "@/lib/three/planetMaterials";
 
 /**
- * WebGL proof-of-concept -- validates whether real shader lighting/shadows
- * actually reads as "cinematic" before committing to rebuilding the whole
- * Orrery in Three.js. Deliberately scoped to one planet, not the full
- * system: cheap to build, cheap to judge, cheap to throw away if it
- * doesn't land. Textures are canvas-generated (banded gradients + noise),
- * not downloaded imagery -- the win here is real lighting/shadow/rim-glow
- * on top of that, which canvas 2D can only ever fake.
+ * WebGL proof-of-concept -- validates whether real shader lighting reads as
+ * cinematic before committing to rebuilding the whole Orrery in Three.js.
+ * Deliberately scoped to one planet, not the full system.
+ *
+ * Second pass: the first version used hand-drawn canvas gradients for the
+ * surface texture, which read as "painted plastic" no matter how the
+ * lighting/roughness was tuned -- there was no real surface detail for
+ * light to catch. Swapped to real texture maps from Solar System Scope
+ * (solarsystemscope.com/textures, CC Attribution 4.0 -- free for
+ * commercial use with credit) instead of continuing to fake it.
  */
 
 function SaturnBody() {
   const groupRef = useRef<THREE.Group>(null);
   const radius = 1.6;
 
-  const bodyTexture = useMemo(
-    () =>
-      makeBandedTexture([
-        [0, "#c9a26a"],
-        [0.15, "#e2c390"],
-        [0.32, "#c9a26a"],
-        [0.48, "#f0dcb0"],
-        [0.62, "#d4ad78"],
-        [0.8, "#e8cf9e"],
-        [1, "#b8895a"],
-      ]),
-    []
-  );
-  const bumpTexture = useMemo(() => makeBumpTexture("bands"), []);
-  const ringTexture = useMemo(() => makeRingTexture(), []);
+  const [bodyTexture, ringTexture] = useTexture([
+    "/textures/2k_saturn.jpg",
+    "/textures/2k_saturn_ring_alpha.png",
+  ]);
+
+  useEffect(() => {
+    bodyTexture.colorSpace = THREE.SRGBColorSpace;
+    ringTexture.colorSpace = THREE.SRGBColorSpace;
+  }, [bodyTexture, ringTexture]);
 
   useFrame((_, delta) => {
     if (groupRef.current) groupRef.current.rotation.y += delta * 0.04;
@@ -45,23 +41,12 @@ function SaturnBody() {
     <group ref={groupRef}>
       <mesh castShadow receiveShadow rotation={[0, 0, 0.02]}>
         <sphereGeometry args={[radius, 96, 96]} />
-        <meshStandardMaterial
-          map={bodyTexture}
-          bumpMap={bumpTexture}
-          bumpScale={radius * 0.05}
-          roughness={0.85}
-          metalness={0}
-        />
+        <meshStandardMaterial map={bodyTexture} roughness={0.75} metalness={0} />
       </mesh>
       <Atmosphere radius={radius} color="#ebd7af" />
       <mesh rotation={[Math.PI / 2.6, 0, 0]} castShadow receiveShadow>
         <ringGeometry args={[radius * 1.35, radius * 2.3, 128]} />
-        <meshStandardMaterial
-          map={ringTexture}
-          transparent
-          side={THREE.DoubleSide}
-          roughness={0.9}
-        />
+        <meshStandardMaterial map={ringTexture} transparent side={THREE.DoubleSide} roughness={0.9} />
       </mesh>
     </group>
   );
@@ -80,7 +65,9 @@ function Scene() {
         shadow-mapSize-height={2048}
       />
       <Stars radius={80} depth={40} count={3000} factor={3} fade speed={0.4} />
-      <SaturnBody />
+      <Suspense fallback={null}>
+        <SaturnBody />
+      </Suspense>
       <OrbitControls enablePan={false} minDistance={3.5} maxDistance={9} autoRotate={false} />
     </>
   );
@@ -119,10 +106,12 @@ export default function SaturnPrototype() {
         <div style={{ fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: "#b4924f", marginBottom: 6 }}>
           WebGL prototype
         </div>
-        Saturn, rendered with real lighting and shadows -- the ring casts an
-        actual shadow across the globe, and the pale rim glow is a
-        view-angle atmosphere shader, not a faked gradient. Drag to rotate,
-        scroll to zoom.
+        Saturn, rendered with real lighting and a real texture map -- the
+        ring casts an actual shadow across the globe, and the pale rim glow
+        is a view-angle atmosphere shader. Drag to rotate, scroll to zoom.
+        <div style={{ marginTop: 10, fontSize: 11, opacity: 0.6 }}>
+          Textures: solarsystemscope.com/textures (CC BY 4.0)
+        </div>
       </div>
     </div>
   );
