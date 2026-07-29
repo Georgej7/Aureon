@@ -243,7 +243,7 @@ export default function Starfield() {
         const a = (i / 10) * Math.PI * 2 + t * 0.00012;
         const rayLen = sunR * (5 + Math.sin(t * 0.001 + i) * 1.2);
         const rg = ctx.createLinearGradient(cx, cy, cx + Math.cos(a) * rayLen, cy + Math.sin(a) * rayLen);
-        rg.addColorStop(0, "rgba(238,212,150,0.10)");
+        rg.addColorStop(0, "rgba(238,212,150,0.06)");
         rg.addColorStop(1, "rgba(238,212,150,0)");
         ctx.strokeStyle = rg;
         ctx.lineWidth = sunR * 0.5;
@@ -273,17 +273,17 @@ export default function Starfield() {
       }
 
       const sunGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, sunR * 5);
-      sunGrad.addColorStop(0, "rgba(238,212,150,0.55)");
-      sunGrad.addColorStop(0.35, "rgba(180,146,79,0.32)");
+      sunGrad.addColorStop(0, "rgba(238,212,150,0.32)");
+      sunGrad.addColorStop(0.35, "rgba(180,146,79,0.18)");
       sunGrad.addColorStop(1, "rgba(180,146,79,0)");
       ctx.beginPath();
       ctx.arc(cx, cy, sunR * 5, 0, Math.PI * 2);
       ctx.fillStyle = sunGrad;
       ctx.fill();
       const sunBody = ctx.createRadialGradient(cx, cy, 0, cx, cy, sunR);
-      sunBody.addColorStop(0, "rgba(250,235,205,0.85)");
-      sunBody.addColorStop(0.65, "rgba(240,218,175,0.85)");
-      sunBody.addColorStop(1, "rgba(210,170,112,0.8)");
+      sunBody.addColorStop(0, "rgba(235,215,180,0.65)");
+      sunBody.addColorStop(0.65, "rgba(222,196,150,0.65)");
+      sunBody.addColorStop(1, "rgba(195,155,100,0.6)");
       ctx.beginPath();
       ctx.arc(cx, cy, sunR, 0, Math.PI * 2);
       ctx.fillStyle = sunBody;
@@ -335,19 +335,6 @@ export default function Starfield() {
         const r = scale * p.size;
 
         ctx.globalAlpha = behind ? 0.5 : 1;
-
-        for (let k = 1; k <= 7; k++) {
-          const trailAng = ang - k * 0.045;
-          const tex = p.a * Math.cos(trailAng),
-            tey = p.b * Math.sin(trailAng);
-          const tx = cx + tex * Math.cos(planetRot) - tey * Math.sin(planetRot);
-          const ty = cy + tex * Math.sin(planetRot) + tey * Math.cos(planetRot);
-          const ta = (1 - k / 7) * 0.3 * (behind ? 0.5 : 1);
-          ctx.beginPath();
-          ctx.arc(tx, ty, r * (1 - k * 0.09), 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(" + p.color + "," + ta.toFixed(2) + ")";
-          ctx.fill();
-        }
 
         ctx.beginPath();
         ctx.arc(px, py, r, 0, Math.PI * 2);
