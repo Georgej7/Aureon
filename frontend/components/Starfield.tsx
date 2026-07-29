@@ -14,41 +14,103 @@ import { useEffect, useRef, useState } from "react";
 // ratios (Jupiter is ~28x Mercury's width; Neptune orbits ~30x farther out
 // than Earth) would either shrink the inner planets to invisible dots or
 // push the outer ones off-screen. Proportions stay stylized for legibility;
-// only the facts shown on click are the real numbers. Astro copy trimmed
-// from backend/knowledge_base/western_astrology/planets.json's definitions.
-const PLANET_INFO: Record<string, { real: string; astro: string }> = {
+// only the facts shown on click are real. Astro line kept consistent with
+// backend/knowledge_base/western_astrology/planets.json's voice.
+const PLANET_INFO: Record<string, { facts: [string, string]; astro: string }> = {
+  Sun: {
+    facts: [
+      "The heart of our Solar System, providing light and energy to every planet.",
+      "A massive star whose gravity holds the entire system together.",
+    ],
+    astro: "Vitality, purpose, and the source of life.",
+  },
   Mercury: {
-    real: "4,879 km diameter · 0.39 AU from the Sun · 88-day orbit",
-    astro: "Communication, reasoning, and how you process information.",
+    facts: [
+      "The smallest and fastest planet, orbiting closest to the Sun.",
+      "A rocky world with extreme temperature changes.",
+    ],
+    astro: "Intellect, communication, and curiosity.",
   },
   Venus: {
-    real: "12,104 km diameter · 0.72 AU from the Sun · 225-day orbit",
-    astro: "Attraction, values, and what you find beautiful.",
+    facts: [
+      "The hottest planet, hidden beneath dense clouds of acid.",
+      "Similar in size to Earth but with a harsh, volcanic environment.",
+    ],
+    astro: "Love, beauty, harmony, and attraction.",
   },
   Earth: {
-    real: "12,742 km diameter · 1.00 AU from the Sun · 365-day orbit",
-    astro: "Home — the only known planet with life.",
+    facts: [
+      "The only known planet that supports life.",
+      "Covered by vast oceans, diverse ecosystems, and a protective atmosphere.",
+    ],
+    astro: "Growth, balance, and human existence.",
+  },
+  Moon: {
+    facts: [
+      "Earth's only natural satellite, shaping tides and stabilising our planet's rotation.",
+      "The brightest object in our night sky after the Sun.",
+    ],
+    astro: "Intuition, emotions, and inner reflection.",
   },
   Mars: {
-    real: "6,779 km diameter · 1.52 AU from the Sun · 687-day orbit",
-    astro: "Drive, assertion, and how you pursue what you want.",
+    facts: [
+      "The famous Red Planet, shaped by ancient volcanoes and deep canyons.",
+      "A leading candidate in humanity's search for life beyond Earth.",
+    ],
+    astro: "Ambition, courage, determination, and action.",
   },
   Jupiter: {
-    real: "139,820 km diameter · 5.20 AU from the Sun · ~12-year orbit",
-    astro: "Growth, meaning, and expansion.",
+    facts: [
+      "The largest planet in the Solar System.",
+      "A giant gas world with powerful storms, including the Great Red Spot.",
+    ],
+    astro: "Expansion, wisdom, abundance, and opportunity.",
   },
   Saturn: {
-    real: "116,460 km diameter · 9.58 AU from the Sun · ~29-year orbit",
-    astro: "Structure, responsibility, and earned mastery.",
+    facts: [
+      "Instantly recognisable for its spectacular ring system.",
+      "A gas giant with more than 140 known moons.",
+    ],
+    astro: "Discipline, responsibility, structure, and time.",
   },
   Uranus: {
-    real: "50,724 km diameter · 19.2 AU from the Sun · ~84-year orbit",
-    astro: "Sudden change and breaking from convention.",
+    facts: [
+      "An icy giant that rotates on its side unlike any other planet.",
+      "Known for its pale blue colour caused by methane in its atmosphere.",
+    ],
+    astro: "Innovation, change, originality, and awakening.",
   },
   Neptune: {
-    real: "49,244 km diameter · 30.1 AU from the Sun · ~165-year orbit",
-    astro: "Imagination, spirituality, dissolving boundaries.",
+    facts: [
+      "The most distant planet from the Sun.",
+      "Home to the fastest winds in the Solar System and a deep blue atmosphere.",
+    ],
+    astro: "Dreams, intuition, imagination, and the unknown.",
   },
+};
+
+// Stable per-planet surface texture -- generated once at module load, not
+// per-frame, so craters/continents don't flicker like noise. Coordinates
+// are fractions of the planet's own radius (local unit-circle space),
+// independent of screen size.
+type SurfaceSpot = { x: number; y: number; r: number; alpha: number };
+function scatterSpots(count: number, minR: number, maxR: number, maxDist = 0.72): SurfaceSpot[] {
+  return Array.from({ length: count }, () => {
+    const ang = Math.random() * Math.PI * 2;
+    const dist = Math.sqrt(Math.random()) * maxDist;
+    return {
+      x: Math.cos(ang) * dist,
+      y: Math.sin(ang) * dist,
+      r: minR + Math.random() * (maxR - minR),
+      alpha: 0.12 + Math.random() * 0.22,
+    };
+  });
+}
+const PLANET_SURFACES: Record<string, SurfaceSpot[]> = {
+  Mercury: scatterSpots(16, 0.05, 0.15),
+  Mars: scatterSpots(9, 0.06, 0.13),
+  Moon: scatterSpots(12, 0.05, 0.14),
+  Earth: scatterSpots(5, 0.16, 0.3, 0.55),
 };
 
 export default function Starfield() {
@@ -289,14 +351,14 @@ export default function Starfield() {
       const rot = -0.32 + Math.sin(t * 0.0005) * 0.025;
 
       const planets = [
-        { name: "Mercury", a: scale * 0.075, b: scale * 0.025, speed: 0.00105, size: 0.0042, color: "168,162,152", phase: 0.4, dTilt: 0.008, retro: true, ring: false, hasMoon: false, banded: false },
-        { name: "Venus", a: scale * 0.1, b: scale * 0.034, speed: 0.00078, size: 0.0068, color: "232,214,168", phase: 2.6, dTilt: -0.014, retro: false, ring: false, hasMoon: false, banded: false },
-        { name: "Earth", a: scale * 0.13, b: scale * 0.044, speed: 0.00062, size: 0.0072, color: "94,144,192", phase: 4.4, dTilt: 0.011, retro: false, ring: false, hasMoon: true, banded: false },
-        { name: "Mars", a: scale * 0.165, b: scale * 0.056, speed: 0.0005, size: 0.0056, color: "193,99,63", phase: 1.1, dTilt: -0.017, retro: false, ring: false, hasMoon: false, banded: false },
-        { name: "Jupiter", a: scale * 0.235, b: scale * 0.08, speed: 0.00033, size: 0.0155, color: "205,172,132", phase: 3.3, dTilt: 0.02, retro: false, ring: false, hasMoon: false, banded: true },
-        { name: "Saturn", a: scale * 0.3, b: scale * 0.102, speed: 0.00024, size: 0.0135, color: "222,201,153", phase: 5.2, dTilt: -0.023, retro: false, ring: true, hasMoon: false, banded: false },
-        { name: "Uranus", a: scale * 0.355, b: scale * 0.121, speed: 0.00017, size: 0.0092, color: "172,222,222", phase: 0.9, dTilt: 0.026, retro: false, ring: false, hasMoon: false, banded: false },
-        { name: "Neptune", a: scale * 0.41, b: scale * 0.14, speed: 0.00012, size: 0.0088, color: "78,104,205", phase: 2.2, dTilt: -0.03, retro: false, ring: false, hasMoon: false, banded: false },
+        { name: "Mercury", a: scale * 0.075, b: scale * 0.025, speed: 0.00105, size: 0.0042, color: "168,162,152", phase: 0.4, dTilt: 0.008, retro: true, ring: false, hasMoon: false, banded: false, atmosphere: null, surface: "craters" as const },
+        { name: "Venus", a: scale * 0.1, b: scale * 0.034, speed: 0.00078, size: 0.0068, color: "232,214,168", phase: 2.6, dTilt: -0.014, retro: false, ring: false, hasMoon: false, banded: false, atmosphere: "250,232,170", surface: "swirl" as const },
+        { name: "Earth", a: scale * 0.13, b: scale * 0.044, speed: 0.00062, size: 0.0072, color: "94,144,192", phase: 4.4, dTilt: 0.011, retro: false, ring: false, hasMoon: true, banded: false, atmosphere: "150,195,255", surface: "earth" as const },
+        { name: "Mars", a: scale * 0.165, b: scale * 0.056, speed: 0.0005, size: 0.0056, color: "193,99,63", phase: 1.1, dTilt: -0.017, retro: false, ring: false, hasMoon: false, banded: false, atmosphere: "255,190,150", surface: "craters" as const },
+        { name: "Jupiter", a: scale * 0.235, b: scale * 0.08, speed: 0.00033, size: 0.0155, color: "205,172,132", phase: 3.3, dTilt: 0.02, retro: false, ring: false, hasMoon: false, banded: true, atmosphere: "230,200,160", surface: "none" as const },
+        { name: "Saturn", a: scale * 0.3, b: scale * 0.102, speed: 0.00024, size: 0.0135, color: "222,201,153", phase: 5.2, dTilt: -0.023, retro: false, ring: true, hasMoon: false, banded: false, atmosphere: "235,215,175", surface: "none" as const },
+        { name: "Uranus", a: scale * 0.355, b: scale * 0.121, speed: 0.00017, size: 0.0092, color: "172,222,222", phase: 0.9, dTilt: 0.026, retro: false, ring: false, hasMoon: false, banded: false, atmosphere: "195,240,240", surface: "none" as const },
+        { name: "Neptune", a: scale * 0.41, b: scale * 0.14, speed: 0.00012, size: 0.0088, color: "78,104,205", phase: 2.2, dTilt: -0.03, retro: false, ring: false, hasMoon: false, banded: false, atmosphere: "140,170,235", surface: "none" as const },
       ];
 
       const zR = scale * 0.47;
@@ -369,6 +431,17 @@ export default function Starfield() {
       ctx.arc(cx, cy, sunR, 0, Math.PI * 2);
       ctx.fillStyle = sunBody;
       ctx.fill();
+      const sunSelected = selectedRef.current === "Sun";
+      if (sunSelected) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, sunR * 1.6, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(168,220,232,0.55)";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+      const hitTargets: { name: string; px: number; py: number; r: number }[] = [
+        { name: "Sun", px: cx, py: cy, r: Math.max(sunR * (sunSelected ? 1.6 : 1), 10) },
+      ];
 
       const positions = [];
       for (const p of planets) {
@@ -418,7 +491,6 @@ export default function Starfield() {
         }
       }
 
-      const hitTargets: { name: string; px: number; py: number; r: number }[] = [];
       for (const { p, px, py, ang, planetRot, retroGlow } of positions) {
         const isSelected = selectedRef.current === p.name;
         const behind = !isSelected && Math.sin(ang) > 0.15;
@@ -453,7 +525,7 @@ export default function Starfield() {
         ctx.fillStyle = shadow;
         ctx.fillRect(px - r * 1.5, py - r * 1.5, r * 3, r * 3);
 
-        // Jupiter's banding + Great Red Spot -- the one planet where a
+        // Jupiter's banding + Great Red Spot -- the one gas giant where a
         // recognizable surface feature actually reads at this size.
         if (p.banded) {
           // Still inside the clip region established above -- no need to
@@ -471,7 +543,63 @@ export default function Starfield() {
           ctx.fillStyle = "rgba(196,110,80,0.55)";
           ctx.fill();
         }
+
+        // Stable surface texture, still inside the clip -- craters read as
+        // small dark pits, Venus gets pale swirling cloud bands, Earth gets
+        // green-brown landmasses under soft white cloud wisps.
+        if (p.surface === "craters") {
+          for (const s of PLANET_SURFACES[p.name] ?? []) {
+            ctx.beginPath();
+            ctx.arc(px + s.x * r, py + s.y * r, s.r * r, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(20,16,14," + s.alpha.toFixed(2) + ")";
+            ctx.fill();
+          }
+        } else if (p.surface === "swirl") {
+          ctx.strokeStyle = "rgba(200,170,110,0.3)";
+          ctx.lineWidth = r * 0.1;
+          [-0.4, 0.05, 0.45].forEach((off, i) => {
+            ctx.beginPath();
+            ctx.moveTo(px - r * 1.2, py + off * r);
+            ctx.quadraticCurveTo(px, py + (off + (i % 2 ? 0.18 : -0.18)) * r, px + r * 1.2, py + off * r * 0.7);
+            ctx.stroke();
+          });
+        } else if (p.surface === "earth") {
+          for (const s of PLANET_SURFACES.Earth ?? []) {
+            ctx.beginPath();
+            ctx.ellipse(px + s.x * r, py + s.y * r, s.r * r, s.r * r * 0.7, s.x, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(70,110,60," + s.alpha.toFixed(2) + ")";
+            ctx.fill();
+          }
+          ctx.strokeStyle = "rgba(255,255,255,0.4)";
+          ctx.lineWidth = r * 0.14;
+          ctx.beginPath();
+          ctx.moveTo(px - r * 0.6, py - r * 0.3);
+          ctx.quadraticCurveTo(px - r * 0.1, py - r * 0.5, px + r * 0.5, py - r * 0.15);
+          ctx.stroke();
+        }
+
+        // Saturn's rings cast a real shadow band across the lit globe.
+        if (p.ring) {
+          ctx.beginPath();
+          ctx.ellipse(px, py, r * 1.3, r * 0.16, planetRot + 0.5, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(10,8,6,0.4)";
+          ctx.fill();
+        }
         ctx.restore();
+
+        // Atmosphere rim glow -- thin, bright right at the limb where a
+        // real atmosphere scatters light at a grazing angle, not a soft
+        // halo everywhere (that's the separate outer glow below).
+        if (p.atmosphere) {
+          const rim = ctx.createRadialGradient(px, py, r * 0.86, px, py, r * 1.12);
+          rim.addColorStop(0, "rgba(" + p.atmosphere + ",0)");
+          rim.addColorStop(0.75, "rgba(" + p.atmosphere + ",0.5)");
+          rim.addColorStop(1, "rgba(" + p.atmosphere + ",0)");
+          ctx.beginPath();
+          ctx.arc(px, py, r * 1.12, 0, Math.PI * 2);
+          ctx.fillStyle = rim;
+          ctx.fill();
+        }
 
         if (isSelected) {
           ctx.beginPath();
@@ -508,19 +636,45 @@ export default function Starfield() {
         }
 
         if (p.hasMoon) {
-          const moonAng = t * 0.0032;
+          const moonSelected = selectedRef.current === "Moon";
+          let moonAng: number;
+          if (moonSelected) {
+            if (!frozenAngles.has("Moon")) frozenAngles.set("Moon", t * 0.0032);
+            moonAng = frozenAngles.get("Moon")!;
+          } else {
+            frozenAngles.delete("Moon");
+            moonAng = t * 0.0032;
+          }
           const moonOrbit = r * 2.8;
+          const moonR = r * 0.34 * (moonSelected ? 2.6 : 1);
           const mx2 = px + moonOrbit * Math.cos(moonAng) * Math.cos(planetRot) - moonOrbit * 0.4 * Math.sin(moonAng) * Math.sin(planetRot);
           const my2 = py + moonOrbit * Math.cos(moonAng) * Math.sin(planetRot) + moonOrbit * 0.4 * Math.sin(moonAng) * Math.cos(planetRot);
+          hitTargets.push({ name: "Moon", px: mx2, py: my2, r: Math.max(moonR, 10) });
           ctx.beginPath();
           ctx.ellipse(px, py, moonOrbit, moonOrbit * 0.4, planetRot, 0, Math.PI * 2);
           ctx.strokeStyle = "rgba(180,146,79,0.16)";
           ctx.lineWidth = 0.6;
           ctx.stroke();
+          ctx.save();
           ctx.beginPath();
-          ctx.arc(mx2, my2, r * 0.34, 0, Math.PI * 2);
+          ctx.arc(mx2, my2, moonR, 0, Math.PI * 2);
+          ctx.clip();
           ctx.fillStyle = "rgba(228,225,217,0.95)";
-          ctx.fill();
+          ctx.fillRect(mx2 - moonR, my2 - moonR, moonR * 2, moonR * 2);
+          for (const s of PLANET_SURFACES.Moon ?? []) {
+            ctx.beginPath();
+            ctx.arc(mx2 + s.x * moonR, my2 + s.y * moonR, s.r * moonR, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(120,116,110," + s.alpha.toFixed(2) + ")";
+            ctx.fill();
+          }
+          ctx.restore();
+          if (moonSelected) {
+            ctx.beginPath();
+            ctx.arc(mx2, my2, moonR * 1.5, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(168,220,232,0.55)";
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+          }
         }
         ctx.globalAlpha = 1;
       }
@@ -667,10 +821,14 @@ export default function Starfield() {
           >
             ×
           </button>
-          <p className="planet-info-label">Planet</p>
+          <p className="planet-info-label">{selectedPlanet === "Sun" ? "Star" : selectedPlanet === "Moon" ? "Satellite" : "Planet"}</p>
           <h3>{selectedPlanet}</h3>
-          <p className="mono data-accent planet-info-real">{info.real}</p>
-          <p className="planet-info-astro">{info.astro}</p>
+          <ul className="planet-info-facts">
+            {info.facts.map((fact) => (
+              <li key={fact}>{fact}</li>
+            ))}
+          </ul>
+          <p className="mono data-accent planet-info-astro">{info.astro}</p>
         </div>
       )}
     </>
