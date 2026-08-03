@@ -121,6 +121,7 @@ No other team, no advisors, no contractors. First real "hire" this plan pushes f
 | Full 5-system product (Western astrology, numerology, Vedic astrology, feng shui, birthstones) | Live, real astronomical calculation (Swiss Ephemeris) + authored knowledge base | This *is* the beachhead ICP's pitch — proof the synthesis claim is real, not marketing copy. |
 | Paddle billing, 3 tiers, webhook-correct tier detection | Live | Pricing page is genuinely launch-ready once checkout env vars are confirmed (see "in-flight"). |
 | VIP differentiator (personal room feng shui / Bagua mapping) | Live | A real, non-generic upsell story for content and launch copy — most competitors don't have anything like it. |
+| VIP Paddle env vars on Render | Live — confirmed on the production pricing page, sandbox mode | Checkout is now genuinely testable end-to-end on the live URL; switch to live Paddle keys when ready for real money. |
 | Landing page design pass (just completed) | Live, one known minor visual bug open | Homepage voice is distinctive and ready to be the anchor for launch-day content. |
 | Transactional email infra (welcome/cancel/resubscribe) | Built + tested, not yet delivering to real users | Zero rebuild needed once the domain is verified — this is a switch-flip, not new work. |
 | Accessibility fix on the entrance gate | Shipped | Minor, but worth knowing the product isn't cutting corners on quality as it heads toward launch. |
@@ -131,8 +132,7 @@ No other team, no advisors, no contractors. First real "hire" this plan pushes f
 |---|---|---|
 | Domain purchase (askaureon.com, ~$12/yr, Porkbun) | Decided, not purchased | Founder funds — expected to clear in ~2 weeks. |
 | Business entity registration (Georgia) | Decided, not filed | Founder funds — same ~2-week window. |
-| Anthropic API key (real AI chat, replacing stub mode) | Decided, not funded | Founder funds — same window. This is the single highest-leverage unblock: the core product promise isn't real until this lands. |
-| VIP Paddle env vars on Render | Code complete | Not funds-blocked — just an unfinished task, should ship this week regardless of the funding gate. |
+| Anthropic API key (real AI chat, replacing stub mode) | Key created and set in backend/.env, but Anthropic account has $0 credit balance | Founder funds — adding billing credits at console.anthropic.com. This is the single highest-leverage unblock: the core product promise isn't real until this lands. |
 | Resend domain verification (unlocks real welcome/lifecycle email) | Ready to go | Depends on domain purchase above. |
 
 ### What's stuck (and needs to unstick this quarter)
@@ -150,7 +150,7 @@ No other team, no advisors, no contractors. First real "hire" this plan pushes f
 | 1 | Positioning | 2/5 | Consistent, distinctive framing exists on the homepage; unproven with any real audience. |
 | 2 | Customer research | 0/5 | Founder intuition only; this plan's ICP work in §2 is the first formal pass. |
 | 3 | Homepage | 3/5 | Voice-aligned, real content throughout, recently design-reviewed; one minor visual bug open, zero real traffic yet. |
-| 4 | Sales / product pages | 3/5 | Pricing page clear and complete; VIP checkout needs a production env-var check. |
+| 4 | Sales / product pages | 3/5 | Pricing page clear and complete; VIP checkout confirmed live in production (sandbox mode). |
 | 5 | Conversion pages | 0/5 | No campaign or use-case landing pages exist. |
 | 6 | Competitor comparison | 0/5 | Real competitors (Co-Star, Chani, The Pattern, Sanctuary) never addressed anywhere. |
 | 7 | Resources / content | 0/5 | No blog or off-app content surface. |
