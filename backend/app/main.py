@@ -9,7 +9,16 @@ from slowapi.middleware import SlowAPIMiddleware
 
 load_dotenv()
 
-from app.api import chart, chat, feng_shui, numerology  # noqa: E402 (must follow load_dotenv())
+from app.api import (  # noqa: E402 (must follow load_dotenv())
+    chart,
+    chat,
+    chinese_astrology,
+    electional,
+    feng_shui,
+    human_design,
+    numerology,
+    tarot,
+)
 from app.rate_limit import limiter  # noqa: E402 (must follow load_dotenv())
 
 app = FastAPI(title="Aureon API")
@@ -35,6 +44,10 @@ app.include_router(chart.router)
 app.include_router(numerology.router)
 app.include_router(chat.router)
 app.include_router(feng_shui.router)
+app.include_router(tarot.router)
+app.include_router(chinese_astrology.router)
+app.include_router(human_design.router)
+app.include_router(electional.router)
 
 
 @app.get("/health")

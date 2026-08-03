@@ -1,6 +1,21 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import swisseph as swe
+
+# Chiron (and any other minor-body files added later) needs its own .se1 data
+# file, unlike the 10 main planets which pyswisseph computes analytically
+# with no external file. seas_18.se1 covers Chiron for the standard modern
+# date range -- see backend/ephe/README.md for provenance (official Swiss
+# Ephemeris GitHub repo, github.com/aloistr/swisseph).
+#
+# EPHE_PATH is set per-call inside chiron_longitude(), not once here at
+# import time: pyswisseph's ephemeris path turns out to be thread-local, and
+# FastAPI dispatches sync endpoints to worker threads, so a single call here
+# (which only affects the main/import thread) silently doesn't reach the
+# thread that actually runs the calculation -- confirmed by reproducing the
+# failure with a plain ThreadPoolExecutor before landing this fix.
+EPHE_PATH = str(Path(__file__).resolve().parents[2] / "ephe")
 
 PLANETS = {
     "Sun": swe.SUN,
@@ -40,6 +55,53 @@ def to_julian_day(iso_datetime: str) -> float:
     return swe.julday(dt_utc.year, dt_utc.month, dt_utc.day, hour)
 
 
+def from_julian_day(jd: float) -> str:
+    """Inverse of to_julian_day: a Swiss Ephemeris Julian day (UT) back to an
+    ISO 8601 UTC datetime string. swe.revjul() returns the hour as a decimal
+    fraction -- converting that to whole hour/minute/second by truncating
+    each component in sequence (int(), then int() again) compounds floating-
+    point error and can truncate a value like 11.999999999999998 down to 11
+    instead of the intended 12, silently landing a second early (confirmed
+    by reproducing this exact off-by-one-second case before landing this
+    fix). Rounding to the nearest whole second up front, then letting
+    timedelta handle hour/minute/second/day carry, avoids that entirely."""
+    year, month, day, hour_decimal = swe.revjul(jd)
+    total_seconds = round(hour_decimal * 3600)
+    base = datetime(year, month, day, tzinfo=timezone.utc)
+    return (base + timedelta(seconds=total_seconds)).isoformat()
+
+
+def find_solar_return_julian_day(natal_sun_longitude: float, target_year: int, birth_month: int, birth_day: int) -> float:
+    """Binary search for the moment in target_year the transiting Sun's
+    longitude exactly matches the natal Sun's longitude -- the Sun completes
+    one 360-degree cycle roughly every 365.25 days, so this crossing happens
+    once per year, always within a day or two of the birth date's calendar
+    anniversary (never exactly at a fixed clock time, since the year isn't
+    exactly 365 days). The Sun is never retrograde, so its longitude is
+    monotonically increasing within this window -- same reasoning that makes
+    plain bisection safe, as already used for the Human Design Design-date
+    search in app/calc/human_design.py."""
+    target = natal_sun_longitude % 360
+    # Guard December 31 -> Jan 1 style edge cases at the window boundary by
+    # clamping the day to a value valid in every month before building the
+    # anchor date -- birth_day is already a real calendar day so this only
+    # matters for the +/-4 day window construction below, not birth_day itself.
+    anchor_jd = swe.julday(target_year, birth_month, birth_day, 12.0)
+    lo, hi = anchor_jd - 4, anchor_jd + 4
+
+    def signed_diff(jd: float) -> float:
+        lon, _retro = planet_longitudes(jd)["Sun"]
+        return ((lon - target + 180) % 360) - 180
+
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        if signed_diff(mid) < 0:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
 def planet_longitudes(jd: float) -> dict[str, tuple[float, bool]]:
     """Geocentric ecliptic longitude (degrees, 0-360) and retrograde flag for
     each planet, using pyswisseph's built-in Moshier ephemeris (no separate
@@ -51,6 +113,60 @@ def planet_longitudes(jd: float) -> dict[str, tuple[float, bool]]:
         longitude, speed_longitude = pos[0], pos[3]
         result[name] = (longitude % 360, speed_longitude < 0)
     return result
+
+
+def _minor_body_longitude(jd: float, swe_code: int) -> tuple[float, bool]:
+    """Shared logic for Chiron and the four main-belt asteroids below --
+    unlike the 10 main planets, all five need the seas_18.se1 data file
+    (see EPHE_PATH above) and the same per-call set_ephe_path(), confirmed
+    to already cover all five bodies with zero additional downloads (see
+    session notes -- Ceres/Pallas/Juno/Vesta all resolved successfully
+    against the same file fetched for Chiron)."""
+    swe.set_ephe_path(EPHE_PATH)
+    pos, _flags = swe.calc_ut(jd, swe_code)
+    longitude, speed_longitude = pos[0], pos[3]
+    return longitude % 360, speed_longitude < 0
+
+
+def chiron_longitude(jd: float) -> tuple[float, bool]:
+    """Kept as its own function, same reasoning as lilith_longitude:
+    surfaced as NatalChart's own field rather than folded into
+    PLANETS/planet_longitudes(), so it doesn't silently change what counts
+    as a "planet" for existing pattern detection (stelliums, grand
+    trines, etc.)."""
+    return _minor_body_longitude(jd, swe.CHIRON)
+
+
+def ceres_longitude(jd: float) -> tuple[float, bool]:
+    """Ceres -- the largest main-belt asteroid (also classified as a dwarf
+    planet), one of the four "goddess asteroids" alongside Pallas, Juno,
+    and Vesta that most serious astrology software includes by default."""
+    return _minor_body_longitude(jd, swe.CERES)
+
+
+def pallas_longitude(jd: float) -> tuple[float, bool]:
+    return _minor_body_longitude(jd, swe.PALLAS)
+
+
+def juno_longitude(jd: float) -> tuple[float, bool]:
+    return _minor_body_longitude(jd, swe.JUNO)
+
+
+def vesta_longitude(jd: float) -> tuple[float, bool]:
+    return _minor_body_longitude(jd, swe.VESTA)
+
+
+def lilith_longitude(jd: float) -> tuple[float, bool]:
+    """Mean Black Moon Lilith -- the Moon's orbital apogee, a mathematically
+    defined point (not a physical body), so it needs no separate ephemeris
+    data file the way Chiron does. Kept as its own function rather than added
+    to PLANETS/planet_longitudes(): Lilith is traditionally read alongside
+    the planets but isn't usually counted toward chart patterns (stelliums,
+    grand trines, etc.), so it's surfaced as its own NatalChart field instead
+    of silently changing what counts as a "planet" for pattern detection."""
+    pos, _flags = swe.calc_ut(jd, swe.MEAN_APOG)
+    longitude, speed_longitude = pos[0], pos[3]
+    return longitude % 360, speed_longitude < 0
 
 
 def house_cusps(jd: float, latitude: float, longitude: float, house_system: str = "P"):

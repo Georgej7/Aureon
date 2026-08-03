@@ -1,0 +1,242 @@
+[
+  {
+    "system": "chinese_astrology",
+    "category": "animal_sign",
+    "topic": "Rat",
+    "definition": "The Rat opens the 12-animal cycle -- traditionally associated with quick intelligence, resourcefulness, and the ability to seize opportunity as it appears.",
+    "traditional_interpretation": "Classical tradition places the Rat first in the cycle for its cleverness in a well-known founding myth, associating it with wit, adaptability, and material resourcefulness.",
+    "modern_interpretation": "Modern practice reads Rat energy as sharp, adaptable thinking -- someone who reads a situation quickly and finds a workable angle others miss.",
+    "psychological_interpretation": "Relates to genuine cognitive flexibility and resourcefulness under changing conditions, balanced against a tendency toward restlessness when a situation stays too static.",
+    "positive_aspects": "Quick thinking, resourcefulness, adaptability, and real skill at making the most of available opportunity.",
+    "challenges": "Restlessness, opportunism that tips into self-interest, or difficulty committing when something better might be just around the corner.",
+    "career_meaning": "Favors fast-moving, opportunity-driven work -- trading, entrepreneurship, or any field rewarding quick, adaptive thinking.",
+    "relationship_meaning": "Brings wit and resourcefulness to relationships, and does best with a partner who can keep up with a genuinely quick mind.",
+    "growth_meaning": "Growth means channeling natural resourcefulness toward sustained commitment, not just the next available opportunity.",
+    "sources": [
+      "Theodora Lau, \"The Handbook of Chinese Horoscopes\"",
+      "Suzanne White, \"The New Astrology\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": null
+  },
+  {
+    "system": "chinese_astrology",
+    "category": "animal_sign",
+    "topic": "Ox",
+    "definition": "The Ox is traditionally associated with diligence, dependability, and quiet, sustained strength -- the steady worker of the cycle.",
+    "traditional_interpretation": "Classical tradition reads the Ox as the reliable, hardworking counterpart to the Rat's cleverness -- strength built through patient, consistent effort rather than shortcuts.",
+    "modern_interpretation": "Modern practice reads Ox energy as genuine dependability -- someone whose word and effort can actually be counted on, consistently, over time.",
+    "psychological_interpretation": "Relates to a real capacity for sustained, disciplined effort, balanced against a tendency toward stubbornness when that discipline calcifies into inflexibility.",
+    "positive_aspects": "Reliability, patience, honest hard work, and a genuinely strong, steady presence others can depend on.",
+    "challenges": "Stubbornness, rigidity, or difficulty adapting when circumstances genuinely call for a different approach.",
+    "career_meaning": "Favors methodical, long-term work -- fields rewarding patience, consistency, and dependable follow-through over flash.",
+    "relationship_meaning": "Offers real reliability and steadiness in relationships, and needs a partner who values consistency over excitement.",
+    "growth_meaning": "Growth means holding steady discipline while staying willing to adapt when the situation genuinely requires it.",
+    "sources": [
+      "Theodora Lau, \"The Handbook of Chinese Horoscopes\"",
+      "Suzanne White, \"The New Astrology\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": null
+  },
+  {
+    "system": "chinese_astrology",
+    "category": "animal_sign",
+    "topic": "Tiger",
+    "definition": "The Tiger is traditionally associated with courage, confidence, and a bold, competitive spirit -- the cycle's natural risk-taker.",
+    "traditional_interpretation": "Classical tradition reads the Tiger as a symbol of raw courage and authority -- bold, magnetic, and unafraid to lead from the front.",
+    "modern_interpretation": "Modern practice reads Tiger energy as genuine confidence and initiative -- someone willing to act decisively where others hesitate.",
+    "psychological_interpretation": "Relates to real courage and a healthy appetite for risk, balanced against impulsiveness when boldness outruns actual judgment.",
+    "positive_aspects": "Courage, confidence, natural leadership, and a genuine willingness to act boldly rather than wait.",
+    "challenges": "Impulsiveness, recklessness, or a competitive streak that tips into conflict when it isn't tempered with patience.",
+    "career_meaning": "Favors leadership, competitive, or high-stakes work -- fields rewarding bold initiative and decisive action.",
+    "relationship_meaning": "Brings real passion and protectiveness to relationships, and needs a partner who isn't intimidated by genuine intensity.",
+    "growth_meaning": "Growth means pairing real courage with patience, so boldness produces lasting results rather than just momentum.",
+    "sources": [
+      "Theodora Lau, \"The Handbook of Chinese Horoscopes\"",
+      "Suzanne White, \"The New Astrology\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": null
+  },
+  {
+    "system": "chinese_astrology",
+    "category": "animal_sign",
+    "topic": "Rabbit",
+    "definition": "The Rabbit is traditionally associated with gentleness, diplomacy, and careful, considered judgment -- the cycle's quiet strategist.",
+    "traditional_interpretation": "Classical tradition reads the Rabbit as graceful and cautious, valuing harmony and careful timing over blunt confrontation.",
+    "modern_interpretation": "Modern practice reads Rabbit energy as genuine diplomatic skill -- someone who navigates conflict thoughtfully rather than avoiding it out of fear.",
+    "psychological_interpretation": "Relates to real emotional attunement and careful judgment, balanced against a tendency toward excessive caution when it tips into avoidance.",
+    "positive_aspects": "Diplomacy, genuine gentleness, careful judgment, and a real gift for maintaining harmony without losing substance.",
+    "challenges": "Excessive caution, conflict avoidance, or difficulty asserting a real need when harmony feels at risk.",
+    "career_meaning": "Favors diplomatic, advisory, or relationship-centered work -- fields rewarding tact and careful, considered judgment.",
+    "relationship_meaning": "Offers real gentleness and consideration in relationships, and needs a partner who won't mistake that gentleness for a lack of real conviction.",
+    "growth_meaning": "Growth means voicing genuine needs directly, rather than letting caution substitute for actually being heard.",
+    "sources": [
+      "Theodora Lau, \"The Handbook of Chinese Horoscopes\"",
+      "Suzanne White, \"The New Astrology\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": null
+  },
+  {
+    "system": "chinese_astrology",
+    "category": "animal_sign",
+    "topic": "Dragon",
+    "definition": "The Dragon is traditionally associated with confidence, ambition, and natural charisma -- the only mythical animal in the cycle, considered especially fortunate.",
+    "traditional_interpretation": "Classical tradition reads the Dragon as a symbol of power and good fortune -- bold, magnetic, and naturally suited to leadership and grand ambition.",
+    "modern_interpretation": "Modern practice reads Dragon energy as genuine, earned confidence -- real charisma and ambition, at its best when backed by real substance rather than performance.",
+    "psychological_interpretation": "Relates to authentic self-confidence and ambition, balanced against a tendency toward arrogance when confidence outpaces actual humility.",
+    "positive_aspects": "Charisma, ambition, natural leadership, and a genuine capacity to inspire others toward a shared vision.",
+    "challenges": "Arrogance, impatience with perceived limitation, or a tendency to dominate a room rather than genuinely collaborate.",
+    "career_meaning": "Favors visionary, leadership-driven work -- fields rewarding bold ambition and the ability to inspire others toward a shared goal.",
+    "relationship_meaning": "Brings real magnetism and generosity to relationships, and does best with a partner who has genuine standing of their own.",
+    "growth_meaning": "Growth means pairing real ambition with humility, so confidence draws people in rather than crowding them out.",
+    "sources": [
+      "Theodora Lau, \"The Handbook of Chinese Horoscopes\"",
+      "Suzanne White, \"The New Astrology\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": null
+  },
+  {
+    "system": "chinese_astrology",
+    "category": "animal_sign",
+    "topic": "Snake",
+    "definition": "The Snake is traditionally associated with wisdom, intuition, and quiet, private depth -- the cycle's most inward sign.",
+    "traditional_interpretation": "Classical tradition reads the Snake as deeply intuitive and wise, valuing privacy and careful observation over open display.",
+    "modern_interpretation": "Modern practice reads Snake energy as genuine insight -- someone who understands a situation more deeply than they initially let on.",
+    "psychological_interpretation": "Relates to real intuitive depth and discretion, balanced against a tendency toward secretiveness when privacy tips into real disconnection from others.",
+    "positive_aspects": "Deep intuition, wisdom, elegance, and a genuine gift for understanding what's happening beneath the surface.",
+    "challenges": "Secretiveness, jealousy, or a tendency toward suspicion when privacy becomes isolation.",
+    "career_meaning": "Favors research, strategy, or any work rewarding careful, private observation and genuine depth of insight.",
+    "relationship_meaning": "Brings real depth and loyalty to relationships, and needs a partner who respects genuine privacy without reading it as distance.",
+    "growth_meaning": "Growth means sharing real insight with trusted others, rather than keeping wisdom entirely private.",
+    "sources": [
+      "Theodora Lau, \"The Handbook of Chinese Horoscopes\"",
+      "Suzanne White, \"The New Astrology\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": null
+  },
+  {
+    "system": "chinese_astrology",
+    "category": "animal_sign",
+    "topic": "Horse",
+    "definition": "The Horse is traditionally associated with energy, independence, and a genuine love of freedom and movement -- the cycle's restless traveler.",
+    "traditional_interpretation": "Classical tradition reads the Horse as spirited and free, valuing open movement and independence over settled routine.",
+    "modern_interpretation": "Modern practice reads Horse energy as real vitality and self-direction -- someone who thrives on genuine forward motion rather than staying still.",
+    "psychological_interpretation": "Relates to a real need for independence and movement, balanced against impatience when that need for freedom collides with necessary commitment.",
+    "positive_aspects": "Energy, independence, adventurousness, and a genuine, infectious enthusiasm for life and movement.",
+    "challenges": "Impatience, restlessness, or difficulty committing when freedom feels threatened by routine or obligation.",
+    "career_meaning": "Favors travel-oriented, independent, or fast-paced work -- fields rewarding genuine self-direction over fixed routine.",
+    "relationship_meaning": "Brings real energy and spontaneity to relationships, and needs a partner who offers genuine freedom rather than tight routine.",
+    "growth_meaning": "Growth means finding real freedom within commitment, rather than treating commitment as freedom's opposite.",
+    "sources": [
+      "Theodora Lau, \"The Handbook of Chinese Horoscopes\"",
+      "Suzanne White, \"The New Astrology\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": null
+  },
+  {
+    "system": "chinese_astrology",
+    "category": "animal_sign",
+    "topic": "Goat",
+    "definition": "The Goat (also called Sheep) is traditionally associated with gentleness, creativity, and genuine compassion -- the cycle's artistic, sensitive sign.",
+    "traditional_interpretation": "Classical tradition reads the Goat as gentle and artistic, valuing beauty, harmony, and genuine emotional connection.",
+    "modern_interpretation": "Modern practice reads Goat energy as real creative sensitivity -- someone whose empathy and artistic instinct run genuinely deep.",
+    "psychological_interpretation": "Relates to real emotional and creative sensitivity, balanced against a tendency toward indecision or worry when that sensitivity isn't grounded.",
+    "positive_aspects": "Creativity, compassion, genuine gentleness, and a real gift for beauty and emotional attunement.",
+    "challenges": "Indecisiveness, excessive worry, or a tendency toward pessimism when sensitivity isn't met with real support.",
+    "career_meaning": "Favors creative, caregiving, or artistic work -- fields rewarding genuine sensitivity and aesthetic or emotional insight.",
+    "relationship_meaning": "Offers real warmth and empathy in relationships, and needs a partner who provides genuine emotional stability and support.",
+    "growth_meaning": "Growth means grounding real sensitivity with enough structure that it becomes a strength, not a source of constant worry.",
+    "sources": [
+      "Theodora Lau, \"The Handbook of Chinese Horoscopes\"",
+      "Suzanne White, \"The New Astrology\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": null
+  },
+  {
+    "system": "chinese_astrology",
+    "category": "animal_sign",
+    "topic": "Monkey",
+    "definition": "The Monkey is traditionally associated with cleverness, wit, and genuine inventiveness -- the cycle's playful problem-solver.",
+    "traditional_interpretation": "Classical tradition reads the Monkey as quick-witted and resourceful, valuing clever solutions and genuine curiosity over rigid method.",
+    "modern_interpretation": "Modern practice reads Monkey energy as real inventive intelligence -- someone who finds a genuinely clever way around an obstacle others find fixed.",
+    "psychological_interpretation": "Relates to real cognitive flexibility and playful problem-solving, balanced against a tendency toward mischief when cleverness tips into manipulation.",
+    "positive_aspects": "Wit, inventiveness, genuine curiosity, and a real gift for clever, resourceful problem-solving.",
+    "challenges": "Mischievousness, opportunism, or a tendency toward restlessness when a clever mind isn't genuinely engaged.",
+    "career_meaning": "Favors inventive, fast-paced, or problem-solving work -- fields rewarding genuine wit and creative resourcefulness.",
+    "relationship_meaning": "Brings real humor and playfulness to relationships, and does best with a partner who enjoys genuine intellectual sparring.",
+    "growth_meaning": "Growth means channeling real cleverness toward honest, constructive ends rather than manipulation for its own sake.",
+    "sources": [
+      "Theodora Lau, \"The Handbook of Chinese Horoscopes\"",
+      "Suzanne White, \"The New Astrology\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": null
+  },
+  {
+    "system": "chinese_astrology",
+    "category": "animal_sign",
+    "topic": "Rooster",
+    "definition": "The Rooster is traditionally associated with observation, hard work, and genuine confidence -- the cycle's precise, honest sign.",
+    "traditional_interpretation": "Classical tradition reads the Rooster as sharp-eyed and industrious, valuing honesty, precision, and being genuinely seen for real effort.",
+    "modern_interpretation": "Modern practice reads Rooster energy as real diligence and honest self-presentation -- someone who works hard and says what they actually think.",
+    "psychological_interpretation": "Relates to genuine attentiveness and honest self-expression, balanced against a tendency toward criticism when precision tips into harshness.",
+    "positive_aspects": "Diligence, honesty, sharp observation, and a genuine confidence earned through real, visible effort.",
+    "challenges": "Overly critical judgment (of self or others), or a tendency toward boastfulness when confidence isn't balanced with real humility.",
+    "career_meaning": "Favors detail-oriented, performance-driven work -- fields rewarding genuine precision and honest, visible effort.",
+    "relationship_meaning": "Brings real honesty and reliability to relationships, and needs a partner who can receive direct feedback without taking it personally.",
+    "growth_meaning": "Growth means pairing real honesty with genuine warmth, so precision reads as care rather than criticism.",
+    "sources": [
+      "Theodora Lau, \"The Handbook of Chinese Horoscopes\"",
+      "Suzanne White, \"The New Astrology\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": null
+  },
+  {
+    "system": "chinese_astrology",
+    "category": "animal_sign",
+    "topic": "Dog",
+    "definition": "The Dog is traditionally associated with loyalty, honesty, and a genuine sense of fairness -- the cycle's protective, principled sign.",
+    "traditional_interpretation": "Classical tradition reads the Dog as faithful and just, valuing genuine loyalty and moral integrity over convenience or expedience.",
+    "modern_interpretation": "Modern practice reads Dog energy as real, dependable loyalty -- someone who shows up consistently and genuinely stands by their values.",
+    "psychological_interpretation": "Relates to a real capacity for loyalty and moral conviction, balanced against a tendency toward anxiety or stubbornness when that conviction feels threatened.",
+    "positive_aspects": "Loyalty, honesty, fairness, and a genuine, protective commitment to the people and values that matter.",
+    "challenges": "Anxiety, worry, or stubbornness when loyalty and principle aren't met with the same genuine commitment from others.",
+    "career_meaning": "Favors advocacy, protective, or values-driven work -- fields rewarding genuine integrity and dependable follow-through.",
+    "relationship_meaning": "Offers real, steady loyalty in relationships, and needs a partner who reciprocates that same genuine commitment.",
+    "growth_meaning": "Growth means trusting that real loyalty doesn't require constant vigilance or worry to remain genuine.",
+    "sources": [
+      "Theodora Lau, \"The Handbook of Chinese Horoscopes\"",
+      "Suzanne White, \"The New Astrology\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": null
+  },
+  {
+    "system": "chinese_astrology",
+    "category": "animal_sign",
+    "topic": "Pig",
+    "definition": "The Pig (also called Boar) closes the 12-animal cycle -- traditionally associated with generosity, diligence, and genuine good nature.",
+    "traditional_interpretation": "Classical tradition reads the Pig as generous and honest, valuing genuine enjoyment of life and sincere, uncomplicated goodwill toward others.",
+    "modern_interpretation": "Modern practice reads Pig energy as real, uncomplicated generosity -- someone whose warmth and diligence come without a hidden agenda.",
+    "psychological_interpretation": "Relates to a genuine capacity for generosity and enjoyment, balanced against a tendency toward naivety when trust isn't met with real reciprocity.",
+    "positive_aspects": "Generosity, genuine diligence, compassion, and a real, uncomplicated warmth toward others.",
+    "challenges": "Naivety, over-indulgence, or difficulty recognizing when genuine trust is being taken advantage of.",
+    "career_meaning": "Favors caregiving, hospitality, or steady, diligent work -- fields rewarding genuine warmth and consistent, honest effort.",
+    "relationship_meaning": "Brings real generosity and warmth to relationships, and needs a partner who treats that trust with real reciprocity, not advantage.",
+    "growth_meaning": "Growth means pairing genuine generosity with enough discernment that trust is given wisely, not automatically.",
+    "sources": [
+      "Theodora Lau, \"The Handbook of Chinese Horoscopes\"",
+      "Suzanne White, \"The New Astrology\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": null
+  }
+]

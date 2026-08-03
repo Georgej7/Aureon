@@ -36,11 +36,21 @@ def summarize_chart(chart: dict) -> str:
 
 
 def summarize_numerology(numerology: dict) -> str:
-    return (
+    parts = [
         f"Life Path {numerology.get('life_path')}, Expression {numerology.get('expression')}, "
         f"Soul Urge {numerology.get('soul_urge')}, Personality {numerology.get('personality')}, "
         f"Personal Year {numerology.get('personal_year')}"
-    )
+    ]
+    pinnacles = numerology.get("pinnacles")
+    if pinnacles:
+        parts.append(f"Pinnacles (life-stage themes, in order): {', '.join(str(p) for p in pinnacles)}")
+    challenges = numerology.get("challenges")
+    if challenges:
+        parts.append(f"Challenges (growth-edge themes, in order): {', '.join(str(c) for c in challenges)}")
+    karmic_debts = numerology.get("karmic_debts")
+    if karmic_debts:
+        parts.append(f"Karmic debt numbers present: {', '.join(str(k) for k in karmic_debts)}")
+    return "\n".join(parts)
 
 
 def summarize_transits(transits: dict | None) -> str:

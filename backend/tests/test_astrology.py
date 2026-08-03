@@ -14,6 +14,8 @@ from app.calc.astrology import (
     compute_transits,
     detect_grand_crosses,
     detect_grand_trines,
+    detect_kites,
+    detect_mystic_rectangles,
     detect_stelliums,
     detect_t_squares,
     detect_yods,
@@ -243,6 +245,172 @@ def test_detect_yod_finds_apex():
     assert patterns[0].pattern_type == "Yod"
     assert patterns[0].apex == "C"
     assert set(patterns[0].planets) == {"A", "B", "C"}
+
+
+def test_detect_mystic_rectangle_finds_alternating_trine_sextile():
+    # A-B opposition (0/180), C-D opposition (120/300); A-C and B-D trine (120deg
+    # apart each), A-D and B-C sextile (60deg apart each).
+    aspects = compute_aspects({"A": 0.0, "B": 180.0, "C": 120.0, "D": 300.0})
+    patterns = detect_mystic_rectangles(aspects)
+    assert len(patterns) == 1
+    assert patterns[0].pattern_type == "Mystic Rectangle"
+    assert set(patterns[0].planets) == {"A", "B", "C", "D"}
+
+
+def test_detect_mystic_rectangle_absent_for_grand_cross():
+    # A Grand Cross (all-square) shouldn't also register as a Mystic Rectangle.
+    aspects = compute_aspects({"A": 0.0, "B": 180.0, "C": 90.0, "D": 270.0})
+    assert detect_mystic_rectangles(aspects) == []
+
+
+def test_detect_kite_finds_grand_trine_plus_tail():
+    # Grand Trine A=0,B=120,C=240; D=180 is opposite A and sextile both B and C.
+    aspects = compute_aspects({"A": 0.0, "B": 120.0, "C": 240.0, "D": 180.0})
+    patterns = detect_kites(aspects)
+    assert len(patterns) == 1
+    assert patterns[0].pattern_type == "Kite"
+    assert patterns[0].apex == "D"
+    assert set(patterns[0].planets) == {"A", "B", "C", "D"}
+
+
+def test_detect_kite_absent_without_tail_planet():
+    # A bare Grand Trine with no 4th planet shouldn't register as a Kite.
+    aspects = compute_aspects({"A": 0.0, "B": 120.0, "C": 240.0})
+    assert detect_kites(aspects) == []
+
+
+def test_quadrant_house_systems_share_true_ascendant_and_midheaven():
+    # Placidus, Koch, Campanus, Regiomontanus, and Porphyry are all
+    # "quadrant" systems -- they divide the space between the four angles
+    # differently, but the angles themselves (Ascendant = house 1 cusp,
+    # Midheaven = house 10 cusp) are astronomically fixed points that don't
+    # move with house system. This is real, documented astrological fact,
+    # not an implementation detail -- if these ever diverged across quadrant
+    # systems, that would indicate a real bug.
+    birth_base = dict(datetime="1993-03-14T04:12:00-05:00", latitude=40.7128, longitude=-74.0060)
+    charts = {hs: build_natal_chart(BirthData(**birth_base, house_system=hs)) for hs in ["P", "K", "C", "R", "O"]}
+    ascendants = {round(c.ascendant, 4) for c in charts.values()}
+    midheavens = {round(c.midheaven, 4) for c in charts.values()}
+    assert len(ascendants) == 1
+    assert len(midheavens) == 1
+
+
+def test_equal_house_system_is_exactly_30_degrees_per_house_from_ascendant():
+    birth = BirthData(datetime="1993-03-14T04:12:00-05:00", latitude=40.7128, longitude=-74.0060, house_system="E")
+    chart = build_natal_chart(birth)
+    asc = chart.houses[0].longitude
+    for house in chart.houses:
+        expected = (asc + (house.house - 1) * 30) % 360
+        assert abs(house.longitude - expected) < 1e-6
+
+
+def test_whole_sign_house_system_cusps_land_on_sign_boundaries():
+    birth = BirthData(datetime="1993-03-14T04:12:00-05:00", latitude=40.7128, longitude=-74.0060, house_system="W")
+    chart = build_natal_chart(birth)
+    for house in chart.houses:
+        assert house.longitude % 30 == 0
+
+
+def test_invalid_house_system_code_is_rejected():
+    import pytest
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        BirthData(datetime="1993-03-14T04:12:00-05:00", house_system="Z")
+
+
+def test_chiron_matches_well_documented_aries_transit():
+    # Chiron entered Aries in Feb 2019 and stayed through the 2020s -- a
+    # well-documented, independently checkable public astrological fact,
+    # not a value derived from this module's own logic.
+    from app.calc.ephemeris import to_julian_day
+    from app.calc.astrology import build_natal_chart
+    from app.calc.models import BirthData
+
+    birth = BirthData(datetime="2020-06-15T12:00:00+00:00")
+    chart = build_natal_chart(birth)
+    assert chart.chiron.name == "Chiron"
+    assert chart.chiron.sign == "Aries"
+
+
+def test_chiron_can_be_both_retrograde_and_prograde_across_years():
+    # Unlike Lilith (a smoothly-precessing point, always prograde), Chiron is
+    # a real body with a genuinely eccentric orbit and real retrograde
+    # periods -- this distinguishes correct behavior from accidentally
+    # copy-pasting Lilith's always-prograde logic.
+    from app.calc.ephemeris import chiron_longitude
+    import swisseph as swe
+
+    retro_found = False
+    prograde_found = False
+    for year in range(1980, 2030, 2):
+        jd = swe.julday(year, 6, 15, 12)
+        _lon, retro = chiron_longitude(jd)
+        if retro:
+            retro_found = True
+        else:
+            prograde_found = True
+    assert retro_found and prograde_found
+
+
+def test_big_four_asteroids_match_independent_direct_swisseph_calls():
+    # Cross-check against swe.calc_ut() called directly, bypassing this
+    # module's own wrapper functions entirely -- same independence
+    # principle as the Chiron retrograde-variation test above.
+    import swisseph as swe
+
+    from app.calc.ephemeris import EPHE_PATH, ceres_longitude, juno_longitude, pallas_longitude, vesta_longitude
+
+    jd = to_julian_day("1993-03-14T04:12:00+04:00")
+    swe.set_ephe_path(EPHE_PATH)
+    for fn, code in [
+        (ceres_longitude, swe.CERES),
+        (pallas_longitude, swe.PALLAS),
+        (juno_longitude, swe.JUNO),
+        (vesta_longitude, swe.VESTA),
+    ]:
+        expected_pos, _flags = swe.calc_ut(jd, code)
+        expected_lon, expected_retro = expected_pos[0] % 360, expected_pos[3] < 0
+        actual_lon, actual_retro = fn(jd)
+        assert abs(actual_lon - expected_lon) < 1e-9
+        assert actual_retro == expected_retro
+
+
+def test_natal_chart_includes_all_four_main_belt_asteroids_with_real_signs():
+    birth = BirthData(datetime="1993-03-14T04:12:00+04:00", latitude=41.7151, longitude=44.8271)
+    chart = build_natal_chart(birth)
+    valid_signs = {
+        "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+        "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
+    }
+    for name, placement in [
+        ("Ceres", chart.ceres), ("Pallas", chart.pallas), ("Juno", chart.juno), ("Vesta", chart.vesta),
+    ]:
+        assert placement.name == name
+        assert placement.sign in valid_signs
+        assert placement.house is not None  # location known -> houses computed
+
+
+def test_natal_chart_asteroids_come_back_house_none_without_location():
+    birth = BirthData(datetime="1993-03-14T04:12:00+04:00")
+    chart = build_natal_chart(birth)
+    assert chart.ceres.house is None
+    assert chart.pallas.house is None
+    assert chart.juno.house is None
+    assert chart.vesta.house is None
+
+
+def test_natal_chart_includes_lilith_with_real_sign_and_speed():
+    birth = BirthData(datetime="1993-03-14T04:12:00+04:00", latitude=41.7151, longitude=44.8271)
+    chart = build_natal_chart(birth)
+    assert chart.lilith.name == "Lilith"
+    assert chart.lilith.sign in [
+        "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+        "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
+    ]
+    # Mean Lilith moves ~3 deg/month and is never retrograde -- its apogee
+    # point only ever advances, unlike a planet's apparent motion.
+    assert chart.lilith.retrograde is False
 
 
 def test_natal_chart_includes_patterns_field():

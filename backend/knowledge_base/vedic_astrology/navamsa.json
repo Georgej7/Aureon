@@ -1,0 +1,19 @@
+[
+  {
+    "system": "vedic_astrology",
+    "category": "divisional_chart",
+    "topic": "Navamsa Chart",
+    "definition": "The Navamsa (D9) is the most important divisional chart in Vedic astrology after the main birth chart (D1/Rashi) -- each of the 12 signs is subdivided into 9 finer segments of 3 degrees 20 minutes each, and every planet's position is remapped into this finer grid, producing a second, complementary chart layered on top of the first.",
+    "traditional_interpretation": "Classical Vedic astrology treats the Navamsa as the chart of marriage, dharma, and inner strength -- traditionally consulted specifically to judge a planet's true strength (a planet weak in the main chart but well-placed in the Navamsa is considered to still carry real capacity) and to read partnership and spiritual life in particular.",
+    "modern_interpretation": "Contemporary practice reads the Navamsa as a second layer of the same personality -- less about outward circumstance (the D1's territory) and more about inner disposition, committed relationships, and what holds up under closer examination once the surface-level placement is looked past.",
+    "psychological_interpretation": "Functions like a magnified, more intimate lens on the same birth data -- where the main chart shows how someone presents and moves through the world, the Navamsa points to what's true about them in close, sustained relationship, away from the public-facing self.",
+    "positive_aspects": "A planet strong in the Navamsa (own sign, exaltation, or a supportive relationship to the sign it falls in) suggests real underlying capacity in that planet's themes, even if the main chart placement looks unremarkable on its own.",
+    "challenges": "A planet weak in the Navamsa, especially one that looked strong in the main chart, suggests that strength may not hold up under real, sustained pressure -- worth taking seriously rather than dismissing as a minor technicality.",
+    "career_meaning": "Traditionally secondary to the main chart for career specifically, though a well-placed 10th-house-related planet in the Navamsa is still read as reinforcing professional themes seen in the D1.",
+    "relationship_meaning": "This is the Navamsa's core traditional territory -- the 7th house and its lord in the Navamsa chart are read as central to understanding marriage and committed partnership specifically, more so than the same houses in the main chart.",
+    "growth_meaning": "Reading the Navamsa alongside the main chart, rather than instead of it, is the traditional discipline -- growth here means resisting the urge to over-weight one chart over the other, and treating them as two views of one coherent picture.",
+    "sources": ["B.V. Raman, \"Notable Horoscopes\"", "K.N. Rao, \"Vedic Remedies in Astrology\"", "Komilla Sutton, \"The Nakshatras\""],
+    "confidence_level": "medium",
+    "context_notes": null
+  }
+]

@@ -18,7 +18,11 @@ from app.calc.vedic import (
     DASHA_YEARS,
     NAKSHATRA_SPAN,
     current_mahadasha,
+    detect_house_lordship_yogas,
+    detect_vedic_yogas,
+    house_lord,
     nakshatra_for_longitude,
+    navamsa_sign,
 )
 
 EQUINOX_SOLSTICE_CASES = [
@@ -109,3 +113,94 @@ def test_vedic_chart_without_location_has_no_ascendant_but_has_dasha_and_nakshat
     assert chart.moon_nakshatra is not None
     assert chart.current_mahadasha is not None
     assert all(p.house is None for p in chart.planets)
+
+
+def test_navamsa_sign_boundaries():
+    # Movable signs (Aries, Cancer, Libra, Capricorn) start their own navamsa
+    # count from themselves -- pada 1 of a movable sign stays that sign.
+    assert navamsa_sign(0.0) == "Aries"
+    assert navamsa_sign(90.0) == "Cancer"
+    # Fixed signs (Taurus, Leo, Scorpio, Aquarius) start counting from the 9th
+    # sign ahead -- pada 1 of Taurus (0-30deg) is Capricorn (Taurus=1st,
+    # Gemini=2nd, ... Capricorn=9th).
+    assert navamsa_sign(30.0) == "Capricorn"
+    # Dual/mutable signs (Gemini, Virgo, Sagittarius, Pisces) start counting
+    # from the 5th sign ahead -- pada 1 of Gemini (60-90deg) is Libra
+    # (Gemini=1st, Cancer=2nd, Leo=3rd, Virgo=4th, Libra=5th).
+    assert navamsa_sign(60.0) == "Libra"
+
+
+def test_gaja_kesari_yoga_detected_in_kendra_from_moon():
+    # Moon at 10deg (Aries, sign 0), Jupiter at 100deg (Cancer, sign 3) --
+    # 3 signs apart, a kendra relationship (Brihat Parashara Hora Shastra def).
+    raw = {"Moon": (10.0, False), "Jupiter": (100.0, False)}
+    yogas = detect_vedic_yogas(raw)
+    assert ("Gaja Kesari Yoga", ["Moon", "Jupiter"]) in yogas
+
+
+def test_gaja_kesari_yoga_absent_when_not_kendra():
+    # Moon in Aries (sign 0), Jupiter in Taurus (sign 1) -- 1 sign apart, not a kendra.
+    raw = {"Moon": (10.0, False), "Jupiter": (40.0, False)}
+    yogas = detect_vedic_yogas(raw)
+    assert not any(y[0] == "Gaja Kesari Yoga" for y in yogas)
+
+
+def test_chandra_mangal_yoga_same_sign():
+    raw = {"Moon": (15.0, False), "Mars": (20.0, False)}  # both Aries
+    yogas = detect_vedic_yogas(raw)
+    assert ("Chandra-Mangal Yoga", ["Moon", "Mars"]) in yogas
+
+
+def test_budhaditya_yoga_same_sign():
+    raw = {"Sun": (100.0, False), "Mercury": (105.0, False)}  # both Cancer
+    yogas = detect_vedic_yogas(raw)
+    assert ("Budhaditya Yoga", ["Sun", "Mercury"]) in yogas
+
+
+def test_house_lord_aries_ascendant_matches_traditional_rulerships():
+    # Aries ascendant (index 0): house N is the Nth sign in order.
+    assert house_lord(1, 0) == "Mars"  # Aries
+    assert house_lord(2, 0) == "Venus"  # Taurus
+    assert house_lord(10, 0) == "Saturn"  # Capricorn
+
+
+def test_raj_yoga_karaka_cancer_ascendant_mars_classic_case():
+    # Textbook example: for Cancer ascendant, Mars rules both the 10th house
+    # (Aries) and the 5th house (Scorpio) -- a kendra and a trikona -- making
+    # Mars a yogakaraka on lordship alone, independent of where any planet
+    # actually sits (hence the empty sign_of dict).
+    yogas = detect_house_lordship_yogas({}, ascendant_sign_index=3)
+    assert ("Raj Yoga", ["Mars"]) in yogas
+
+
+def test_raj_yoga_absent_for_aries_ascendant_with_no_connection():
+    # Aries ascendant: kendra lords {Mars, Moon, Venus, Saturn}, trikona
+    # lords {Mars, Sun, Jupiter} (excluding the shared house-1/Mars overlap,
+    # which is correctly skipped, not counted as a yoga). With no planets
+    # placed to create a conjunction/exchange, no Raj Yoga should fire.
+    yogas = detect_house_lordship_yogas({}, ascendant_sign_index=0)
+    assert not any(y[0] == "Raj Yoga" for y in yogas)
+
+
+def test_dhana_yoga_conjunction_aries_ascendant():
+    # Aries ascendant: 2nd lord Venus (Taurus), 11th lord Saturn (Aquarius).
+    # Placing both in the same sign (Virgo, index 5) should trigger Dhana Yoga.
+    sign_of = {"Venus": 5, "Saturn": 5}
+    yogas = detect_house_lordship_yogas(sign_of, ascendant_sign_index=0)
+    assert ("Dhana Yoga", ["Saturn", "Venus"]) in yogas
+
+
+def test_dhana_yoga_absent_without_connection():
+    sign_of = {"Venus": 5, "Saturn": 8}  # different signs, no exchange either
+    yogas = detect_house_lordship_yogas(sign_of, ascendant_sign_index=0)
+    assert not any(y[0] == "Dhana Yoga" for y in yogas)
+
+
+def test_detect_vedic_yogas_includes_house_lordship_yogas_when_ascendant_known():
+    yogas = detect_vedic_yogas({}, ascendant_sign_index=3)
+    assert ("Raj Yoga", ["Mars"]) in yogas
+
+
+def test_detect_vedic_yogas_skips_house_lordship_yogas_without_ascendant():
+    yogas = detect_vedic_yogas({})
+    assert not any(y[0] in ("Raj Yoga", "Dhana Yoga") for y in yogas)

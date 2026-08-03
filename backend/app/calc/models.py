@@ -2,6 +2,23 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+# The single-character codes swisseph's house() function expects. Limited to
+# the systems professional astrologers actually ask for by name, not the
+# full set swisseph supports -- each of these is well-documented and
+# unambiguous; less common systems can be added the same way once there's
+# real demand, rather than guessing at obscure codes now.
+HouseSystem = Literal["P", "K", "E", "W", "C", "R", "O"]
+
+HOUSE_SYSTEM_NAMES: dict[str, str] = {
+    "P": "Placidus",
+    "K": "Koch",
+    "E": "Equal",
+    "W": "Whole Sign",
+    "C": "Campanus",
+    "R": "Regiomontanus",
+    "O": "Porphyry",
+}
+
 
 class BirthData(BaseModel):
     """Birth moment and place. `datetime` must be an ISO 8601 string with a UTC
@@ -26,7 +43,7 @@ class BirthData(BaseModel):
     datetime: str
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
-    house_system: str = "P"  # Placidus
+    house_system: HouseSystem = "P"
     time_known: bool = True
 
 
@@ -71,6 +88,12 @@ class NatalChart(BaseModel):
     midheaven: float | None
     aspects: list[Aspect]
     patterns: list[ChartPattern]
+    lilith: PlanetPlacement
+    chiron: PlanetPlacement
+    ceres: PlanetPlacement
+    pallas: PlanetPlacement
+    juno: PlanetPlacement
+    vesta: PlanetPlacement
 
 
 class Nakshatra(BaseModel):
@@ -122,6 +145,19 @@ class BaguaResponse(BaseModel):
     zones: list[BaguaZone]
 
 
+class NavamsaPlacement(BaseModel):
+    name: str
+    sign: str  # D9 sign -- a different, finer-grained placement than the D1 (rashi) sign
+
+
+class YogaPattern(BaseModel):
+    """A classical planetary combination (see app/calc/vedic.py's
+    detect_vedic_yogas for which ones are currently detected and why)."""
+
+    yoga_type: str
+    planets: list[str]
+
+
 class VedicChart(BaseModel):
     """Sidereal (Lahiri ayanamsa) chart — a genuinely different reference
     frame from NatalChart's tropical zodiac, not a re-labeling of the same
@@ -129,7 +165,9 @@ class VedicChart(BaseModel):
     Vedic astrology but absent from Western charts. ascendant/ascendant_sign/
     ascendant_nakshatra are null without a known birth location and time,
     same rule as NatalChart's houses — moon_nakshatra and current_mahadasha
-    need only the Moon's position, so they're always present."""
+    need only the Moon's position, so they're always present. navamsa (D9)
+    and yogas are sign-based, so they're always present too, independent of
+    a known birth time/location, same reasoning as planets/nakshatra."""
 
     planets: list[PlanetPlacement]
     ascendant: float | None
@@ -137,6 +175,8 @@ class VedicChart(BaseModel):
     ascendant_nakshatra: Nakshatra | None
     moon_nakshatra: Nakshatra
     current_mahadasha: Mahadasha
+    navamsa: list[NavamsaPlacement]
+    yogas: list[YogaPattern]
 
 
 class NatalPlanetLongitude(BaseModel):
@@ -198,10 +238,104 @@ class SynastryResponse(BaseModel):
     aspects: list[SynastryAspect]
 
 
+class SolarReturnRequest(BaseModel):
+    birth: BirthData
+    target_year: int = Field(ge=1900, le=2100)
+    # Defaults to the birth location if omitted -- set these for a
+    # "relocated" solar return (the real technique of reading the return
+    # chart from wherever the person will actually be that year).
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
+    house_system: HouseSystem = "P"
+
+
+class SolarReturnResponse(BaseModel):
+    exact_datetime: str  # ISO 8601 UTC -- the precise moment of the return
+    chart: NatalChart
+
+
+class ProgressedChartRequest(BaseModel):
+    birth: BirthData
+    target_date: str  # ISO 8601 with UTC offset -- "as of" date for the progression
+    house_system: HouseSystem = "P"
+
+
+class ProgressedChartResponse(BaseModel):
+    progressed_datetime: str  # ISO 8601 -- the actual "day for a year" moment used
+    chart: NatalChart
+
+
+class DavisonChartRequest(BaseModel):
+    person_a: BirthData
+    person_b: BirthData
+    house_system: HouseSystem = "P"
+
+
+class DavisonChartResponse(BaseModel):
+    midpoint_datetime: str  # ISO 8601 UTC -- the real midpoint moment this chart is cast for
+    chart: NatalChart
+
+
+class CompositeChartRequest(BaseModel):
+    person_a: BirthData
+    person_b: BirthData
+
+
 class NumerologyRequest(BaseModel):
     full_name: str
     date: str  # "YYYY-MM-DD"
     target_year: int | None = None  # defaults to current year for personal_year
+
+
+class ChineseZodiacRequest(BaseModel):
+    birth_year: int = Field(ge=1900, le=2100)
+
+
+class ChineseZodiacProfile(BaseModel):
+    animal: str
+    element: str
+    yin_yang: str
+
+
+class ElectionalScanRequest(BaseModel):
+    birth_date: str  # "YYYY-MM-DD"
+    start_date: str  # "YYYY-MM-DD"
+    days: int = Field(default=30, ge=1, le=90)
+
+
+class ElectionalDay(BaseModel):
+    date: str
+    personal_day_number: int
+    favorable_numerology: bool
+    mercury_retrograde: bool
+    moon_phase: str
+
+
+class ElectionalScanResponse(BaseModel):
+    days: list[ElectionalDay]
+
+
+class HumanDesignRequest(BaseModel):
+    datetime: str  # ISO 8601 with UTC offset, same rule as BirthData
+
+
+class HumanDesignChart(BaseModel):
+    type: str
+    strategy: str
+    authority: str
+    profile: str
+    defined_centers: list[str]
+    undefined_centers: list[str]
+    active_gates: list[int]
+
+
+class TarotDrawRequest(BaseModel):
+    seed: str  # e.g. f"{user_id}:{date}" -- same seed always returns the same card
+
+
+class TarotCard(BaseModel):
+    name: str
+    upright: bool
 
 
 class NumerologyProfile(BaseModel):
@@ -210,3 +344,6 @@ class NumerologyProfile(BaseModel):
     soul_urge: int
     personality: int
     personal_year: int
+    pinnacles: list[int]
+    challenges: list[int]
+    karmic_debts: list[int]

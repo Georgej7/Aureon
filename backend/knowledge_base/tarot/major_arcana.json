@@ -1,0 +1,530 @@
+[
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The Fool",
+    "definition": "The Fool opens the Major Arcana at number 0 -- the card of new beginnings, pure potential, and the willingness to step forward without knowing exactly what's ahead.",
+    "traditional_interpretation": "Classically depicted as a traveler at a cliff's edge, traditionally read as innocence and the start of a journey undertaken on faith rather than a fully mapped plan.",
+    "modern_interpretation": "Modern tarot reads The Fool as the courage to begin something genuinely new -- not naivety, but a willingness to accept real uncertainty as the price of any real start.",
+    "psychological_interpretation": "Relates to the psychological capacity to act without complete information -- healthy risk tolerance versus either reckless disregard for consequences or paralysis that never begins at all.",
+    "positive_aspects": "Spontaneity, openness, genuine optimism, and the freedom that comes from not yet being weighed down by past outcomes.",
+    "challenges": "Naivety, recklessness, or a refusal to learn from foreseeable risk when taken too far.",
+    "career_meaning": "Suggests a genuinely new professional direction or venture -- most alive at the very start of something, before its shape is fully known.",
+    "relationship_meaning": "Points to a relationship or connection just beginning, with real openness and few preconceptions yet formed.",
+    "growth_meaning": "Growth means carrying the willingness to begin without demanding total certainty first -- the only way anything genuinely new gets started.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "A real invitation to begin something new -- trust the leap even without a full map.",
+      "reversed": "Reversed often points to recklessness, or the opposite: fear that's blocking a beginning that's actually ready to happen."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The Magician",
+    "definition": "The Magician represents the ability to turn raw potential into real, deliberate action -- resourcefulness, skill, and the conscious will to manifest an intention.",
+    "traditional_interpretation": "Classically shown with all four suit-tools on the table, traditionally read as mastery over the elements and the power to act deliberately rather than wait passively.",
+    "modern_interpretation": "Modern tarot reads this as having every resource actually needed already at hand -- the card isn't about waiting for more, it's about using what's already available with focus.",
+    "psychological_interpretation": "Relates to self-efficacy -- the belief that one's own action genuinely shapes outcomes, distinct from either grandiosity or learned helplessness.",
+    "positive_aspects": "Skill, focus, resourcefulness, and the capacity to translate a clear intention directly into result.",
+    "challenges": "Manipulation or trickery when skill is used to deceive rather than genuinely create, or scattered effort that never converts potential into anything real.",
+    "career_meaning": "Favors initiating a project with the resources already on hand -- a card of deliberate, skillful execution, not further preparation.",
+    "relationship_meaning": "Suggests genuine agency in how a connection develops -- actively shaping it rather than leaving it to chance.",
+    "growth_meaning": "Growth means using real skill honestly, in service of an actual outcome, not as manipulation or performance.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "The resources for what you want are already here -- act deliberately.",
+      "reversed": "Reversed often points to manipulation, or scattered talent that hasn't been focused into real follow-through."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The High Priestess",
+    "definition": "The High Priestess represents intuition, hidden knowledge, and the wisdom that comes from stillness rather than active pursuit.",
+    "traditional_interpretation": "Classically seated between two pillars guarding a veiled inner sanctum, traditionally read as a keeper of mysteries not yet ready to be spoken aloud.",
+    "modern_interpretation": "Modern tarot reads this as trusting inner knowing over external validation -- information that arrives through intuition rather than direct evidence.",
+    "psychological_interpretation": "Relates to the value of the unconscious and the parts of understanding that resist immediate rational explanation but are no less real for it.",
+    "positive_aspects": "Deep intuition, receptivity, and access to knowledge that isn't yet fully conscious or articulable.",
+    "challenges": "Withholding, secrecy, or disconnection from one's own intuition when it's actively ignored or suppressed.",
+    "career_meaning": "Favors work requiring genuine intuition, research, or discretion -- fields where not everything can or should be said outright yet.",
+    "relationship_meaning": "Suggests something in the connection not yet fully spoken or understood -- worth real patience rather than forcing premature clarity.",
+    "growth_meaning": "Growth means learning to trust intuitive knowing as real information, not dismissing it for lacking immediate proof.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "Trust what you sense beneath the surface, even without full proof yet.",
+      "reversed": "Reversed often points to ignoring one's own intuition, or secrets that have become genuinely harmful rather than simply private."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The Empress",
+    "definition": "The Empress represents abundance, nurturing, and creative fertility -- the card of bringing something into full, generous form.",
+    "traditional_interpretation": "Classically shown in a lush natural setting, traditionally read as maternal abundance and the fruitful outcome of what's been carefully tended.",
+    "modern_interpretation": "Modern tarot reads this as creativity in its most generous, embodied form -- not just artistic output, but any act of genuinely nurturing something into growth.",
+    "psychological_interpretation": "Relates to the capacity for self-nourishment as much as nurturing others -- abundance that isn't earned through depletion of the self.",
+    "positive_aspects": "Abundance, creativity, sensory pleasure, and genuine generosity that doesn't come at the cost of self-neglect.",
+    "challenges": "Overindulgence, smothering care, or creative stagnation when comfort is prioritized over ever finishing anything.",
+    "career_meaning": "Favors creative, nurturing, or growth-oriented work -- fields where cultivating something over time produces real, abundant results.",
+    "relationship_meaning": "Suggests real warmth and generosity in the connection -- a relationship with genuine room to grow and be nourished.",
+    "growth_meaning": "Growth means extending the same generous nurturing inward, not only outward toward others or projects.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "Real abundance and growth are available -- tend what you're cultivating.",
+      "reversed": "Reversed often points to creative block, or nurturing so intense it becomes smothering."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The Emperor",
+    "definition": "The Emperor represents structure, authority, and the discipline required to build something stable and lasting.",
+    "traditional_interpretation": "Classically shown enthroned in stone, traditionally read as earned authority and the capacity to impose order on chaos through will and structure.",
+    "modern_interpretation": "Modern tarot reads this as healthy structure -- rules and boundaries that genuinely serve stability, not control exercised for its own sake.",
+    "psychological_interpretation": "Relates to the developmental task of building a reliable internal structure -- self-discipline that supports goals rather than rigidly restricting them.",
+    "positive_aspects": "Stability, leadership, sound strategic thinking, and the capacity to build lasting structure.",
+    "challenges": "Rigidity, authoritarian control, or an inability to adapt when structure calms into an end in itself.",
+    "career_meaning": "Favors leadership, management, or foundational building work -- roles rewarding structure and long-term strategic thinking.",
+    "relationship_meaning": "Suggests a connection benefiting from clear boundaries and stated expectations, rather than ambiguity.",
+    "growth_meaning": "Growth means holding structure firmly enough to be useful, loosely enough to adapt when it genuinely needs to.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "Build real structure -- clear boundaries will serve you here.",
+      "reversed": "Reversed often points to rigid control, or structure that's collapsed into genuine instability."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The Hierophant",
+    "definition": "The Hierophant represents tradition, institutional wisdom, and learning within an established structure or lineage.",
+    "traditional_interpretation": "Classically depicted as a religious teacher flanked by students, traditionally read as spiritual or institutional authority and conventional wisdom passed down.",
+    "modern_interpretation": "Modern tarot reads this as genuine value in tradition and mentorship -- not blind conformity, but real wisdom that doesn't need to be rediscovered from scratch every time.",
+    "psychological_interpretation": "Relates to the value of belonging to a lineage or community of shared values -- balanced against the risk of conforming past the point it still serves growth.",
+    "positive_aspects": "Access to mentorship, established wisdom, and the real benefit of not having to reinvent every answer alone.",
+    "challenges": "Rigid conformity or blind obedience to convention when tradition is followed past the point it still makes sense.",
+    "career_meaning": "Favors education, mentorship, or institutional roles -- work benefiting from established structure and shared standards.",
+    "relationship_meaning": "Suggests a connection grounded in shared values or a formal commitment, rather than an unconventional arrangement.",
+    "growth_meaning": "Growth means taking real wisdom from tradition while staying willing to question it when it stops actually serving.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "Real guidance is available through established wisdom or mentorship -- worth seeking out.",
+      "reversed": "Reversed often points to rigid dogma, or breaking from convention in a way that's actually needed and overdue."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The Lovers",
+    "definition": "The Lovers represents genuine connection, meaningful choice, and alignment between values and action.",
+    "traditional_interpretation": "Classically shown as a couple beneath a divine figure, traditionally read as both romantic union and a significant moral or values-based choice.",
+    "modern_interpretation": "Modern tarot reads this less narrowly than 'romance' and more as any deep alignment -- a real choice made from genuine values, not just attraction.",
+    "psychological_interpretation": "Relates to the psychological task of choosing authentically -- decisions driven by real inner values rather than external pressure or fear.",
+    "positive_aspects": "Genuine connection, harmony, and clarity about what actually matters when a real choice is required.",
+    "challenges": "Disharmony, indecision, or a choice made to please others rather than from authentic values.",
+    "career_meaning": "Suggests a career choice or partnership decision that should be made from real alignment with values, not convenience.",
+    "relationship_meaning": "The card most directly tied to genuine partnership and meaningful romantic or values-based connection.",
+    "growth_meaning": "Growth means making choices from authentic values, even when an easier option exists.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "A meaningful choice or connection is at hand -- choose from real alignment, not convenience.",
+      "reversed": "Reversed often points to misalignment, or a choice being avoided that genuinely needs to be made."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The Chariot",
+    "definition": "The Chariot represents willpower, focused determination, and forward movement achieved by holding opposing forces in disciplined balance.",
+    "traditional_interpretation": "Classically shown driven by two opposing sphinxes held in check by will alone, traditionally read as victory achieved through sheer determination.",
+    "modern_interpretation": "Modern tarot reads this as directed drive -- genuine progress made by holding conflicting impulses in balance rather than letting either one win outright.",
+    "psychological_interpretation": "Relates to self-mastery under real internal tension -- the capacity to move forward decisively even while pulled in more than one direction.",
+    "positive_aspects": "Determination, focus, and the capacity to make real progress despite internal or external opposing forces.",
+    "challenges": "Aggression, loss of direction, or being pulled apart by opposing forces when the balance isn't actually held.",
+    "career_meaning": "Favors ambitious, competitive, or high-stakes work -- fields rewarding sheer determination and disciplined focus.",
+    "relationship_meaning": "Suggests real forward movement in a connection, though possibly requiring active work to hold competing needs in balance.",
+    "growth_meaning": "Growth means channeling real willpower toward one clear direction, rather than being pulled apart by competing impulses.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "Real progress is available through focused, disciplined will -- move forward deliberately.",
+      "reversed": "Reversed often points to loss of direction, or aggression used in place of genuine control."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "Strength",
+    "definition": "Strength represents courage exercised through gentleness and patience rather than force -- inner fortitude, not domination.",
+    "traditional_interpretation": "Classically shown as a figure calmly taming a lion with bare hands, traditionally read as the triumph of gentle, patient courage over raw force.",
+    "modern_interpretation": "Modern tarot reads this as emotional resilience and self-control -- managing one's own instincts (or a difficult situation) through patience rather than suppression or force.",
+    "psychological_interpretation": "Relates to the integration of instinct rather than its suppression -- real strength that comes from working with a difficult impulse, not fighting it into submission.",
+    "positive_aspects": "Genuine courage, patience, compassion, and the quiet strength that comes from self-mastery rather than domination.",
+    "challenges": "Self-doubt, or using raw force where patience and gentleness would actually work better.",
+    "career_meaning": "Favors work requiring patience and steady resilience over aggressive force -- long-game fields rewarding persistence.",
+    "relationship_meaning": "Suggests handling a difficult dynamic with patience and compassion rather than confrontation.",
+    "growth_meaning": "Growth means meeting a difficult internal impulse or external challenge with patience rather than suppression or force.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "Real strength here comes from patience and gentleness, not force.",
+      "reversed": "Reversed often points to self-doubt, or raw force being used where patience was actually the answer."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The Hermit",
+    "definition": "The Hermit represents introspection, solitary reflection, and the wisdom that comes from deliberately stepping back from the world.",
+    "traditional_interpretation": "Classically shown as a solitary figure with a lantern on a mountain, traditionally read as inner guidance found through voluntary withdrawal and reflection.",
+    "modern_interpretation": "Modern tarot reads this as intentional solitude -- not isolation as avoidance, but a deliberate pause to find real clarity before re-engaging.",
+    "psychological_interpretation": "Relates to the value of solitary reflection for genuine self-understanding -- distinct from withdrawal driven by fear or avoidance.",
+    "positive_aspects": "Deep introspection, genuine wisdom gained through reflection, and clarity that comes from real distance.",
+    "challenges": "Isolation, loneliness, or withdrawal that's become avoidance rather than a deliberate, temporary pause.",
+    "career_meaning": "Favors research, writing, or any solitary, reflective work -- fields where independent, focused thinking produces the real value.",
+    "relationship_meaning": "Suggests a genuine need for space or reflection within a connection, not necessarily a sign of it ending.",
+    "growth_meaning": "Growth means using solitude as a deliberate tool for clarity, then returning, rather than staying withdrawn indefinitely.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "Real clarity is available through deliberate solitude and reflection right now.",
+      "reversed": "Reversed often points to isolation that's tipped into loneliness, or avoidance disguised as needed reflection."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "Wheel of Fortune",
+    "definition": "The Wheel of Fortune represents cycles, change, and the turning points that arrive regardless of direct control.",
+    "traditional_interpretation": "Classically shown as a wheel in constant motion, traditionally read as fate and the inevitability of change, for better or worse.",
+    "modern_interpretation": "Modern tarot reads this less as fixed fate and more as the reality that circumstances genuinely do shift -- what matters is how a person meets the turn, not resisting that change happens.",
+    "psychological_interpretation": "Relates to accepting real uncertainty and impermanence -- the psychological flexibility to adapt as circumstances genuinely change.",
+    "positive_aspects": "Positive turning points, genuine opportunity, and forward movement that arrives through circumstance as much as effort.",
+    "challenges": "Feeling at the mercy of events, or resisting a change that's already genuinely underway.",
+    "career_meaning": "Suggests a real shift in career circumstances is likely -- worth staying adaptable rather than over-fixed on one plan.",
+    "relationship_meaning": "Suggests a connection entering a genuinely new phase, for better or worse, driven by circumstance as much as choice.",
+    "growth_meaning": "Growth means meeting genuine change with adaptability rather than either passive resignation or rigid resistance.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "A real turning point is arriving -- meet it with adaptability, not resistance.",
+      "reversed": "Reversed often points to resisting a change that's already happening, or a run of setbacks that feel outside one's control."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "Justice",
+    "definition": "Justice represents fairness, truth, and the real consequences that follow from choices actually made.",
+    "traditional_interpretation": "Classically shown holding scales and a sword, traditionally read as impartial judgment and the direct link between action and consequence.",
+    "modern_interpretation": "Modern tarot reads this as honest accountability -- clear-eyed acknowledgment of cause and effect, without either excessive self-blame or avoidance.",
+    "psychological_interpretation": "Relates to the developmental task of genuine accountability -- seeing one's own role in outcomes clearly, neither inflated nor minimized.",
+    "positive_aspects": "Fairness, clarity, integrity, and the real satisfaction of a situation resolved honestly.",
+    "challenges": "Unfairness, avoidance of consequence, or rigid judgment applied without real compassion or context.",
+    "career_meaning": "Favors legal, contractual, or accountability-driven work -- fields where clear, fair judgment is the actual product.",
+    "relationship_meaning": "Suggests a connection benefiting from real honesty about what's actually fair to each person involved.",
+    "growth_meaning": "Growth means taking honest accountability for one's own real role in an outcome, not more and not less than that.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "A fair, honest reckoning is due -- meet it directly rather than avoiding it.",
+      "reversed": "Reversed often points to avoided accountability, or an unfairness that genuinely needs to be addressed."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The Hanged Man",
+    "definition": "The Hanged Man represents a deliberate pause, surrender, and the different perspective that becomes visible only by stopping.",
+    "traditional_interpretation": "Classically shown suspended calmly upside-down by one foot, traditionally read as voluntary sacrifice and the wisdom gained through a suspended, altered viewpoint.",
+    "modern_interpretation": "Modern tarot reads this as choosing to pause rather than push forward -- a productive stall, not a failure, when the usual approach genuinely isn't working.",
+    "psychological_interpretation": "Relates to the value of surrendering forced control -- real insight that becomes available only once the need to actively fix something is set down.",
+    "positive_aspects": "Fresh perspective, genuine release of forced control, and the insight only available through deliberate stillness.",
+    "challenges": "Stagnation, unproductive martyrdom, or delay used to avoid a decision rather than genuinely gain perspective.",
+    "career_meaning": "Suggests a professional situation is better served by pausing and reassessing than by continuing to push forward.",
+    "relationship_meaning": "Suggests a connection benefiting from a real pause rather than forced resolution or more effort right now.",
+    "growth_meaning": "Growth means distinguishing a genuinely useful pause from avoidance dressed up as patience.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "Pause deliberately here -- real insight is available once forcing stops.",
+      "reversed": "Reversed often points to stalling that's become genuine stagnation, or resisting a pause that's actually needed."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "Death",
+    "definition": "Death represents genuine transformation and the definite ending of one phase that makes real room for the next -- almost never a literal reading in modern practice.",
+    "traditional_interpretation": "Classically shown as a skeletal figure amid both endings and new growth, traditionally read as transformation, not literal mortality -- the end of one state as the necessary condition for the next.",
+    "modern_interpretation": "Modern tarot reads this as a real, often overdue ending -- something has genuinely run its course and continuing to hold onto it delays what wants to come next.",
+    "psychological_interpretation": "Relates to the psychological task of letting go -- grief and resistance are real, but so is the relief and growth that follow genuine completion.",
+    "positive_aspects": "Genuine transformation, necessary release, and the real growth that follows an ending fully allowed to happen.",
+    "challenges": "Resistance to necessary change, or fear that prevents letting go of something that's already effectively over.",
+    "career_meaning": "Suggests a genuine ending in a professional chapter -- a role, project, or approach that's run its course.",
+    "relationship_meaning": "Suggests a connection or relational pattern genuinely transforming or ending, opening real space for what's next.",
+    "growth_meaning": "Growth means allowing a genuine ending to complete rather than holding onto something already over out of fear.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "A real ending is at hand -- let it complete rather than resisting it.",
+      "reversed": "Reversed often points to resisting a necessary ending, or change that's stalled without ever fully completing."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "Temperance",
+    "definition": "Temperance represents balance, integration, and the patient blending of opposing elements into something genuinely workable.",
+    "traditional_interpretation": "Classically shown pouring liquid between two cups in careful balance, traditionally read as moderation and the harmonious combination of opposites.",
+    "modern_interpretation": "Modern tarot reads this as real integration work -- patiently finding what actually works between two competing needs, not compromise as settling for less.",
+    "psychological_interpretation": "Relates to the developmental task of holding complexity -- integrating seemingly opposite needs rather than forcing a choice between them.",
+    "positive_aspects": "Balance, patience, and a genuine, workable synthesis between competing needs or forces.",
+    "challenges": "Imbalance, excess, or impatience that abandons real integration for a quick, incomplete fix.",
+    "career_meaning": "Favors mediation, integration, or long-term collaborative work -- fields rewarding patient balance over quick resolution.",
+    "relationship_meaning": "Suggests a connection benefiting from patient compromise and genuine balance between two people's real needs.",
+    "growth_meaning": "Growth means staying patient with the slow work of real integration, rather than forcing a premature resolution.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "Real balance between competing needs is achievable -- stay patient with the process.",
+      "reversed": "Reversed often points to real imbalance, or excess in one direction that's crowding out the other."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The Devil",
+    "definition": "The Devil represents genuine bondage to unhealthy patterns -- attachment, dependency, or self-limiting belief mistaken for a fixed truth.",
+    "traditional_interpretation": "Classically shown as chained figures who could remove their own chains, traditionally read as bondage that's ultimately self-imposed and therefore self-reversible.",
+    "modern_interpretation": "Modern tarot reads this as real, honest confrontation with an unhealthy attachment or pattern -- addiction, an unhealthy dynamic, or a limiting belief treated as unchangeable fact.",
+    "psychological_interpretation": "Relates to the psychological work of recognizing a genuinely self-imposed limitation -- the first real step toward any actual freedom from it.",
+    "positive_aspects": "Honest, unflinching self-awareness about a real limiting pattern -- the necessary first step toward genuine change.",
+    "challenges": "Real dependency, unhealthy attachment, or a limiting belief mistaken for unchangeable fact.",
+    "career_meaning": "Suggests examining a genuinely limiting professional pattern -- a role or habit kept out of fear rather than actual necessity.",
+    "relationship_meaning": "Suggests an unhealthy relational pattern worth honestly naming rather than continuing to normalize.",
+    "growth_meaning": "Growth means honestly naming a self-imposed limitation as the real first step toward loosening its hold.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "Name the real pattern honestly -- that's the actual first step toward freedom from it.",
+      "reversed": "Reversed often points to real progress being made in breaking free of a limiting pattern, or continued denial of one."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The Tower",
+    "definition": "The Tower represents sudden, disruptive upheaval that breaks down a structure that was never actually as stable as it appeared.",
+    "traditional_interpretation": "Classically shown as a tower struck by lightning, traditionally read as sudden, dramatic collapse -- destructive in the moment, but clearing away what was already unsound.",
+    "modern_interpretation": "Modern tarot reads this as genuinely necessary disruption -- painful, but revealing a structure (a belief, a plan, a relationship) that needed to fall to make room for something real.",
+    "psychological_interpretation": "Relates to the psychological reality that sudden crisis, however unwelcome, sometimes forces a genuinely necessary confrontation with a foundation that was already unstable.",
+    "positive_aspects": "Genuine liberation from a false or unstable structure, and the clarity that follows an unavoidable disruption.",
+    "challenges": "Real crisis, sudden loss, or upheaval that feels chaotic and destabilizing while it's happening.",
+    "career_meaning": "Suggests genuine, unplanned professional disruption -- painful in the moment, potentially clearing away something already unsound.",
+    "relationship_meaning": "Suggests sudden, real upheaval in a connection -- a moment that reveals what was actually unstable underneath.",
+    "growth_meaning": "Growth means recognizing that a sudden collapse, however painful, is clearing space for something built on more honest ground.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "Sudden, real disruption is clearing away a structure that wasn't actually stable.",
+      "reversed": "Reversed often points to avoiding an overdue collapse, or the aftermath and slow rebuilding after disruption has already hit."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The Star",
+    "definition": "The Star represents genuine hope, renewal, and a quiet, sustaining faith in the future after real difficulty.",
+    "traditional_interpretation": "Classically shown as a figure pouring water beneath a bright night sky, traditionally read as hope and healing that follows a difficult period, typically read right after The Tower in sequence.",
+    "modern_interpretation": "Modern tarot reads this as authentic hope -- not naive optimism, but a real, grounded sense of renewal earned by having actually come through something difficult.",
+    "psychological_interpretation": "Relates to genuine psychological resilience -- the capacity to hold hope credibly, having actually survived real difficulty rather than never having faced it.",
+    "positive_aspects": "Renewed hope, genuine healing, inspiration, and a real, quiet faith in what's ahead.",
+    "challenges": "Despair, disconnection from hope, or hope so vague it never translates into any real, grounded action.",
+    "career_meaning": "Suggests a genuinely hopeful professional period following real difficulty -- worth trusting rather than bracing for another setback.",
+    "relationship_meaning": "Suggests real healing and renewed hope within a connection, especially after a difficult period.",
+    "growth_meaning": "Growth means letting real hope be grounded in what's actually been survived, not disconnected from it.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "Genuine hope and renewal are real right now -- trust it.",
+      "reversed": "Reversed often points to real despair or disconnection from hope, or hope that's stayed too vague to act on."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The Moon",
+    "definition": "The Moon represents uncertainty, the unconscious, and navigating a situation where not everything is yet clearly visible.",
+    "traditional_interpretation": "Classically shown as a winding path beneath an ambiguous moon, traditionally read as illusion, confusion, and the presence of fears not yet fully faced.",
+    "modern_interpretation": "Modern tarot reads this as real uncertainty that has to be navigated by intuition rather than complete information, since not everything is knowable yet.",
+    "psychological_interpretation": "Relates to tolerating genuine ambiguity -- moving forward through the unconscious or the not-yet-clear without demanding premature certainty.",
+    "positive_aspects": "Deep intuition, genuine creativity, and the capacity to navigate real uncertainty without needing full clarity first.",
+    "challenges": "Confusion, anxiety, or self-deception when uncertainty tips into genuine disorientation or avoided fear.",
+    "career_meaning": "Suggests a professional situation that's genuinely unclear right now -- worth moving carefully rather than forcing false certainty.",
+    "relationship_meaning": "Suggests real uncertainty or unspoken undercurrents in a connection, worth acknowledging honestly rather than ignoring.",
+    "growth_meaning": "Growth means trusting intuition to navigate real uncertainty, rather than either forcing false clarity or freezing in confusion.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "Real uncertainty is present -- navigate it by intuition, not forced clarity.",
+      "reversed": "Reversed often points to a fear or confusion finally clearing, or self-deception that's become genuinely harmful."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The Sun",
+    "definition": "The Sun represents genuine joy, vitality, and clear, unguarded success -- one of the most straightforwardly positive cards in the deck.",
+    "traditional_interpretation": "Classically shown as a radiant sun over a joyful figure, traditionally read as vitality, success, and genuine happiness without the ambiguity many other cards carry.",
+    "modern_interpretation": "Modern tarot reads this as authentic, unguarded joy -- real vitality and clarity, not performed positivity.",
+    "psychological_interpretation": "Relates to genuine psychological flourishing -- real vitality, confidence, and joy that isn't defensive or compensating for anything underneath.",
+    "positive_aspects": "Real joy, vitality, confidence, and clear, well-earned success.",
+    "challenges": "Rarely severe even when present -- occasionally overconfidence, or joy so unguarded it overlooks a real practical detail.",
+    "career_meaning": "Suggests a genuinely successful, energized professional period -- worth trusting and enjoying rather than second-guessing.",
+    "relationship_meaning": "Suggests real, uncomplicated joy and vitality within a connection.",
+    "growth_meaning": "Growth means allowing real joy and success to be trusted fully, without needing to brace for a catch that isn't actually there.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "Genuine joy and success are real and well-earned right now.",
+      "reversed": "Reversed often points to temporarily dimmed joy or minor overconfidence -- rarely a severe reading given the card's inherent positivity."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "Judgement",
+    "definition": "Judgement represents genuine reckoning, self-evaluation, and the call to fully step into who one has actually become.",
+    "traditional_interpretation": "Classically shown as figures rising in response to a trumpet call, traditionally read as a final reckoning and rebirth into a new, truer stage.",
+    "modern_interpretation": "Modern tarot reads this as honest self-evaluation -- a real accounting of where things actually stand, and the call to act on what that reveals.",
+    "psychological_interpretation": "Relates to genuine psychological accountability and integration -- honestly reviewing where one actually stands before stepping into what's next.",
+    "positive_aspects": "Genuine clarity, honest self-evaluation, and the real relief of finally answering a call that's been building.",
+    "challenges": "Self-doubt, avoided accountability, or harsh self-judgment that overshoots honest evaluation into real self-punishment.",
+    "career_meaning": "Suggests a genuine moment of professional reckoning -- evaluating honestly whether a current path still actually fits.",
+    "relationship_meaning": "Suggests a connection reaching a genuine point of honest evaluation about where it actually stands.",
+    "growth_meaning": "Growth means answering an honest reckoning directly, rather than avoiding it or turning it into harsh self-judgment.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "A real, honest reckoning is calling -- answer it directly.",
+      "reversed": "Reversed often points to avoided self-evaluation, or self-judgment that's tipped into real harshness rather than honest accounting."
+    }
+  },
+  {
+    "system": "tarot",
+    "category": "major_arcana",
+    "topic": "The World",
+    "definition": "The World closes the Major Arcana at number 21 -- genuine completion, integration, and the real achievement of a full cycle.",
+    "traditional_interpretation": "Classically shown as a dancing figure within a wreath, traditionally read as fulfillment and the successful, integrated completion of a long journey.",
+    "modern_interpretation": "Modern tarot reads this as real, earned completion -- not just an ending, but genuine integration of everything the cycle actually involved.",
+    "psychological_interpretation": "Relates to the psychological satisfaction of real integration -- a cycle completed and internalized, not just survived or escaped.",
+    "positive_aspects": "Genuine fulfillment, real integration, and the satisfaction of a cycle actually completed well.",
+    "challenges": "Incompletion, or a genuine ending rushed past before it's actually been integrated.",
+    "career_meaning": "Suggests real professional completion or achievement -- a genuine milestone worth actually acknowledging before moving to what's next.",
+    "relationship_meaning": "Suggests a connection reaching a real, satisfying point of completion or integration.",
+    "growth_meaning": "Growth means allowing real completion to actually register and be integrated before rushing into whatever comes after it.",
+    "sources": [
+      "Arthur Edward Waite, \"The Pictorial Key to the Tarot\"",
+      "Rachel Pollack, \"Seventy-Eight Degrees of Wisdom\"",
+      "Mary K. Greer, \"Tarot for Yourself\""
+    ],
+    "confidence_level": "medium",
+    "context_notes": {
+      "upright": "A real cycle is completing well -- let it actually register before moving on.",
+      "reversed": "Reversed often points to a genuine ending left incomplete, or difficulty closing a chapter that's actually already over."
+    }
+  }
+]

@@ -83,5 +83,39 @@
     "sources": ["Stephen Arroyo, \"Astrology, Psychology, and the Four Elements\"", "Sue Tompkins, \"Aspects in Astrology\""],
     "confidence_level": "medium",
     "context_notes": null
+  },
+  {
+    "system": "western_astrology",
+    "category": "chart_pattern",
+    "topic": "Mystic Rectangle",
+    "definition": "A mystic rectangle forms when two opposition pairs are connected by alternating trines and sextiles — a closed, four-planet configuration that combines the tension of two oppositions with the ease of trine and sextile connections holding it together.",
+    "traditional_interpretation": "Traditionally read as a fortunate configuration despite its oppositions — the trine and sextile connections are thought to provide practical outlets and support that a lone opposition lacks, making the underlying tension genuinely workable rather than simply stressful.",
+    "modern_interpretation": "Modern astrology reads the mystic rectangle as tension held within a stable, supportive structure — the two oppositions provide real awareness of competing needs, while the trines and sextiles provide the practical means to actually balance them, rather than just alternate between extremes.",
+    "psychological_interpretation": "Represents an unusual capacity to hold two sets of opposing needs simultaneously without being torn apart by them — the harmonious connections give each opposition a constructive outlet rather than a purely internal conflict.",
+    "positive_aspects": "Diplomatic skill, resourcefulness, and a genuine talent for finding practical, workable balance between competing demands rather than being forced to choose one side.",
+    "challenges": "Can produce a tendency to manage tension so smoothly that it's avoided rather than genuinely resolved — the ease of the trines and sextiles can become a way to sidestep the oppositions' real questions.",
+    "career_meaning": "Favors roles requiring diplomacy, negotiation, or balancing competing stakeholder needs — mediation, project management, or any field where holding multiple demands at once is an asset.",
+    "relationship_meaning": "In synastry, a mystic rectangle formed across two people's charts suggests real tension that's genuinely workable — competing needs that can actually be balanced rather than requiring one person to consistently give way.",
+    "growth_meaning": "Growth means using the configuration's natural ease to actually engage and resolve the underlying oppositions, rather than letting smooth surface balance substitute for real resolution.",
+    "sources": ["Stephen Arroyo, \"Astrology, Psychology, and the Four Elements\"", "Sue Tompkins, \"Aspects in Astrology\""],
+    "confidence_level": "medium",
+    "context_notes": null
+  },
+  {
+    "system": "western_astrology",
+    "category": "chart_pattern",
+    "topic": "Kite",
+    "definition": "A kite forms when a fourth planet opposes one member of a Grand Trine while sextiling the other two — turning a self-contained, closed triangle of ease into a configuration with a genuine outlet and direction.",
+    "traditional_interpretation": "Traditionally read as one of the more fortunate configurations available — the Grand Trine's natural talent and ease, given an active outlet and direction through the opposition point, rather than staying comfortably self-contained.",
+    "modern_interpretation": "Modern astrology reads the kite as solving the Grand Trine's classic weakness — talent that risks staying undeveloped because it's too comfortable — by adding a planet (the 'tail') that provides real friction and motivation to actually use that talent in the world.",
+    "psychological_interpretation": "The opposition point (the tail) functions like a built-in call to action — a place of real tension and awareness that keeps the Grand Trine's natural ease from settling into complacency.",
+    "positive_aspects": "Significant natural talent (from the Grand Trine) combined with real motivation and direction to actually apply it (from the tail) — a rarer and more actionable combination than the Grand Trine alone.",
+    "challenges": "The tail planet's opposition can still produce real tension or self-consciousness, even though it ultimately serves the configuration's growth — it's motivating precisely because it isn't entirely comfortable.",
+    "career_meaning": "Often points to talent that gets genuinely developed and applied professionally, rather than staying a pleasant but underused natural gift — the tail planet's house/themes often show where that application happens.",
+    "relationship_meaning": "In synastry, a kite formed across two people's charts suggests natural ease between them that also has real direction and motivation behind it, rather than staying purely comfortable and undemanding.",
+    "growth_meaning": "Growth means actively using the tail planet's tension as motivation to apply the Grand Trine's natural talent, rather than treating it as an unwelcome complication.",
+    "sources": ["Stephen Arroyo, \"Astrology, Psychology, and the Four Elements\"", "Sue Tompkins, \"Aspects in Astrology\""],
+    "confidence_level": "medium",
+    "context_notes": null
   }
 ]
