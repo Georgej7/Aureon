@@ -189,7 +189,7 @@ body.prototype-fullscreen{overflow:hidden;}
 .chat-input button{background:var(--gold);border:none;border-radius:8px;padding:0 18px;color:#1c1509;font-weight:600;cursor:pointer;}
 
 /* ---- PRICING ---- */
-.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+.price-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
 .plan{background:var(--bg-card);border:1px solid var(--line);border-radius:16px;padding:28px;position:relative;}
 .plan.featured{border-color:var(--gold);}
 .plan .badge{position:absolute;top:-11px;left:24px;background:var(--gold);color:#1c1509;font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;letter-spacing:.5px;}
@@ -345,6 +345,14 @@ footer.note{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);co
 .site-footer a{color:var(--text-faint);}
 .site-footer a:hover{color:var(--text-dim);}
 
+/* ---- Tablet: pricing grid only ----
+   4 equal columns (added for the Practitioner tier) get cramped well above
+   the 720px mobile breakpoint below -- 2x2 reads cleanly in that gap
+   instead of one relayout jump straight from 4 columns to 1. */
+@media (max-width: 980px){
+  .price-grid{grid-template-columns:repeat(2,1fr);}
+}
+
 /* ---- Mobile (no breakpoints existed before this — every multi-column grid
    below squished rather than reflowed at narrow widths) ---- */
 @media (max-width: 720px){
@@ -375,4 +383,31 @@ footer.note{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);co
      tall one. Scale with the viewport instead, clamped so it never gets
      uncomfortably small or swallows the whole screen. */
   .chat-window{height:clamp(380px, calc(100dvh - 300px), 620px);}
+}
+
+/* ---- Print / "Save as PDF" reports ----
+   No PDF-generation dependency needed -- the browser's own print dialog
+   ("Save as PDF") is a complete, reliable export path once the page looks
+   right on paper. The dark "Orrery" theme reads badly in ink, so print
+   overrides the palette to light/high-contrast rather than printing a near-
+   black page. .print-hide marks chrome (nav, footer, buttons) that has no
+   place on a printed report. */
+@media print{
+  :root{
+    --bg: #ffffff;
+    --bg-raised: #f4f2ee;
+    --bg-card: #ffffff;
+    --gold: #8a6d1f;
+    --gold-soft: #6b5518;
+    --starlight: #2a6b78;
+    --plum: #5a4a76;
+    --text: #17151f;
+    --text-dim: #45414f;
+    --text-faint: #6d6878;
+    --line: #d8d4cc;
+  }
+  body{background:#fff;}
+  .print-hide{display:none !important;}
+  .card{border:1px solid var(--line);break-inside:avoid;}
+  a{color:inherit;text-decoration:none;}
 }

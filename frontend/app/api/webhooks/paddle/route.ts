@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { EventName } from "@paddle/paddle-node-sdk";
+import type { SubscriptionTier } from "@/lib/api";
 import { getPaddleClient } from "@/lib/paddle/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email/resend";
@@ -27,7 +28,14 @@ async function notifyUser(
 // bought, not just the subscription's status -- a status of "active" alone
 // can't distinguish a Premium purchase from a VIP one. Unknown/unrecognized
 // price IDs fail safe to "free" rather than silently granting access.
-function tierForPriceId(priceId: string | null | undefined): "free" | "premium" | "vip" {
+// Practitioner is checked first since it's a separate professional track,
+// not "VIP but more expensive" -- there's no real ordering between them to
+// get backwards, but checking it explicitly first keeps that intent clear.
+function tierForPriceId(priceId: string | null | undefined): SubscriptionTier {
+  const practitionerPriceIds = [
+    process.env.NEXT_PUBLIC_PADDLE_PRACTITIONER_PRICE_ID,
+    process.env.NEXT_PUBLIC_PADDLE_PRACTITIONER_ANNUAL_PRICE_ID,
+  ];
   const vipPriceIds = [
     process.env.NEXT_PUBLIC_PADDLE_VIP_PRICE_ID,
     process.env.NEXT_PUBLIC_PADDLE_VIP_ANNUAL_PRICE_ID,
@@ -36,6 +44,7 @@ function tierForPriceId(priceId: string | null | undefined): "free" | "premium" 
     process.env.NEXT_PUBLIC_PADDLE_PREMIUM_PRICE_ID,
     process.env.NEXT_PUBLIC_PADDLE_PREMIUM_ANNUAL_PRICE_ID,
   ];
+  if (priceId && practitionerPriceIds.includes(priceId)) return "practitioner";
   if (priceId && vipPriceIds.includes(priceId)) return "vip";
   if (priceId && premiumPriceIds.includes(priceId)) return "premium";
   return "free";
@@ -51,7 +60,7 @@ type SubscriptionLike = {
 };
 
 function mapSubscriptionStatus(subscription: SubscriptionLike): {
-  tier: "free" | "premium" | "vip";
+  tier: SubscriptionTier;
   status: "active" | "past_due" | "canceled" | "incomplete";
 } {
   const purchasedTier = tierForPriceId(subscription.items[0]?.price?.id);

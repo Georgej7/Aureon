@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import KnowledgeDetail from "@/components/KnowledgeDetail";
-import type { KnowledgeEntry, VedicChart } from "@/lib/api";
+import type { KnowledgeEntry, SubscriptionTier, VedicChart } from "@/lib/api";
 import { postVedicChart } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
 import { createClient } from "@/lib/supabase/client";
@@ -15,7 +15,7 @@ type ProfileRow = {
   latitude: number | null;
   longitude: number | null;
   utc_offset: number | null;
-  subscription_tier: "free" | "premium" | "vip";
+  subscription_tier: SubscriptionTier;
 };
 
 function yearOf(iso: string): string {
@@ -23,7 +23,7 @@ function yearOf(iso: string): string {
 }
 
 export default function VedicPage() {
-  const [tier, setTier] = useState<"free" | "premium" | "vip" | undefined>(undefined);
+  const [tier, setTier] = useState<SubscriptionTier | undefined>(undefined);
   const [hasProfile, setHasProfile] = useState<boolean | undefined>(undefined);
   const [chart, setChart] = useState<VedicChart | null>(null);
   const [content, setContent] = useState<Record<string, KnowledgeEntry>>({});
@@ -82,6 +82,8 @@ export default function VedicPage() {
           result.moon_nakshatra.name,
           result.ascendant_nakshatra?.name,
           `${result.current_mahadasha.lord} Mahadasha`,
+          "Navamsa Chart",
+          ...result.yogas.map((y) => y.yoga_type),
         ].filter((t): t is string => !!t);
         const { data: entries } = await supabase
           .from("knowledge_base")
@@ -161,8 +163,10 @@ export default function VedicPage() {
   const moonContent = content[chart.moon_nakshatra.name];
   const ascContent = chart.ascendant_nakshatra ? content[chart.ascendant_nakshatra.name] : null;
   const dashaContent = content[`${chart.current_mahadasha.lord} Mahadasha`];
+  const navamsaContent = content["Navamsa Chart"];
   const rahu = chart.planets.find((p) => p.name === "Rahu");
   const ketu = chart.planets.find((p) => p.name === "Ketu");
+  const moonNavamsa = chart.navamsa.find((n) => n.name === "Moon");
 
   return (
     <section className="screen active" id="vedic">
@@ -213,6 +217,24 @@ export default function VedicPage() {
               Rahu in {rahu?.sign ?? "—"} · Ketu in {ketu?.sign ?? "—"}
             </p>
           </div>
+
+          {moonNavamsa && (
+            <div className="card">
+              <div className="label">Navamsa (D9)</div>
+              <h3>Moon in {moonNavamsa.sign}</h3>
+              <p style={{ marginBottom: navamsaContent ? 12 : 0 }}>
+                Your Moon's finer-grained placement in the D9 chart — a second, complementary
+                layer read especially for inner disposition and committed partnership.
+              </p>
+              {navamsaContent && <p>{navamsaContent.definition}</p>}
+            </div>
+          )}
+          {navamsaContent && (
+            <div className="card">
+              <div className="label">About the Navamsa Chart</div>
+              <KnowledgeDetail entry={navamsaContent} />
+            </div>
+          )}
         </div>
 
         <div>
@@ -242,6 +264,37 @@ export default function VedicPage() {
               ))}
             </ul>
           </div>
+
+          {chart.yogas.length > 0 && (
+            <div className="card">
+              <div className="label">Yogas</div>
+              <p style={{ marginBottom: 12 }}>
+                Planetary combinations detected in your chart — a first, deliberately small set,
+                not an exhaustive list of every yoga in the tradition.
+              </p>
+              {chart.yogas.map((yoga) => {
+                const yogaContent = content[yoga.yoga_type];
+                return (
+                  <div key={yoga.yoga_type} style={{ marginBottom: 12 }}>
+                    <h3 style={{ marginBottom: 4 }}>{yoga.yoga_type}</h3>
+                    <p style={{ margin: 0, color: "var(--text-dim)", fontSize: 14 }}>
+                      {yoga.planets.join(" + ")}
+                    </p>
+                    {yogaContent && <p style={{ marginTop: 8 }}>{yogaContent.definition}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {chart.yogas.map((yoga) => {
+            const yogaContent = content[yoga.yoga_type];
+            return yogaContent ? (
+              <div className="card" key={`${yoga.yoga_type}-detail`}>
+                <div className="label">About {yoga.yoga_type}</div>
+                <KnowledgeDetail entry={yogaContent} />
+              </div>
+            ) : null;
+          })}
         </div>
       </div>
     </section>

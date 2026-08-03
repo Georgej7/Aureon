@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ApiError, postChatReply, postTransits } from "@/lib/api";
-import type { NatalChart, NumerologyProfile, Transits } from "@/lib/api";
+import type { NatalChart, NumerologyProfile, SubscriptionTier, Transits } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
@@ -97,15 +97,36 @@ function topicsForProfile(
   if (chart.houses && chart.houses[0]) topics.add(chart.houses[0].sign); // ascendant sign
   for (const aspect of chart.aspects) topics.add(aspect.aspect_type);
   for (const pattern of chart.patterns) topics.add(pattern.pattern_type);
+  // lilith/chiron/ceres/pallas/juno/vesta are newer fields -- guard for
+  // profiles saved before they existed, same reasoning as the numerology
+  // pinnacles/challenges guard below. Topic must be the body's own name
+  // ("Lilith"), not its sign -- the knowledge base entry is keyed by name,
+  // and the sign is already covered by every other planet in the loop
+  // above. (Fixing a real bug here: this previously added chart.lilith.sign
+  // instead of "Lilith", which meant the dedicated Lilith/Chiron knowledge
+  // base entries were never reachable by exact topic match, only by luck
+  // via full-text search.)
+  if (chart.lilith) topics.add("Lilith");
+  if (chart.chiron) topics.add("Chiron");
+  if (chart.ceres) topics.add("Ceres");
+  if (chart.pallas) topics.add("Pallas");
+  if (chart.juno) topics.add("Juno");
+  if (chart.vesta) topics.add("Vesta");
   for (const value of [
     numerology.life_path,
     numerology.expression,
     numerology.soul_urge,
     numerology.personality,
     numerology.personal_year,
+    // pinnacles/challenges/karmic_debts are newer fields -- guard with ?? []
+    // so profiles saved before they existed (no re-onboarding backfill) don't
+    // crash the spread on undefined.
+    ...(numerology.pinnacles ?? []),
+    ...(numerology.challenges ?? []),
   ]) {
     topics.add(`Number ${value}`);
   }
+  for (const debt of numerology.karmic_debts ?? []) topics.add(`Karmic Debt ${debt}`);
   if (transits) {
     for (const aspect of transits.aspects) {
       topics.add(`Transiting ${aspect.transiting_planet}`);
@@ -128,7 +149,7 @@ export default function ChatWindow() {
     null
   );
   const [transits, setTransits] = useState<Transits | null>(null);
-  const [tier, setTier] = useState<"free" | "premium" | "vip">("free");
+  const [tier, setTier] = useState<SubscriptionTier>("free");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -176,7 +197,7 @@ export default function ChatWindow() {
       }
       if (!cancelled) {
         setProfile({ chart: profileRow.chart, numerology: profileRow.numerology });
-        setTier((profileRow.subscription_tier as "free" | "premium" | "vip") ?? "free");
+        setTier((profileRow.subscription_tier as SubscriptionTier) ?? "free");
       }
       try {
         const result = await postTransits(

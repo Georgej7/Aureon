@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import KnowledgeDetail from "@/components/KnowledgeDetail";
-import type { KnowledgeEntry, Synastry } from "@/lib/api";
+import type { KnowledgeEntry, SubscriptionTier, Synastry } from "@/lib/api";
 import { postSynastry } from "@/lib/api";
 import { offsetToIso, zodiacSign } from "@/lib/astrology";
 import { createClient } from "@/lib/supabase/client";
@@ -111,7 +111,7 @@ function PersonForm({
 }
 
 export default function CompatibilityPage() {
-  const [tier, setTier] = useState<"free" | "premium" | "vip" | undefined>(undefined);
+  const [tier, setTier] = useState<SubscriptionTier | undefined>(undefined);
   const [personA, setPersonA] = useState<PersonInput>(BLANK_PERSON);
   const [personB, setPersonB] = useState<PersonInput>(BLANK_PERSON);
   const [submitting, setSubmitting] = useState(false);
@@ -136,7 +136,7 @@ export default function CompatibilityPage() {
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled) return;
-      setTier((data?.subscription_tier as "free" | "premium" | "vip") ?? "free");
+      setTier((data?.subscription_tier as SubscriptionTier) ?? "free");
       if (data?.birth_date) {
         setPersonA({
           name: data.full_name ?? "You",

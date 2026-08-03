@@ -14,6 +14,8 @@ const TABS = [
   { href: "/compatibility", label: "Compatibility" },
   { href: "/vedic", label: "Vedic" },
   { href: "/feng-shui", label: "Feng shui" },
+  { href: "/timing", label: "Timing" },
+  { href: "/clients", label: "Clients" },
   { href: "/pricing", label: "Pricing" },
 ];
 
@@ -44,7 +46,7 @@ export default function TopNav() {
   }
 
   return (
-    <div className="topnav">
+    <div className="topnav print-hide">
       <Link href="/" className="brand">
         <svg className="brand-mark" viewBox="0 0 40 40">
           <circle cx="20" cy="20" r="18" fill="none" stroke="#c9a24a" strokeWidth="1.2" />

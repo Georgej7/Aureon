@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import KnowledgeDetail from "@/components/KnowledgeDetail";
-import type { BaguaZone, Compass, KnowledgeEntry, KuaProfile } from "@/lib/api";
+import type { BaguaZone, Compass, KnowledgeEntry, KuaProfile, SubscriptionTier } from "@/lib/api";
 import { postBagua, postKua } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
@@ -40,7 +40,7 @@ const GRID_ORDER = [
 ];
 
 export default function FengShuiPage() {
-  const [tier, setTier] = useState<"free" | "premium" | "vip" | undefined>(undefined);
+  const [tier, setTier] = useState<SubscriptionTier | undefined>(undefined);
 
   const [birthYear, setBirthYear] = useState("");
   const [gender, setGender] = useState<"male" | "female">("female");
@@ -48,6 +48,7 @@ export default function FengShuiPage() {
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<KuaProfile | null>(null);
   const [content, setContent] = useState<KnowledgeEntry | null>(null);
+  const [elementContent, setElementContent] = useState<KnowledgeEntry | null>(null);
 
   const [facingDirection, setFacingDirection] = useState<Compass>("N");
   const [baguaSubmitting, setBaguaSubmitting] = useState(false);
@@ -71,7 +72,7 @@ export default function FengShuiPage() {
         .select("subscription_tier")
         .eq("id", session.user.id)
         .maybeSingle();
-      if (!cancelled) setTier((data?.subscription_tier as "free" | "premium" | "vip") ?? "free");
+      if (!cancelled) setTier((data?.subscription_tier as SubscriptionTier) ?? "free");
     }
     loadTier();
     return () => {
@@ -103,14 +104,16 @@ export default function FengShuiPage() {
       const result = await postKua({ birth_year: Number(birthYear), gender }, session.access_token);
       setProfile(result);
 
-      const { data: entry } = await supabase
+      const { data: entries } = await supabase
         .from("knowledge_base")
         .select(
           "system, category, topic, definition, traditional_interpretation, modern_interpretation, psychological_interpretation, positive_aspects, challenges, career_meaning, relationship_meaning, growth_meaning, sources, confidence_level, context_notes"
         )
-        .eq("topic", `Kua ${result.kua_number}`)
-        .maybeSingle();
-      setContent((entry as KnowledgeEntry) ?? null);
+        .in("topic", [`Kua ${result.kua_number}`, `${result.element} Element`]);
+      const byTopic: Record<string, KnowledgeEntry> = {};
+      for (const entry of (entries as KnowledgeEntry[]) ?? []) byTopic[entry.topic] = entry;
+      setContent(byTopic[`Kua ${result.kua_number}`] ?? null);
+      setElementContent(byTopic[`${result.element} Element`] ?? null);
     } catch {
       setError("Couldn't calculate your Kua number — is the backend running? Try again in a moment.");
     } finally {
@@ -137,7 +140,10 @@ export default function FengShuiPage() {
       const result = await postBagua({ facing_direction: facingDirection }, session.access_token);
       setZones(result.zones);
 
-      const topics = result.zones.map((z) => z.zone);
+      const topics = [
+        ...result.zones.map((z) => z.zone),
+        ...result.zones.map((z) => `${z.element} Element`),
+      ];
       const { data: entries } = await supabase
         .from("knowledge_base")
         .select(
@@ -206,6 +212,13 @@ export default function FengShuiPage() {
               <div className="card">
                 <div className="label">What this means</div>
                 <KnowledgeDetail entry={content} />
+              </div>
+            )}
+            {elementContent && (
+              <div className="card">
+                <div className="label">Your element: {profile.element}</div>
+                <p style={{ marginBottom: 12 }}>{elementContent.definition}</p>
+                <KnowledgeDetail entry={elementContent} />
               </div>
             )}
           </div>

@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ChartWheel from "@/components/ChartWheel";
 import KnowledgeDetail from "@/components/KnowledgeDetail";
-import type { KnowledgeEntry, NatalChart, NumerologyProfile, Transits, TransitAspect } from "@/lib/api";
+import type { KnowledgeEntry, NatalChart, NumerologyProfile, SubscriptionTier, Transits, TransitAspect } from "@/lib/api";
 import { postTransits } from "@/lib/api";
 import { birthstoneForSign, zodiacSign } from "@/lib/astrology";
 import { createClient } from "@/lib/supabase/client";
@@ -11,7 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 type Profile = {
   chart: NatalChart;
   numerology: NumerologyProfile;
-  subscription_tier: "free" | "premium" | "vip";
+  subscription_tier: SubscriptionTier;
 };
 
 // Slow-moving planets define a multi-week/month "theme"; fast ones define today's tone.
@@ -123,6 +124,18 @@ export default function DashboardPage() {
 
   return (
     <section className="screen active" id="dashboard">
+      {profile && (
+        <>
+          <div className="print-hide" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+            <button className="btn btn-ghost" onClick={() => window.print()}>
+              Save as PDF / Print
+            </button>
+          </div>
+          <div className="card" style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+            <ChartWheel chart={profile.chart} />
+          </div>
+        </>
+      )}
       <div className="dash-grid">
         <div>
           <div className="card">
@@ -226,7 +239,7 @@ export default function DashboardPage() {
             {transitingMoon && <p>The Moon is currently in {transitingMoon.sign}.</p>}
           </div>
           {profile?.subscription_tier === "premium" && (
-            <div className="card">
+            <div className="card print-hide">
               <div className="label">Subscription</div>
               <h3>Aureon Premium</h3>
               <p style={{ marginBottom: 14 }}>Manage your payment method or cancel anytime.</p>

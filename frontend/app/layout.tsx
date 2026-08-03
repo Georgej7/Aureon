@@ -48,7 +48,7 @@ export default function RootLayout({
           <TopNav />
           {children}
         </div>
-        <footer className="site-footer">
+        <footer className="site-footer print-hide">
           <span>© {new Date().getFullYear()} Aureon</span>
           <Link href="/terms">Terms</Link>
           <Link href="/privacy">Privacy</Link>

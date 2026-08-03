@@ -11,6 +11,7 @@ export default function PricingPage() {
   const [paddle, setPaddle] = useState<Paddle>();
   const [error, setError] = useState<string | null>(null);
   const [vipError, setVipError] = useState<string | null>(null);
+  const [practitionerError, setPractitionerError] = useState<string | null>(null);
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export default function PricingPage() {
   }, [router]);
 
   async function openCheckout(
-    tier: "premium" | "vip",
+    tier: "premium" | "vip" | "practitioner",
     monthlyEnvVar: string | undefined,
     annualEnvVar: string | undefined,
     setErrorFn: (msg: string | null) => void
@@ -80,6 +81,15 @@ export default function PricingPage() {
       process.env.NEXT_PUBLIC_PADDLE_VIP_PRICE_ID,
       process.env.NEXT_PUBLIC_PADDLE_VIP_ANNUAL_PRICE_ID,
       setVipError
+    );
+  }
+
+  function goPractitioner() {
+    return openCheckout(
+      "practitioner",
+      process.env.NEXT_PUBLIC_PADDLE_PRACTITIONER_PRICE_ID,
+      process.env.NEXT_PUBLIC_PADDLE_PRACTITIONER_ANNUAL_PRICE_ID,
+      setPractitionerError
     );
   }
 
@@ -159,6 +169,33 @@ export default function PricingPage() {
             Go VIP
           </button>
           {vipError && <p style={{ color: "#c96a4a", fontSize: 13, marginTop: 8 }}>{vipError}</p>}
+        </div>
+        <div className="plan">
+          <div className="tier">Practitioner</div>
+          {billing === "annual" ? (
+            <>
+              <div className="price">
+                $990 <span>/ year</span>
+              </div>
+              <p className="price-note">Just $82.50/mo billed annually — 2 months free</p>
+            </>
+          ) : (
+            <div className="price">
+              $99 <span>/ month</span>
+            </div>
+          )}
+          <ul>
+            <li>Everything in Premium</li>
+            <li>Client roster — unlimited saved charts for real client work</li>
+            <li>Full chart wheel + PDF/print reports to hand clients</li>
+            <li>Solar return, progressions, composite &amp; Davison charts</li>
+          </ul>
+          <button className="btn btn-gold" onClick={goPractitioner}>
+            Go Practitioner
+          </button>
+          {practitionerError && (
+            <p style={{ color: "#c96a4a", fontSize: 13, marginTop: 8 }}>{practitionerError}</p>
+          )}
         </div>
       </div>
       <footer className="note">
