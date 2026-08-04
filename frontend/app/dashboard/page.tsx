@@ -131,8 +131,11 @@ export default function DashboardPage() {
               Save as PDF / Print
             </button>
           </div>
-          <div className="card" style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+          <div className="card" style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
             <ChartWheel chart={profile.chart} />
+            <Link className="btn btn-ghost print-hide" href="/natal-report" style={{ marginTop: 16 }}>
+              View full reading →
+            </Link>
           </div>
         </>
       )}

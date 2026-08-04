@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/client";
 // crowding the bar.
 const TABS = [
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/natal-report", label: "Full reading" },
   { href: "/chat", label: "AI chat" },
   { href: "/compatibility", label: "Compatibility" },
 ];
