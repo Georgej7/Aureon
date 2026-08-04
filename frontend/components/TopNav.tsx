@@ -2,19 +2,37 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 
+// Core destinations stay as direct pill tabs. Everything else -- every
+// distinct chart/reading type -- lives under one "Tools" dropdown instead
+// of each getting its own top-level tab, the same way astro-seek surfaces
+// a dozen-plus calculators from a single "Astro Tools" menu rather than
+// flattening them all into the nav bar. "Landing" was dropped as a direct
+// tab -- the brand logo already links home, so it was a redundant entry
+// crowding the bar.
 const TABS = [
-  { href: "/", label: "Landing" },
-  { href: "/onboarding", label: "Onboarding" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/chat", label: "AI chat" },
   { href: "/compatibility", label: "Compatibility" },
-  { href: "/vedic", label: "Vedic" },
+];
+
+const TOOLS = [
+  { href: "/onboarding", label: "Create / edit profile" },
+  { href: "/vedic", label: "Vedic chart" },
+  { href: "/solar-return", label: "Solar return" },
+  { href: "/progressed", label: "Progressed chart" },
+  { href: "/composite", label: "Composite & Davison" },
+  { href: "/human-design", label: "Human Design" },
+  { href: "/tarot", label: "Tarot draw" },
+  { href: "/chinese-zodiac", label: "Chinese zodiac" },
+  { href: "/timing", label: "Financial timing" },
   { href: "/feng-shui", label: "Feng shui" },
-  { href: "/timing", label: "Timing" },
+];
+
+const TAIL_TABS = [
   { href: "/clients", label: "Clients" },
   { href: "/pricing", label: "Pricing" },
 ];
@@ -26,6 +44,9 @@ export default function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const toolsRef = useRef<HTMLDivElement>(null);
+  const toolsActive = TOOLS.some((tool) => tool.href === pathname);
 
   useEffect(() => {
     if (!SUPABASE_CONFIGURED) return;
@@ -36,6 +57,21 @@ export default function TopNav() {
     });
     return () => subscription.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!toolsOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (toolsRef.current && !toolsRef.current.contains(e.target as Node)) {
+        setToolsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [toolsOpen]);
+
+  useEffect(() => {
+    setToolsOpen(false);
+  }, [pathname]);
 
   async function handleLogOut() {
     const supabase = createClient();
@@ -59,6 +95,39 @@ export default function TopNav() {
       </Link>
       <div className="tabs">
         {TABS.map((tab) => (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className={`tab${pathname === tab.href ? " active" : ""}`}
+          >
+            {tab.label}
+          </Link>
+        ))}
+        <div className="tools-dropdown" ref={toolsRef}>
+          <button
+            type="button"
+            className={`tab${toolsActive ? " active" : ""}`}
+            onClick={() => setToolsOpen((open) => !open)}
+            aria-expanded={toolsOpen}
+          >
+            Tools ▾
+          </button>
+          {toolsOpen && (
+            <div className="tools-menu">
+              {TOOLS.map((tool) => (
+                <Link
+                  key={tool.href}
+                  href={tool.href}
+                  className={`tools-menu-item${pathname === tool.href ? " active" : ""}`}
+                  onClick={() => setToolsOpen(false)}
+                >
+                  {tool.label}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+        {TAIL_TABS.map((tab) => (
           <Link
             key={tab.href}
             href={tab.href}
