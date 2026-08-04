@@ -387,6 +387,22 @@ class AstrocartographyResponse(BaseModel):
     lines: list[PlanetLines]
 
 
+class VoidOfCourseRequest(BaseModel):
+    start_date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    days: int = Field(default=30, ge=1, le=90)
+
+
+class VoidOfCoursePeriod(BaseModel):
+    start: str  # ISO 8601 UTC -- the Moon's last major aspect before leaving its sign
+    end: str  # ISO 8601 UTC -- the exact sign-ingress moment
+    leaving_sign: str
+    entering_sign: str | None  # null if the ingress falls after the requested scan window
+
+
+class VoidOfCourseResponse(BaseModel):
+    periods: list[VoidOfCoursePeriod]
+
+
 class NumerologyProfile(BaseModel):
     life_path: int
     expression: int

@@ -8,7 +8,10 @@ from app.calc.models import (
     AspectSearchResponse,
     EphemerisDayRequest,
     EphemerisDayResponse,
+    VoidOfCourseRequest,
+    VoidOfCourseResponse,
 )
+from app.calc.void_of_course import find_void_of_course_periods
 from app.rate_limit import limiter
 
 router = APIRouter(prefix="/api/ephemeris", tags=["ephemeris"])
@@ -41,3 +44,14 @@ def aspect_search(
         hits=[AspectSearchHit(date=d, orb=o, exact=e) for d, o, e in hits],
         searched_days=searched_days,
     )
+
+
+# Heavier than a single chart lookup -- scans the Moon's position at ~90-minute
+# resolution against 9 other planets for every sign it transits in the window.
+@router.post("/void-of-course", response_model=VoidOfCourseResponse)
+@limiter.limit("10/minute")
+def void_of_course(
+    request: Request, body: VoidOfCourseRequest, _user_id: str = Depends(require_user)
+) -> VoidOfCourseResponse:
+    periods = find_void_of_course_periods(body.start_date, body.days)
+    return VoidOfCourseResponse(periods=periods)

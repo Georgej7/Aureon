@@ -393,6 +393,25 @@ export function postAstrocartography(
   return postJson<AstrocartographyResponse>("/api/astrocartography/lines", { birth }, token);
 }
 
+export type VoidOfCoursePeriod = {
+  start: string;
+  end: string;
+  leaving_sign: string;
+  entering_sign: string | null;
+};
+
+export type VoidOfCourseResponse = {
+  periods: VoidOfCoursePeriod[];
+};
+
+export function postVoidOfCourse(
+  startDate: string,
+  days: number,
+  token: string
+): Promise<VoidOfCourseResponse> {
+  return postJson<VoidOfCourseResponse>("/api/ephemeris/void-of-course", { start_date: startDate, days }, token);
+}
+
 export type KuaRequest = {
   birth_year: number;
   gender: "male" | "female";

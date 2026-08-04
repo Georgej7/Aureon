@@ -115,6 +115,18 @@ def planet_longitudes(jd: float) -> dict[str, tuple[float, bool]]:
     return result
 
 
+def two_planet_longitudes(jd: float, name_a: str, name_b: str) -> tuple[float, float]:
+    """Longitude-only lookup for exactly two named planets, skipping the
+    other 8 -- used by void-of-course's bisection loop, which evaluates the
+    Moon-vs-one-other-planet angle at ~40 midpoints per aspect crossing
+    found. Computing the full 10-planet planet_longitudes() at every one of
+    those midpoints (the first version of this code) was pure waste: 8 of
+    the 10 positions it returns are never even looked at during bisection."""
+    pos_a, _flags_a = swe.calc_ut(jd, PLANETS[name_a])
+    pos_b, _flags_b = swe.calc_ut(jd, PLANETS[name_b])
+    return pos_a[0] % 360, pos_b[0] % 360
+
+
 def _minor_body_longitude(jd: float, swe_code: int) -> tuple[float, bool]:
     """Shared logic for Chiron and the four main-belt asteroids below --
     unlike the 10 main planets, all five need the seas_18.se1 data file

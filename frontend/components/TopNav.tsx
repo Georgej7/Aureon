@@ -34,6 +34,7 @@ const TOOLS = [
   { href: "/ephemeris", label: "Ephemeris tables" },
   { href: "/aspect-search", label: "Aspect search" },
   { href: "/astrocartography", label: "AstroCartography" },
+  { href: "/void-of-course", label: "Void-of-course Moon" },
 ];
 
 const TAIL_TABS = [
