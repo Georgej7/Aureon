@@ -68,12 +68,13 @@ const ZODIAC_OUTER_R = 280;
 const ZODIAC_INNER_R = 250;
 const HOUSE_LINE_OUTER_R = 250;
 const HOUSE_NUMBER_R = 232;
-// Three radius bands for collision avoidance -- bumped from two now that
-// Lilith/Chiron/Ceres/Pallas/Juno/Vesta bring the wheel to 16 possible
-// points, where two bands started visibly overlapping in tightly-clustered
-// charts.
-const PLANET_RING_R = [205, 182, 159];
-const ASPECT_R = 140; // comfortably inside all three planet rings (see PLANET_RING_R)
+// Four radius bands for collision avoidance -- bumped from three; even with
+// three bands, a real stellium (several of the now-16 possible points within
+// a ~15deg arc, easy with six asteroid points added) could still overflow
+// the last band and visibly overlap, since the fallback always lands
+// everything past band three on band three regardless of further crowding.
+const PLANET_RING_R = [212, 191, 170, 149];
+const ASPECT_R = 128; // comfortably inside all four planet rings (see PLANET_RING_R)
 const MIN_PLANET_SEPARATION_DEG = 7;
 
 function toRadians(deg: number): number {
@@ -119,7 +120,7 @@ function assignRingBands(points: WheelPoint[], ascendant: number | null): (Wheel
         const diff = Math.abs(((screenAngleDeg(p.longitude, ascendant) - angle + 540) % 360) - 180);
         return diff < MIN_PLANET_SEPARATION_DEG;
       });
-    const ring = !collidesInRing(0) ? 0 : !collidesInRing(1) ? 1 : 2;
+    const ring = !collidesInRing(0) ? 0 : !collidesInRing(1) ? 1 : !collidesInRing(2) ? 2 : 3;
     placed.push({ ...point, ring });
   }
   return placed;
@@ -146,7 +147,8 @@ export default function ChartWheel({ chart }: { chart: NatalChart }) {
   const pointByName = new Map(placedPoints.map((p) => [p.name, p]));
 
   return (
-    <svg viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ width: "100%", height: "auto", maxWidth: 560 }}>
+    <div style={{ width: "100%", maxWidth: 560 }}>
+      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} style={{ width: "100%", height: "auto" }}>
       <circle cx={CENTER} cy={CENTER} r={ZODIAC_OUTER_R} fill="none" stroke="var(--line)" strokeWidth={1} />
       <circle cx={CENTER} cy={CENTER} r={ZODIAC_INNER_R} fill="none" stroke="var(--line)" strokeWidth={1} />
       <circle cx={CENTER} cy={CENTER} r={ASPECT_R} fill="none" stroke="var(--line)" strokeWidth={1} />
@@ -270,6 +272,40 @@ export default function ChartWheel({ chart }: { chart: NatalChart }) {
           MC
         </text>
       )}
-    </svg>
+      </svg>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "6px 16px",
+          justifyContent: "center",
+          marginTop: 10,
+          fontSize: 11,
+          color: "var(--text-faint)",
+        }}
+      >
+        {[
+          { label: "Conjunction", color: "var(--plum)" },
+          { label: "Trine / Sextile", color: "var(--gold)" },
+          { label: "Square / Opposition", color: "#c96a4a" },
+        ].map((item) => (
+          <span key={item.label} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+            <span
+              style={{
+                display: "inline-block",
+                width: 10,
+                height: 2,
+                background: item.color,
+              }}
+            />
+            {item.label}
+          </span>
+        ))}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+          <span style={{ color: "#c96a4a", fontWeight: 600 }}>R</span>
+          Retrograde
+        </span>
+      </div>
+    </div>
   );
 }
