@@ -10,6 +10,7 @@ from slowapi.middleware import SlowAPIMiddleware
 load_dotenv()
 
 from app.api import (  # noqa: E402 (must follow load_dotenv())
+    astrocartography,
     chart,
     chat,
     chinese_astrology,
@@ -50,6 +51,7 @@ app.include_router(chinese_astrology.router)
 app.include_router(human_design.router)
 app.include_router(electional.router)
 app.include_router(ephemeris.router)
+app.include_router(astrocartography.router)
 
 
 @app.get("/health")

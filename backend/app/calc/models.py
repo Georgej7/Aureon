@@ -366,6 +366,27 @@ class AspectSearchResponse(BaseModel):
     searched_days: int
 
 
+class AstrocartographyRequest(BaseModel):
+    birth: BirthData
+
+
+class AstrocartographyLatLon(BaseModel):
+    latitude: float
+    longitude: float
+
+
+class PlanetLines(BaseModel):
+    planet: str
+    mc_longitude: float  # a single meridian -- MC/IC are straight vertical lines
+    ic_longitude: float
+    asc_curve: list[AstrocartographyLatLon]  # ASC/DSC are curved -- one point per sampled latitude
+    desc_curve: list[AstrocartographyLatLon]
+
+
+class AstrocartographyResponse(BaseModel):
+    lines: list[PlanetLines]
+
+
 class NumerologyProfile(BaseModel):
     life_path: int
     expression: int

@@ -32,6 +32,7 @@ const TOOLS = [
   { href: "/feng-shui", label: "Feng shui" },
   { href: "/ephemeris", label: "Ephemeris tables" },
   { href: "/aspect-search", label: "Aspect search" },
+  { href: "/astrocartography", label: "AstroCartography" },
 ];
 
 const TAIL_TABS = [

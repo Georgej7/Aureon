@@ -202,6 +202,26 @@ def sidereal_longitudes(jd: float) -> dict[str, tuple[float, bool]]:
     return result
 
 
+def planet_equatorial(jd: float, swe_code: int) -> tuple[float, float]:
+    """Right ascension and declination (degrees) for a body -- used by
+    astrocartography, which works in the equatorial frame (RA/Dec + sidereal
+    time), not the ecliptic frame (longitude/latitude) everything else in
+    this module uses. FLG_EQUATORIAL asks swisseph to do the ecliptic ->
+    equatorial conversion itself (true obliquity, nutation, etc. all
+    handled internally) rather than hand-rolling that trig, the same
+    reasoning as leaning on swisseph for everything else astronomical in
+    this project."""
+    pos, _flags = swe.calc_ut(jd, swe_code, swe.FLG_EQUATORIAL)
+    return pos[0] % 360, pos[1]
+
+
+def greenwich_sidereal_time_deg(jd: float) -> float:
+    """Greenwich Sidereal Time in degrees (swe.sidtime returns hours). This
+    plus a geographic longitude gives Local Sidereal Time, the quantity
+    astrocartography's MC/IC/ASC/DSC lines are all defined against."""
+    return swe.sidtime(jd) * 15
+
+
 def sidereal_ascendant(jd: float, latitude: float, longitude: float) -> float:
     """Sidereal ascendant degree, for nakshatra/whole-sign-house purposes.
     Whole-sign houses (the traditional Vedic system) don't need the other 11

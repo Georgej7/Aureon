@@ -372,6 +372,27 @@ export function postAspectSearch(
   return postJson<AspectSearchResponse>("/api/ephemeris/aspect-search", payload, token);
 }
 
+export type AstrocartographyLatLon = { latitude: number; longitude: number };
+
+export type PlanetLines = {
+  planet: string;
+  mc_longitude: number;
+  ic_longitude: number;
+  asc_curve: AstrocartographyLatLon[];
+  desc_curve: AstrocartographyLatLon[];
+};
+
+export type AstrocartographyResponse = {
+  lines: PlanetLines[];
+};
+
+export function postAstrocartography(
+  birth: NatalChartRequest,
+  token: string
+): Promise<AstrocartographyResponse> {
+  return postJson<AstrocartographyResponse>("/api/astrocartography/lines", { birth }, token);
+}
+
 export type KuaRequest = {
   birth_year: number;
   gender: "male" | "female";
