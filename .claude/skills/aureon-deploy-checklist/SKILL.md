@@ -60,11 +60,18 @@ the coordinates a screenshot suggests. The reliable method: `document.querySelec
 textarea, *then* send keys — never trust a click landed without checking
 `document.activeElement` first.
 
-## 4. Commit and push — only with explicit per-instance permission
+## 4. Commit and push — pre-authorized, conditional on step 1 passing
 
-Never push without the user explicitly approving *this* push. Write a commit message that
-explains *why*, not just what changed (see prior commits in this repo for the established
-style — 1-2 sentence body explaining the reasoning, not a changelog).
+Gio explicitly pre-authorized this (2026-08-04): push to `main` without asking first,
+**as long as step 1 (build/tests) actually passed** — he doesn't have time to sit at the
+PC approving every deploy. This covers ordinary code changes: bug fixes, new pages/features,
+refactors. It does **not** cover anything step 1 can't catch the risk of — applying a
+Supabase migration (step 3, still needs his own hand in the SQL Editor), rotating/changing
+a secret or env var, deleting data, or anything else genuinely destructive/irreversible;
+still confirm before those specifically, and say plainly why. If step 1 fails, stop and fix
+it — don't push a red build under this authorization. Write a commit message that explains
+*why*, not just what changed (see prior commits in this repo for the established style —
+1-2 sentence body explaining the reasoning, not a changelog).
 
 ## 5. Wait for Render auto-deploy, then verify live
 
