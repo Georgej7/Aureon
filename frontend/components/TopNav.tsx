@@ -35,6 +35,7 @@ const TOOLS = [
   { href: "/aspect-search", label: "Aspect search" },
   { href: "/astrocartography", label: "AstroCartography" },
   { href: "/void-of-course", label: "Void-of-course Moon" },
+  { href: "/famous-people", label: "Famous people" },
 ];
 
 const TAIL_TABS = [
