@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import ChartWheel from "@/components/ChartWheel";
+import LocationField, { LocationValue } from "@/components/LocationField";
 import type { NatalChart, SubscriptionTier } from "@/lib/api";
 import { postCompositeChart, postDavisonChart } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
@@ -12,8 +13,7 @@ type PersonInput = {
   name: string;
   birthDate: string;
   birthTime: string;
-  latitude: string;
-  longitude: string;
+  location: LocationValue;
   utcOffset: string;
 };
 
@@ -21,21 +21,20 @@ const BLANK_PERSON: PersonInput = {
   name: "",
   birthDate: "",
   birthTime: "",
-  latitude: "",
-  longitude: "",
+  location: { displayName: "", latitude: null, longitude: null },
   utcOffset: "0",
 };
 
 function toBirthDataPayload(person: PersonInput) {
   const hasTime = person.birthTime.trim() !== "";
-  const hasLocation = person.latitude.trim() !== "" && person.longitude.trim() !== "";
+  const hasLocation = person.location.latitude !== null && person.location.longitude !== null;
   const datetime = `${person.birthDate}T${hasTime ? person.birthTime : "12:00"}:00${offsetToIso(
     Number(person.utcOffset)
   )}`;
   return {
     datetime,
     time_known: hasTime,
-    ...(hasLocation ? { latitude: Number(person.latitude), longitude: Number(person.longitude) } : {}),
+    ...(hasLocation ? { latitude: person.location.latitude!, longitude: person.location.longitude! } : {}),
   };
 }
 
@@ -77,26 +76,11 @@ function PersonForm({
           />
         </div>
       </div>
-      <div className="row2">
-        <div className="field">
-          <label>Latitude (optional)</label>
-          <input
-            type="number"
-            step="0.0001"
-            value={person.latitude}
-            onChange={(e) => onChange({ ...person, latitude: e.target.value })}
-          />
-        </div>
-        <div className="field">
-          <label>Longitude (optional)</label>
-          <input
-            type="number"
-            step="0.0001"
-            value={person.longitude}
-            onChange={(e) => onChange({ ...person, longitude: e.target.value })}
-          />
-        </div>
-      </div>
+      <LocationField
+        label="Birth location (optional)"
+        value={person.location}
+        onChange={(location) => onChange({ ...person, location })}
+      />
       <div className="field">
         <label>UTC offset at birth</label>
         <input
@@ -133,7 +117,7 @@ export default function CompositePage() {
       }
       const { data } = await supabase
         .from("profiles")
-        .select("full_name, birth_date, birth_time, latitude, longitude, utc_offset, subscription_tier")
+        .select("full_name, birth_date, birth_time, birth_location, latitude, longitude, utc_offset, subscription_tier")
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled) return;
@@ -143,9 +127,11 @@ export default function CompositePage() {
           name: data.full_name ?? "You",
           birthDate: data.birth_date,
           birthTime: data.birth_time ?? "",
-          latitude: data.latitude !== null && data.latitude !== undefined ? String(data.latitude) : "",
-          longitude:
-            data.longitude !== null && data.longitude !== undefined ? String(data.longitude) : "",
+          location: {
+            displayName: data.birth_location ?? "",
+            latitude: data.latitude ?? null,
+            longitude: data.longitude ?? null,
+          },
           utcOffset: data.utc_offset !== null && data.utc_offset !== undefined ? String(data.utc_offset) : "0",
         });
       }
