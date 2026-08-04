@@ -2,38 +2,46 @@
 
 import type { Aspect, NatalChart, PlanetPlacement } from "@/lib/api";
 
+// U+FE0E (text variation selector) forces plain line-art glyph rendering
+// instead of the colorful emoji-badge rendering Windows/Segoe UI Emoji uses
+// for these codepoints by default -- without it, every sign/planet renders
+// as a small colored square with an illegible icon inside. The ambient
+// Starfield background deliberately omits this selector (emoji color is
+// wanted there); a functional chart wheel needs the opposite choice.
+const TP = "︎";
+
 const ZODIAC_SIGNS: { name: string; glyph: string }[] = [
-  { name: "Aries", glyph: "♈" },
-  { name: "Taurus", glyph: "♉" },
-  { name: "Gemini", glyph: "♊" },
-  { name: "Cancer", glyph: "♋" },
-  { name: "Leo", glyph: "♌" },
-  { name: "Virgo", glyph: "♍" },
-  { name: "Libra", glyph: "♎" },
-  { name: "Scorpio", glyph: "♏" },
-  { name: "Sagittarius", glyph: "♐" },
-  { name: "Capricorn", glyph: "♑" },
-  { name: "Aquarius", glyph: "♒" },
-  { name: "Pisces", glyph: "♓" },
+  { name: "Aries", glyph: "♈" + TP },
+  { name: "Taurus", glyph: "♉" + TP },
+  { name: "Gemini", glyph: "♊" + TP },
+  { name: "Cancer", glyph: "♋" + TP },
+  { name: "Leo", glyph: "♌" + TP },
+  { name: "Virgo", glyph: "♍" + TP },
+  { name: "Libra", glyph: "♎" + TP },
+  { name: "Scorpio", glyph: "♏" + TP },
+  { name: "Sagittarius", glyph: "♐" + TP },
+  { name: "Capricorn", glyph: "♑" + TP },
+  { name: "Aquarius", glyph: "♒" + TP },
+  { name: "Pisces", glyph: "♓" + TP },
 ];
 
 const PLANET_GLYPHS: Record<string, string> = {
-  Sun: "☉",
-  Moon: "☽",
-  Mercury: "☿",
-  Venus: "♀",
-  Mars: "♂",
-  Jupiter: "♃",
-  Saturn: "♄",
-  Uranus: "♅",
-  Neptune: "♆",
-  Pluto: "♇",
-  Lilith: "⚸",
-  Chiron: "⚷",
-  Ceres: "⚳",
-  Pallas: "⚴",
-  Juno: "⚵",
-  Vesta: "⚶",
+  Sun: "☉" + TP,
+  Moon: "☽" + TP,
+  Mercury: "☿" + TP,
+  Venus: "♀" + TP,
+  Mars: "♂" + TP,
+  Jupiter: "♃" + TP,
+  Saturn: "♄" + TP,
+  Uranus: "♅" + TP,
+  Neptune: "♆" + TP,
+  Pluto: "♇" + TP,
+  Lilith: "⚸" + TP,
+  Chiron: "⚷" + TP,
+  Ceres: "⚳" + TP,
+  Pallas: "⚴" + TP,
+  Juno: "⚵" + TP,
+  Vesta: "⚶" + TP,
 };
 
 // Soft aspects (trine/sextile) read as harmonious -- gold, matching the
