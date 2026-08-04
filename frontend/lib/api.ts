@@ -337,6 +337,41 @@ export function postFinancialTiming(
   return postJson<{ days: ElectionalDay[] }>("/api/electional/financial-timing", payload, token);
 }
 
+export type EphemerisDayResponse = {
+  date: string;
+  planets: PlanetPlacement[];
+};
+
+export function postEphemerisDay(date: string, token: string): Promise<EphemerisDayResponse> {
+  return postJson<EphemerisDayResponse>("/api/ephemeris/day", { date }, token);
+}
+
+export type AspectSearchRequest = {
+  planet_a: string;
+  planet_b: string;
+  aspect_type: string;
+  start_date: string;
+  days?: number;
+};
+
+export type AspectSearchHit = {
+  date: string;
+  orb: number;
+  exact: boolean;
+};
+
+export type AspectSearchResponse = {
+  hits: AspectSearchHit[];
+  searched_days: number;
+};
+
+export function postAspectSearch(
+  payload: AspectSearchRequest,
+  token: string
+): Promise<AspectSearchResponse> {
+  return postJson<AspectSearchResponse>("/api/ephemeris/aspect-search", payload, token);
+}
+
 export type KuaRequest = {
   birth_year: number;
   gender: "male" | "female";

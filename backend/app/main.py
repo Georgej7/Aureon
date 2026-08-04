@@ -14,6 +14,7 @@ from app.api import (  # noqa: E402 (must follow load_dotenv())
     chat,
     chinese_astrology,
     electional,
+    ephemeris,
     feng_shui,
     human_design,
     numerology,
@@ -48,6 +49,7 @@ app.include_router(tarot.router)
 app.include_router(chinese_astrology.router)
 app.include_router(human_design.router)
 app.include_router(electional.router)
+app.include_router(ephemeris.router)
 
 
 @app.get("/health")

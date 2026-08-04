@@ -30,6 +30,8 @@ const TOOLS = [
   { href: "/chinese-zodiac", label: "Chinese zodiac" },
   { href: "/timing", label: "Financial timing" },
   { href: "/feng-shui", label: "Feng shui" },
+  { href: "/ephemeris", label: "Ephemeris tables" },
+  { href: "/aspect-search", label: "Aspect search" },
 ];
 
 const TAIL_TABS = [

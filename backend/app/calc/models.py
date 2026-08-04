@@ -338,6 +338,34 @@ class TarotCard(BaseModel):
     upright: bool
 
 
+class EphemerisDayRequest(BaseModel):
+    date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")  # "YYYY-MM-DD"
+
+
+class EphemerisDayResponse(BaseModel):
+    date: str
+    planets: list[PlanetPlacement]  # house is always null -- a plain ephemeris has no location/houses
+
+
+class AspectSearchRequest(BaseModel):
+    planet_a: str
+    planet_b: str
+    aspect_type: str
+    start_date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    days: int = Field(default=365, ge=1, le=3650)  # up to 10 years -- outer-planet aspects can be rare
+
+
+class AspectSearchHit(BaseModel):
+    date: str
+    orb: float
+    exact: bool  # within 0.1 degree -- close enough to call it "exact" for that day
+
+
+class AspectSearchResponse(BaseModel):
+    hits: list[AspectSearchHit]
+    searched_days: int
+
+
 class NumerologyProfile(BaseModel):
     life_path: int
     expression: int

@@ -518,6 +518,64 @@ def build_composite_chart(request: CompositeChartRequest) -> NatalChart:
     )
 
 
+def ephemeris_for_date(date: str) -> list[PlanetPlacement]:
+    """Planetary positions for a plain calendar date, no birth data involved
+    -- a reference-table lookup (astro-seek-style "Ephemeris Tables"), not a
+    chart. Snapshot taken at 12:00 UT, the same noon-UT convention already
+    used elsewhere in this codebase as the birth-time-unknown fallback (see
+    onboarding), rather than the 00:00 UT convention some published
+    ephemerides use -- documented in the API response as noon UT so the
+    convention is never ambiguous to the caller."""
+    jd = ephemeris.to_julian_day(f"{date}T12:00:00+00:00")
+    raw_planets = ephemeris.planet_longitudes(jd)
+    placements = []
+    for name, (longitude, retrograde) in raw_planets.items():
+        sign, sign_degree = longitude_to_sign(longitude)
+        placements.append(
+            PlanetPlacement(
+                name=name, longitude=longitude, sign=sign, sign_degree=sign_degree, house=None, retrograde=retrograde
+            )
+        )
+    return placements
+
+
+def search_aspect(
+    planet_a: str, planet_b: str, aspect_type: str, start_date: str, days: int
+) -> tuple[list[tuple[str, float, bool]], int]:
+    """Scans forward day-by-day (12:00 UT snapshots, same convention as
+    ephemeris_for_date) for days where the given aspect is within orb --
+    an astro-seek-style "aspect search engine". Daily resolution rather than
+    exact-moment root-finding: perfectly fine for the outer-planet transits
+    this tool is mainly for (Jupiter/Saturn/Uranus/Neptune/Pluto move well
+    under 1deg/day, so no exact hit is ever more than half a day from the
+    nearest sampled date), but can double-count or skip fast movers like the
+    Moon -- documented as a known limitation rather than silently wrong.
+    Matches the same (name, angle, orb) triples as compute_aspects/
+    ASPECT_DEFINITIONS so "Square" here means the same 8deg orb it means on
+    a natal chart."""
+    definition = next((d for d in ASPECT_DEFINITIONS if d[0] == aspect_type), None)
+    if definition is None:
+        raise ValueError(f"Unknown aspect type: {aspect_type}")
+    _name, target_angle, orb = definition
+
+    start = datetime.fromisoformat(f"{start_date}T12:00:00+00:00")
+    hits: list[tuple[str, float, bool]] = []
+    for offset in range(days):
+        day = start + timedelta(days=offset)
+        jd = ephemeris.to_julian_day(day.isoformat())
+        raw_planets = ephemeris.planet_longitudes(jd)
+        if planet_a not in raw_planets or planet_b not in raw_planets:
+            raise ValueError(f"Unknown planet: {planet_a if planet_a not in raw_planets else planet_b}")
+        lon_a, _ = raw_planets[planet_a]
+        lon_b, _ = raw_planets[planet_b]
+        diff = abs(lon_a - lon_b) % 360
+        diff = min(diff, 360 - diff)
+        delta = abs(diff - target_angle)
+        if delta <= orb:
+            hits.append((day.date().isoformat(), round(delta, 2), delta <= 0.1))
+    return hits, days
+
+
 def build_vedic_chart(birth: BirthData) -> VedicChart:
     jd = ephemeris.to_julian_day(birth.datetime)
     raw_planets = ephemeris.sidereal_longitudes(jd)
