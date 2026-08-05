@@ -87,7 +87,13 @@ export default function ProgressedPage() {
             time_known: hasTime,
             ...(hasLocation ? { latitude: profileRow.latitude!, longitude: profileRow.longitude! } : {}),
           },
-          target_date: targetDate,
+          // Backend requires a full ISO datetime with a UTC offset here (it
+          // subtracts this from the birth datetime, which fails outright on
+          // a naive/offset-less value) -- the date picker only ever gives a
+          // bare "YYYY-MM-DD", so noon UT is appended, same convention as
+          // every other date-only lookup in this codebase (ephemeris,
+          // aspect search).
+          target_date: `${targetDate}T12:00:00+00:00`,
         },
         session.access_token
       );
