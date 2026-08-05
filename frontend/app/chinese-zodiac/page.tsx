@@ -2,13 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { ChineseZodiacProfile } from "@/lib/api";
+import KnowledgeDetail from "@/components/KnowledgeDetail";
+import type { ChineseZodiacProfile, KnowledgeEntry } from "@/lib/api";
 import { postChineseZodiac } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
+
+const KNOWLEDGE_COLUMNS =
+  "system, category, topic, definition, traditional_interpretation, modern_interpretation, psychological_interpretation, positive_aspects, challenges, career_meaning, relationship_meaning, growth_meaning, sources, confidence_level, context_notes";
 
 export default function ChineseZodiacPage() {
   const [hasProfile, setHasProfile] = useState<boolean | undefined>(undefined);
   const [profile, setProfile] = useState<ChineseZodiacProfile | null>(null);
+  const [animalEntry, setAnimalEntry] = useState<KnowledgeEntry | null>(null);
+  const [elementEntry, setElementEntry] = useState<KnowledgeEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,6 +48,21 @@ export default function ChineseZodiacPage() {
         const birthYear = new Date(data.birth_date).getUTCFullYear();
         const result = await postChineseZodiac(birthYear, session.access_token);
         if (!cancelled) setProfile(result);
+        // Content topics for this system are "{Animal}" and "{Element} Year"
+        // (distinct from Feng Shui's separate "{Element} Element" set, which
+        // is a different content file entirely) -- was never queried at
+        // all before, so the page only ever showed the three raw stat
+        // words with zero explanation of what any of them meant.
+        const { data: entries } = await supabase
+          .from("knowledge_base")
+          .select(KNOWLEDGE_COLUMNS)
+          .in("topic", [result.animal, `${result.element} Year`]);
+        if (!cancelled) {
+          setAnimalEntry((entries as KnowledgeEntry[])?.find((e) => e.topic === result.animal) ?? null);
+          setElementEntry(
+            (entries as KnowledgeEntry[])?.find((e) => e.topic === `${result.element} Year`) ?? null
+          );
+        }
       } catch {
         if (!cancelled) setError("Couldn't compute your Chinese zodiac — is the backend running? Try again in a moment.");
       } finally {
@@ -89,22 +110,40 @@ export default function ChineseZodiacPage() {
       {error && <p style={{ color: "#c96a4a", fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
       {profile && (
-        <div className="card">
-          <div className="stat-row">
-            <div className="stat">
-              <div className="val">{profile.animal}</div>
-              <div className="lbl">Animal</div>
-            </div>
-            <div className="stat">
-              <div className="val">{profile.element}</div>
-              <div className="lbl">Element</div>
-            </div>
-            <div className="stat">
-              <div className="val">{profile.yin_yang}</div>
-              <div className="lbl">Polarity</div>
+        <>
+          <div className="card">
+            <div className="stat-row">
+              <div className="stat">
+                <div className="val">{profile.animal}</div>
+                <div className="lbl">Animal</div>
+              </div>
+              <div className="stat">
+                <div className="val">{profile.element}</div>
+                <div className="lbl">Element</div>
+              </div>
+              <div className="stat">
+                <div className="val">{profile.yin_yang}</div>
+                <div className="lbl">Polarity</div>
+              </div>
             </div>
           </div>
-        </div>
+          {animalEntry && (
+            <div className="card">
+              <div className="label">{profile.animal}</div>
+              <p style={{ marginBottom: 12 }}>{animalEntry.definition}</p>
+              <KnowledgeDetail entry={animalEntry} />
+            </div>
+          )}
+          {elementEntry && (
+            <div className="card">
+              <div className="label">
+                {profile.element} · {profile.yin_yang}
+              </div>
+              <p style={{ marginBottom: 12 }}>{elementEntry.definition}</p>
+              <KnowledgeDetail entry={elementEntry} />
+            </div>
+          )}
+        </>
       )}
     </section>
   );

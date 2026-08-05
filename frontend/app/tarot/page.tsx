@@ -1,12 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import type { TarotCard } from "@/lib/api";
+import KnowledgeDetail from "@/components/KnowledgeDetail";
+import type { KnowledgeEntry, TarotCard } from "@/lib/api";
 import { postTarotDraw } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
+const KNOWLEDGE_COLUMNS =
+  "system, category, topic, definition, traditional_interpretation, modern_interpretation, psychological_interpretation, positive_aspects, challenges, career_meaning, relationship_meaning, growth_meaning, sources, confidence_level, context_notes";
+
 export default function TarotPage() {
   const [card, setCard] = useState<TarotCard | null>(null);
+  const [entry, setEntry] = useState<KnowledgeEntry | null>(null);
   const [drawing, setDrawing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,6 +30,18 @@ export default function TarotPage() {
       const seed = `${session.user.id}:${Date.now()}`;
       const result = await postTarotDraw(seed, session.access_token);
       setCard(result);
+      // The card draw and its written meaning are two separate systems
+      // (backend/app/calc/tarot.py just picks a name; the interpretation
+      // lives in the knowledge base, same pattern as every other reading in
+      // this app) -- this was previously never wired together, so drawing
+      // a card showed only its name with no meaning attached at all.
+      const { data } = await supabase
+        .from("knowledge_base")
+        .select(KNOWLEDGE_COLUMNS)
+        .eq("system", "tarot")
+        .eq("topic", result.name)
+        .maybeSingle();
+      setEntry((data as KnowledgeEntry) ?? null);
     } catch {
       setError("Couldn't draw a card — is the backend running? Try again in a moment.");
     } finally {
@@ -66,6 +83,20 @@ export default function TarotPage() {
           {drawing ? "Drawing…" : card ? "Draw again" : "Draw a card"}
         </button>
       </div>
+
+      {card && entry && (
+        <div className="card" style={{ maxWidth: 640, marginTop: 24 }}>
+          {!card.upright && (
+            <p className="sub" style={{ marginBottom: 16 }}>
+              Reversed generally points to this meaning turned inward, delayed, or blocked —
+              read the upright meaning below as the starting point, then consider what&apos;s
+              holding it back.
+            </p>
+          )}
+          <p style={{ marginBottom: 16 }}>{entry.definition}</p>
+          <KnowledgeDetail entry={entry} />
+        </div>
+      )}
     </section>
   );
 }
