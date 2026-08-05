@@ -1,6 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { dominantElement, type Element } from "@/lib/astrology";
+import { createClient } from "@/lib/supabase/client";
+
+// Per-element palette bias -- the ambient background subtly shifts toward
+// whichever element dominates the signed-in user's own chart (Fire=warmer/
+// more active, Water=deeper blue/calmer, etc.) rather than everyone seeing
+// an identical sky. Deliberately a *bias*, not a full recolor: the existing
+// default palette still shows through most of the time (see resize()'s
+// tint-blend below) so the site's core visual identity stays intact for
+// logged-out visitors and doesn't lurch when it does apply.
+const ELEMENT_PALETTE: Record<Element, { nebula: [string, string, string]; starTint: string; cometColor: string }> = {
+  Fire: { nebula: ["196,110,60", "180,146,79", "150,60,40"], starTint: "255,200,150", cometColor: "255,210,170" },
+  Earth: { nebula: ["120,110,70", "150,130,90", "90,100,70"], starTint: "224,214,180", cometColor: "230,215,175" },
+  Air: { nebula: ["150,180,210", "168,220,232", "190,200,230"], starTint: "205,228,240", cometColor: "215,232,245" },
+  Water: { nebula: ["70,100,160", "90,80,160", "60,120,150"], starTint: "175,205,238", cometColor: "185,212,245" },
+};
 
 /**
  * Ambient cosmos background: layered nebula glow, parallax starfield, occasional
@@ -118,6 +134,7 @@ export default function Starfield() {
   const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null);
   const selectedRef = useRef<string | null>(null);
   const latestPositionsRef = useRef<{ name: string; px: number; py: number; r: number }[]>([]);
+  const [rareEventLabel, setRareEventLabel] = useState<string | null>(null);
 
   useEffect(() => {
     selectedRef.current = selectedPlanet;
@@ -149,6 +166,18 @@ export default function Starfield() {
     let milkyWayStars: MilkyWayStar[] = [];
     let mx = 0,
       my = 0;
+
+    // Populated asynchronously (if the visitor is signed in and has a
+    // completed profile) -- frame()/resize() below are closures over these
+    // `let` bindings, so mutating them once the fetch resolves is visible
+    // on the next animation frame with no extra plumbing. Stays empty/null
+    // (falling back to the generic look) for logged-out visitors or any
+    // fetch failure -- this is a decorative background, never worth
+    // surfacing an error for.
+    let natalPoints: { name: string; longitude: number }[] = [];
+    let natalAspects: { a: string; b: string }[] = [];
+    let element: Element | null = null;
+    let scrollProgress = 0;
 
     // Real asterisms, not decorative sparkle -- fixed screen-fraction
     // positions (roughly true to each shape) so the sky reads as charted,
@@ -221,11 +250,20 @@ export default function Starfield() {
       w = canvas.width = window.innerWidth;
       h = canvas.height = window.innerHeight;
       const count = Math.round((w * h) / 4500);
+      const palette = element ? ELEMENT_PALETTE[element] : null;
       stars = Array.from({ length: count }, () => {
         const layer = Math.random();
         const tint = Math.random();
+        // Palette bias only claims a minority of stars (35%) -- the sky
+        // should read as recognizably "Aureon" first, personalized second.
         const tintColor =
-          tint < 0.7 ? "242,237,226" : tint < 0.87 ? "168,220,232" : "212,180,130";
+          palette && tint < 0.35
+            ? palette.starTint
+            : tint < 0.7
+              ? "242,237,226"
+              : tint < 0.87
+                ? "168,220,232"
+                : "212,180,130";
         return {
           x: Math.random() * w,
           y: Math.random() * h,
@@ -239,9 +277,9 @@ export default function Starfield() {
         };
       });
       nebulas = [
-        { x: w * 0.18, y: h * 0.25, r: Math.max(w, h) * 0.35, color: "180,146,79", depth: 0.15 },
-        { x: w * 0.82, y: h * 0.15, r: Math.max(w, h) * 0.28, color: "111,95,140", depth: 0.25 },
-        { x: w * 0.5, y: h * 0.85, r: Math.max(w, h) * 0.32, color: "111,95,140", depth: 0.1 },
+        { x: w * 0.18, y: h * 0.25, r: Math.max(w, h) * 0.35, color: palette?.nebula[0] ?? "180,146,79", depth: 0.15 },
+        { x: w * 0.82, y: h * 0.15, r: Math.max(w, h) * 0.28, color: palette?.nebula[1] ?? "111,95,140", depth: 0.25 },
+        { x: w * 0.5, y: h * 0.85, r: Math.max(w, h) * 0.32, color: palette?.nebula[2] ?? "111,95,140", depth: 0.1 },
       ];
 
       // Extra pinpoint density inside the Milky Way band -- coordinates are
@@ -269,6 +307,15 @@ export default function Starfield() {
       mx = e.clientX / w - 0.5;
       my = e.clientY / h - 0.5;
       document.body.style.cursor = hitTestPlanet(e.clientX, e.clientY) ? "pointer" : "";
+    }
+    // Scroll depth stands in for "zooming out" -- there's no real camera/3D
+    // scene to pull back in yet, but a scroll-linked reveal delivers the
+    // same idea (a hidden thing that surfaces as you go deeper into the
+    // page) with what actually exists today.
+    function handleScroll() {
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - doc.clientHeight;
+      scrollProgress = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
     }
 
     // #starfield sits behind .app in z-order, but .app's own layout boxes
@@ -300,7 +347,35 @@ export default function Starfield() {
     window.addEventListener("resize", handleResize);
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("click", handleWindowClick);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     resize();
+    handleScroll();
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session || cancelled) return;
+        const { data } = await supabase.from("profiles").select("chart").eq("id", session.user.id).maybeSingle();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const chart = (data as any)?.chart;
+        if (!chart || cancelled) return;
+        const extraPoints = [chart.lilith, chart.chiron, chart.ceres, chart.pallas, chart.juno, chart.vesta].filter(Boolean);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        natalPoints = [...chart.planets, ...extraPoints].map((p: any) => ({ name: p.name, longitude: p.longitude }));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        natalAspects = (chart.aspects ?? []).map((a: any) => ({ a: a.planet_a, b: a.planet_b }));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        element = dominantElement(chart.planets.map((p: any) => p.sign));
+        resize(); // regenerate stars/nebulas now that the element bias is known
+      } catch {
+        // Ambient background degrades gracefully to the generic look on any
+        // failure here -- never worth surfacing an error for decoration.
+      }
+    })();
 
     let t = 0;
     let comets: { x: number; y: number; vx: number; vy: number; life: number; maxLife: number }[] = [];
@@ -326,14 +401,15 @@ export default function Starfield() {
         nextCometAt = t + 240 + Math.random() * 360;
       }
       comets = comets.filter((c) => c.life < c.maxLife);
+      const cometColor = element ? ELEMENT_PALETTE[element].cometColor : "255,250,235";
       for (const c of comets) {
         c.life++;
         const cx2 = c.x + c.vx * c.life,
           cy2 = c.y + c.vy * c.life;
         const fade = 1 - c.life / c.maxLife;
         const grad = ctx.createLinearGradient(cx2, cy2, cx2 - c.vx * 10, cy2 - c.vy * 10);
-        grad.addColorStop(0, "rgba(255,250,235," + (0.9 * fade).toFixed(2) + ")");
-        grad.addColorStop(1, "rgba(255,250,235,0)");
+        grad.addColorStop(0, "rgba(" + cometColor + "," + (0.9 * fade).toFixed(2) + ")");
+        grad.addColorStop(1, "rgba(" + cometColor + ",0)");
         ctx.strokeStyle = grad;
         ctx.lineWidth = 1.6;
         ctx.beginPath();
@@ -341,6 +417,114 @@ export default function Starfield() {
         ctx.lineTo(cx2 - c.vx * 10, cy2 - c.vy * 10);
         ctx.stroke();
       }
+    }
+
+    // Rare cosmic event: a brief, unusual aurora-like sweep, gated to roughly
+    // once a week per visitor and even then not guaranteed -- the point is
+    // scarcity (something worth a screenshot precisely because most visits
+    // never see it), not a scheduled animation everyone gets every time.
+    let rareEventActive = false;
+    let rareEventStart = 0;
+    let rareEventChecked = false;
+    const RARE_EVENT_KEY = "aureon_last_rare_event";
+    const RARE_EVENT_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+    const RARE_EVENT_DURATION_FRAMES = 480; // ~8s at 60fps
+
+    function maybeTriggerRareEvent() {
+      if (rareEventChecked) return;
+      rareEventChecked = true;
+      try {
+        const last = localStorage.getItem(RARE_EVENT_KEY);
+        const eligible = !last || Date.now() - Number(last) > RARE_EVENT_COOLDOWN_MS;
+        // Eligible-but-not-guaranteed: most visits in an eligible week still
+        // don't trigger it, so it doesn't just fire like clockwork every 7
+        // days for someone who happens to check daily.
+        if (eligible && Math.random() < 0.12) {
+          rareEventActive = true;
+          rareEventStart = t;
+          localStorage.setItem(RARE_EVENT_KEY, String(Date.now()));
+          setRareEventLabel("A rare aurora has awakened");
+          setTimeout(() => setRareEventLabel(null), 9000);
+        }
+      } catch {
+        // localStorage unavailable (private browsing, etc.) -- just skip;
+        // the rare event is a delight layer, not core functionality.
+      }
+    }
+
+    function drawRareEvent() {
+      if (!ctx || !rareEventActive) return;
+      const elapsed = t - rareEventStart;
+      if (elapsed > RARE_EVENT_DURATION_FRAMES) {
+        rareEventActive = false;
+        return;
+      }
+      const progress = elapsed / RARE_EVENT_DURATION_FRAMES;
+      const fade = progress < 0.15 ? progress / 0.15 : progress > 0.8 ? (1 - progress) / 0.2 : 1;
+      const palette = element ? ELEMENT_PALETTE[element] : ELEMENT_PALETTE.Water;
+      const bandY = h * 0.18 + Math.sin(elapsed * 0.01) * h * 0.04;
+      const grad = ctx.createLinearGradient(0, bandY - h * 0.22, 0, bandY + h * 0.22);
+      grad.addColorStop(0, "rgba(0,0,0,0)");
+      grad.addColorStop(0.3, "rgba(" + palette.nebula[2] + ",0.45)");
+      grad.addColorStop(0.5, "rgba(" + palette.starTint + ",0.55)");
+      grad.addColorStop(0.7, "rgba(" + palette.nebula[0] + ",0.45)");
+      grad.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, fade) * 0.55;
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+      ctx.restore();
+    }
+
+    // "Zoom out to reveal your natal chart as a hidden constellation" --
+    // there's no real 3D camera to pull back yet, so page scroll depth
+    // stands in for it (see handleScroll above). Placed in the lower-left,
+    // clear of the centered animated solar system and the two upper
+    // named constellations (Ursa Major / Cassiopeia at y < 0.25).
+    function drawPersonalConstellation() {
+      if (!ctx || natalPoints.length === 0) return;
+      const reveal = Math.max(0, (scrollProgress - 0.5) / 0.5);
+      if (reveal <= 0) return;
+      const cx = w * 0.28,
+        cy = h * 0.72;
+      const R = Math.min(w, h) * 0.14;
+      const palette = element ? ELEMENT_PALETTE[element] : ELEMENT_PALETTE.Water;
+      const positions = new Map<string, [number, number]>();
+      for (const p of natalPoints) {
+        const ang = (p.longitude * Math.PI) / 180;
+        positions.set(p.name, [cx + R * Math.cos(ang), cy + R * Math.sin(ang) * 0.6]);
+      }
+      ctx.save();
+      ctx.globalAlpha = reveal * 0.85;
+      for (const { a, b } of natalAspects) {
+        const pa = positions.get(a);
+        const pb = positions.get(b);
+        if (!pa || !pb) continue;
+        ctx.beginPath();
+        ctx.moveTo(pa[0], pa[1]);
+        ctx.lineTo(pb[0], pb[1]);
+        ctx.strokeStyle = "rgba(" + palette.starTint + ",0.3)";
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+      }
+      for (const [, [px, py]] of positions) {
+        const twinkle = 0.7 + Math.sin(t * 0.015 + px) * 0.25;
+        ctx.beginPath();
+        ctx.arc(px, py, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(" + palette.starTint + ",0.15)";
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(px, py, 1.8, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(232,224,210," + Math.min(1, twinkle).toFixed(2) + ")";
+        ctx.fill();
+      }
+      if (reveal > 0.6) {
+        ctx.font = "11px sans-serif";
+        ctx.fillStyle = "rgba(232,224,210," + (((reveal - 0.6) / 0.4) * 0.6).toFixed(2) + ")";
+        ctx.textAlign = "center";
+        ctx.fillText("Your Constellation", cx, cy + R * 0.9);
+      }
+      ctx.restore();
     }
 
     function drawOrbitSystem() {
@@ -793,16 +977,21 @@ export default function Starfield() {
 
       drawOrbitSystem();
       drawComets();
+      drawRareEvent();
+      drawPersonalConstellation();
 
       rafId = requestAnimationFrame(frame);
     }
+    maybeTriggerRareEvent();
     rafId = requestAnimationFrame(frame);
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("click", handleWindowClick);
+      window.removeEventListener("scroll", handleScroll);
       document.body.style.cursor = "";
     };
   }, []);
@@ -831,6 +1020,7 @@ export default function Starfield() {
           <p className="mono data-accent planet-info-astro">{info.astro}</p>
         </div>
       )}
+      {rareEventLabel && <div className="rare-event-toast">✨ {rareEventLabel}</div>}
     </>
   );
 }

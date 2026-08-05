@@ -67,6 +67,24 @@ body.prototype-fullscreen{overflow:hidden;}
 .vignette{position:fixed;inset:0;pointer-events:none;z-index:0;
   background:radial-gradient(ellipse at center, rgba(0,0,0,0) 45%, rgba(10,8,6,0.55) 100%);
 }
+
+/* Rare cosmic event discovery toast -- see Starfield.tsx's
+   maybeTriggerRareEvent(). Fades in/out via CSS rather than JS opacity
+   tweening; the component just mounts/unmounts it. */
+@keyframes rare-event-toast-fade{
+  0%{opacity:0;transform:translate(-50%,6px);}
+  10%,85%{opacity:1;transform:translate(-50%,0);}
+  100%{opacity:0;transform:translate(-50%,6px);}
+}
+.rare-event-toast{
+  position:fixed;top:28px;left:50%;z-index:3;
+  background:rgba(18,21,42,0.85);backdrop-filter:blur(10px);
+  border:1px solid rgba(180,146,79,0.4);border-radius:999px;
+  padding:9px 20px;font-size:13px;color:var(--text);
+  box-shadow:0 8px 28px rgba(0,0,0,0.35);
+  animation:rare-event-toast-fade 9s ease both;
+  pointer-events:none;
+}
 .app{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 24px;}
 
 @keyframes riseIn{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}

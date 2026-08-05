@@ -32,6 +32,42 @@ export function birthstoneForSign(sign: string): string | null {
   return BIRTHSTONES[sign] ?? null;
 }
 
+export type Element = "Fire" | "Earth" | "Air" | "Water";
+
+const ELEMENT_BY_SIGN: Record<string, Element> = {
+  Aries: "Fire", Leo: "Fire", Sagittarius: "Fire",
+  Taurus: "Earth", Virgo: "Earth", Capricorn: "Earth",
+  Gemini: "Air", Libra: "Air", Aquarius: "Air",
+  Cancer: "Water", Scorpio: "Water", Pisces: "Water",
+};
+
+export function elementForSign(sign: string): Element | null {
+  return ELEMENT_BY_SIGN[sign] ?? null;
+}
+
+/** Standard "dominant element" reading: count the element of each of the 10
+ * classical/modern planets' signs (not asteroids/Lilith -- those aren't part
+ * of the traditional dominant-element count) and return whichever element
+ * has the most. Used to subtly bias the ambient background's palette per
+ * user (Starfield.tsx) -- ties visual mood to something astrologically
+ * real rather than a random per-session color. */
+export function dominantElement(planetSigns: string[]): Element | null {
+  const counts: Record<Element, number> = { Fire: 0, Earth: 0, Air: 0, Water: 0 };
+  for (const sign of planetSigns) {
+    const el = elementForSign(sign);
+    if (el) counts[el]++;
+  }
+  let best: Element | null = null;
+  let bestCount = 0;
+  for (const el of Object.keys(counts) as Element[]) {
+    if (counts[el] > bestCount) {
+      best = el;
+      bestCount = counts[el];
+    }
+  }
+  return best;
+}
+
 /** Converts a plain UTC-offset number (e.g. 4, -5.5) into an ISO 8601 offset
  * suffix (e.g. "+04:00", "-05:30") for building a datetime string the
  * backend's BirthData model can parse. */
