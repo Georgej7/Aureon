@@ -91,7 +91,7 @@ export default function LocationField({
         />
       </div>
       {open && (
-        <div className="tools-menu" style={{ width: "100%", top: "calc(100% - 4px)" }}>
+        <div className="tools-menu" style={{ position: "absolute", width: "100%", top: "calc(100% - 4px)" }}>
           {searching && <div className="tools-menu-item">Searching…</div>}
           {!searching && results.length === 0 && (
             <div className="tools-menu-item">No matches — try a nearby larger city, or enter coordinates manually below.</div>

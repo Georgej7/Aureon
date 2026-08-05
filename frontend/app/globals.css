@@ -122,8 +122,21 @@ body.prototype-fullscreen{overflow:hidden;}
 .tab:hover:not(.active){color:var(--text);}
 
 .tools-dropdown{position:relative;}
+/* Position (fixed, top/left) is set inline in TopNav.tsx -- the menu is
+   rendered via a React portal into document.body, not as a child of
+   .tools-dropdown, since .app establishes its own CSS stacking context
+   (position:relative + z-index:1) that silently caps any z-index set on
+   elements nested inside it. A high z-index here alone can't win against
+   .site-footer's z-index:1: .app's *entire* box, everything inside it
+   included, only ever competes at z-index:1 against .site-footer's
+   sibling box -- confirmed as the actual cause of the dropdown's last
+   couple of items becoming unclickable behind the footer once the list
+   grew past ~15 entries. The portal escapes that trap entirely. max-height
+   +scroll is a second, independent safeguard: the list will only keep
+   growing as more tools get added, so it shouldn't rely solely on always
+   fitting above the footer on every page/viewport combination. */
 .tools-menu{
-  position:absolute;top:calc(100% + 8px);left:0;z-index:20;min-width:200px;
+  z-index:1000;min-width:200px;max-height:min(70vh,480px);overflow-y:auto;
   background:var(--bg-card);border:1px solid var(--line);border-radius:10px;
   padding:6px;display:flex;flex-direction:column;gap:2px;
   box-shadow:0 12px 32px rgba(0,0,0,0.4);

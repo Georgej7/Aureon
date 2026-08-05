@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 
@@ -51,8 +52,18 @@ export default function TopNav() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const [mounted, setMounted] = useState(false);
   const toolsRef = useRef<HTMLDivElement>(null);
+  const toolsButtonRef = useRef<HTMLButtonElement>(null);
+  const toolsMenuRef = useRef<HTMLDivElement>(null);
   const toolsActive = TOOLS.some((tool) => tool.href === pathname);
+
+  // Portals need a real document to render into -- guards the SSR pass,
+  // where document doesn't exist yet.
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!SUPABASE_CONFIGURED) return;
@@ -66,13 +77,37 @@ export default function TopNav() {
 
   useEffect(() => {
     if (!toolsOpen) return;
+    // The menu itself is portalled out to document.body (see render below),
+    // so it's no longer a DOM descendant of toolsRef -- without also
+    // checking toolsMenuRef here, every click on a menu item would
+    // register as "outside" and close the menu before the Link's own
+    // onClick had a chance to navigate.
     function handleClickOutside(e: MouseEvent) {
-      if (toolsRef.current && !toolsRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const insideButton = toolsRef.current?.contains(target);
+      const insideMenu = toolsMenuRef.current?.contains(target);
+      if (!insideButton && !insideMenu) {
         setToolsOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [toolsOpen]);
+
+  useEffect(() => {
+    if (!toolsOpen) return;
+    function updatePosition() {
+      const rect = toolsButtonRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setMenuPos({ top: rect.bottom + 8, left: rect.left });
+    }
+    updatePosition();
+    // Keeps the portalled menu glued to the button on resize -- it's
+    // viewport-fixed now, not parent-relative, so it won't track the
+    // button's position automatically the way the old absolute-positioned
+    // version did.
+    window.addEventListener("resize", updatePosition);
+    return () => window.removeEventListener("resize", updatePosition);
   }, [toolsOpen]);
 
   useEffect(() => {
@@ -112,26 +147,35 @@ export default function TopNav() {
         <div className="tools-dropdown" ref={toolsRef}>
           <button
             type="button"
+            ref={toolsButtonRef}
             className={`tab${toolsActive ? " active" : ""}`}
             onClick={() => setToolsOpen((open) => !open)}
             aria-expanded={toolsOpen}
           >
             Tools ▾
           </button>
-          {toolsOpen && (
-            <div className="tools-menu">
-              {TOOLS.map((tool) => (
-                <Link
-                  key={tool.href}
-                  href={tool.href}
-                  className={`tools-menu-item${pathname === tool.href ? " active" : ""}`}
-                  onClick={() => setToolsOpen(false)}
-                >
-                  {tool.label}
-                </Link>
-              ))}
-            </div>
-          )}
+          {toolsOpen &&
+            mounted &&
+            menuPos &&
+            createPortal(
+              <div
+                className="tools-menu"
+                ref={toolsMenuRef}
+                style={{ position: "fixed", top: menuPos.top, left: menuPos.left }}
+              >
+                {TOOLS.map((tool) => (
+                  <Link
+                    key={tool.href}
+                    href={tool.href}
+                    className={`tools-menu-item${pathname === tool.href ? " active" : ""}`}
+                    onClick={() => setToolsOpen(false)}
+                  >
+                    {tool.label}
+                  </Link>
+                ))}
+              </div>,
+              document.body
+            )}
         </div>
         {TAIL_TABS.map((tab) => (
           <Link
