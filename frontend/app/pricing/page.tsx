@@ -18,12 +18,30 @@ export default function PricingPage() {
     const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
     if (!clientToken) return;
 
+    // Checkout always redirected to /dashboard regardless of which gated
+    // page sent the user here -- reported live as annoying, and confirmed:
+    // e.g. upgrading from /timing dumped you on the dashboard instead of
+    // back on Financial Timing. Paddle's overlay Checkout never actually
+    // navigates away from /pricing (it's an in-page overlay, not a real
+    // page load), so document.referrer at mount time still reliably holds
+    // whichever page linked here -- captured once up front rather than
+    // read fresh in the callback, since by the time checkout.completed
+    // fires the user has been on /pricing long enough that referrer could
+    // no longer be trusted to mean "where they came from this visit."
+    // Only trusted if it's actually our own origin, to rule out an
+    // external referrer being used as an open redirect.
+    const referrer = document.referrer;
+    const returnTo =
+      referrer && referrer.startsWith(window.location.origin) && !referrer.includes("/pricing")
+        ? new URL(referrer).pathname
+        : "/dashboard";
+
     initializePaddle({
       token: clientToken,
       environment: process.env.NEXT_PUBLIC_PADDLE_ENV === "production" ? "production" : "sandbox",
       eventCallback: (event) => {
         if (event.name === "checkout.completed") {
-          router.push("/dashboard?upgraded=1");
+          router.push(`${returnTo}?upgraded=1`);
         }
       },
     }).then(setPaddle);

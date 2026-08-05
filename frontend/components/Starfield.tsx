@@ -339,7 +339,21 @@ export default function Starfield() {
     }
     function handleWindowClick(e: MouseEvent) {
       const target = e.target as HTMLElement;
-      if (target.closest && target.closest("a,button,input,textarea,select,[role='button']")) return;
+      // Excluded interactive controls only covered form elements -- a click
+      // landing on a real content surface (the chart wheel card, an
+      // onboarding form, the nav, the tools dropdown, the planet-info panel
+      // itself) still fell through to this background hit-test underneath
+      // it, since none of those are form controls. Reported live: clicking
+      // near the natal chart wheel could accidentally pop a planet-info
+      // panel on top of it. A real surface should always intercept the
+      // click before the decorative background gets a turn at it.
+      if (
+        target.closest &&
+        target.closest(
+          "a,button,input,textarea,select,[role='button'],.card,.onboard-card,.topnav,.tools-menu,.planet-info-panel"
+        )
+      )
+        return;
       const hit = hitTestPlanet(e.clientX, e.clientY);
       setSelectedPlanet((prev) => (hit ? (prev === hit ? null : hit) : null));
     }
