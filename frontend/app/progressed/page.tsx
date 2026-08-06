@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import ChartWheel from "@/components/ChartWheel";
+import NatalPlacementList from "@/components/NatalPlacementList";
 import type { NatalChart, SubscriptionTier } from "@/lib/api";
 import { postProgressedChart } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
@@ -191,6 +192,7 @@ export default function ProgressedPage() {
           <div className="card" style={{ display: "flex", justifyContent: "center" }}>
             <ChartWheel chart={chart} />
           </div>
+          <NatalPlacementList chart={chart} />
         </>
       )}
     </section>

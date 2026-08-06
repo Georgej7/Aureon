@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import ChartWheel from "@/components/ChartWheel";
 import LocationField, { LocationValue } from "@/components/LocationField";
+import NatalPlacementList from "@/components/NatalPlacementList";
 import type { NatalChart, SubscriptionTier } from "@/lib/api";
 import { postCompositeChart, postDavisonChart } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
@@ -256,6 +257,7 @@ export default function CompositePage() {
           <div className="card" style={{ display: "flex", justifyContent: "center" }}>
             <ChartWheel chart={chart} />
           </div>
+          <NatalPlacementList chart={chart} />
         </div>
       )}
     </section>
