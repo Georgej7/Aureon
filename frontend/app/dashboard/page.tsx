@@ -14,6 +14,7 @@ type Profile = {
   chart: NatalChart;
   numerology: NumerologyProfile;
   subscription_tier: SubscriptionTier;
+  subscription_status: "active" | "past_due" | "canceled" | "incomplete" | null;
 };
 
 // Slow-moving planets define a multi-week/month "theme"; fast ones define today's tone.
@@ -54,7 +55,7 @@ export default function DashboardPage() {
       const user = session.user;
       const { data } = await supabase
         .from("profiles")
-        .select("chart, numerology, subscription_tier")
+        .select("chart, numerology, subscription_tier, subscription_status")
         .eq("id", user.id)
         .maybeSingle();
       const loadedProfile =
@@ -132,6 +133,23 @@ export default function DashboardPage() {
               Save as PDF / Print
             </button>
           </div>
+          {profile.subscription_status === "past_due" && (
+            <div
+              className="card print-hide"
+              style={{ marginBottom: 24, borderColor: "#c96a4a", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}
+            >
+              <div>
+                <div className="label" style={{ color: "#c96a4a" }}>Payment failed</div>
+                <p style={{ margin: 0 }}>
+                  We couldn&apos;t charge your card for your subscription. Update your payment method to keep your access.
+                </p>
+                {manageError && <p style={{ color: "#c96a4a", fontSize: 13, margin: "8px 0 0" }}>{manageError}</p>}
+              </div>
+              <button className="btn btn-gold" onClick={() => openManageUrl("payment")} disabled={manageLoading !== null}>
+                {manageLoading === "payment" ? "Opening…" : "Update payment method"}
+              </button>
+            </div>
+          )}
           <div className="card" style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
             <ChartWheel chart={profile.chart} />
             <Link className="btn btn-ghost print-hide" href="/natal-report" style={{ marginTop: 16 }}>
