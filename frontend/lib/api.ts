@@ -302,14 +302,21 @@ export function postChineseZodiac(birthYear: number, token: string): Promise<Chi
   return postJson<ChineseZodiacProfile>("/api/chinese-astrology/zodiac", { birth_year: birthYear }, token);
 }
 
+export type HumanDesignChannel = {
+  gates: [number, number];
+  name: string;
+};
+
 export type HumanDesignChart = {
   type: string;
   strategy: string;
   authority: string;
   profile: string;
+  definition: string;
   defined_centers: string[];
   undefined_centers: string[];
   active_gates: number[];
+  active_channels: HumanDesignChannel[];
 };
 
 export function postHumanDesignChart(datetime: string, token: string): Promise<HumanDesignChart> {

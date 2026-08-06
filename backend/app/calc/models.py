@@ -319,14 +319,21 @@ class HumanDesignRequest(BaseModel):
     datetime: str  # ISO 8601 with UTC offset, same rule as BirthData
 
 
+class HumanDesignChannel(BaseModel):
+    gates: list[int]  # always length 2
+    name: str
+
+
 class HumanDesignChart(BaseModel):
     type: str
     strategy: str
     authority: str
     profile: str
+    definition: str
     defined_centers: list[str]
     undefined_centers: list[str]
     active_gates: list[int]
+    active_channels: list[HumanDesignChannel]
 
 
 class TarotDrawRequest(BaseModel):

@@ -52,6 +52,51 @@ GATE_TO_CENTER = {gate: center for center, gates in CENTERS.items() for gate in 
 
 MOTOR_CENTERS = {"Sacral", "Heart", "SolarPlexus", "Root"}
 
+# Traditional channel names -- these are the widely-published names used
+# consistently across the Human Design community (same epistemic status as
+# the gate wheel/channel list above: not independently re-derivable the way
+# an equinox timestamp is, multiple published sources agree on these names).
+# Some channels are known by more than one common name; picked the most
+# widely-used one rather than trying to list every variant.
+CHANNEL_NAMES: dict[tuple[int, int], str] = {
+    (1, 8): "Channel of Inspiration",
+    (2, 14): "Channel of the Beat",
+    (3, 60): "Channel of Mutation",
+    (4, 63): "Channel of Logic",
+    (5, 15): "Channel of Rhythm",
+    (6, 59): "Channel of Mating",
+    (7, 31): "Channel of the Alpha",
+    (9, 52): "Channel of Concentration",
+    (10, 20): "Channel of Awakening",
+    (10, 34): "Channel of Exploration",
+    (10, 57): "Channel of Perfected Form",
+    (11, 56): "Channel of Curiosity",
+    (12, 22): "Channel of Openness",
+    (13, 33): "Channel of the Prodigal",
+    (16, 48): "Channel of the Wavelength",
+    (17, 62): "Channel of Acceptance",
+    (18, 58): "Channel of Judgment",
+    (19, 49): "Channel of Synthesis",
+    (20, 34): "Channel of Charisma",
+    (20, 57): "Channel of the Brainwave",
+    (21, 45): "Channel of Money",
+    (23, 43): "Channel of Structuring",
+    (24, 61): "Channel of Awareness",
+    (25, 51): "Channel of Initiation",
+    (26, 44): "Channel of Surrender",
+    (27, 50): "Channel of Preservation",
+    (28, 38): "Channel of Struggle",
+    (29, 46): "Channel of Discovery",
+    (30, 41): "Channel of Recognition",
+    (32, 54): "Channel of Transformation",
+    (34, 57): "Channel of Power",
+    (35, 36): "Channel of Transitoriness",
+    (37, 40): "Channel of Community",
+    (39, 55): "Channel of Emoting",
+    (42, 53): "Channel of Maturation",
+    (47, 64): "Channel of Abstraction",
+}
+
 # The 36 channels, cross-verified against 2 independent published lists
 # (normalized/sorted pairs matched exactly between them).
 CHANNELS = [
@@ -167,6 +212,47 @@ def determine_type(defined: set[str], active_gates: set[int]) -> tuple[str, str]
     return "Projector", "Wait for invitation"
 
 
+def active_channels(active_gates: set[int]) -> list[tuple[int, int]]:
+    """Every complete (both-gates-active) channel, sorted for stable output."""
+    return sorted(
+        (gate_a, gate_b) for gate_a, gate_b in CHANNELS if _channel_is_complete(gate_a, gate_b, active_gates)
+    )
+
+
+def determine_definition(defined: set[str], channels: list[tuple[int, int]]) -> str:
+    """Definition type -- how many separate connected groups the defined
+    centers form, found via connected-components on the graph of defined
+    centers joined by complete channels. A totally undefined chart
+    (Reflector) has no definition at all; everything else has at least one
+    connected group, up to a genuine (if rare) Quadruple Split."""
+    if not defined:
+        return "No Definition"
+
+    adjacency: dict[str, set[str]] = {center: set() for center in defined}
+    for gate_a, gate_b in channels:
+        center_a, center_b = GATE_TO_CENTER[gate_a], GATE_TO_CENTER[gate_b]
+        if center_a in defined and center_b in defined:
+            adjacency[center_a].add(center_b)
+            adjacency[center_b].add(center_a)
+
+    visited: set[str] = set()
+    groups = 0
+    for start in defined:
+        if start in visited:
+            continue
+        groups += 1
+        stack = [start]
+        while stack:
+            node = stack.pop()
+            if node in visited:
+                continue
+            visited.add(node)
+            stack.extend(adjacency[node] - visited)
+
+    names = {1: "Single Definition", 2: "Split Definition", 3: "Triple Split Definition", 4: "Quadruple Split Definition"}
+    return names.get(groups, f"{groups}-Way Split Definition")
+
+
 def determine_authority(defined: set[str], type_name: str) -> str:
     if type_name == "Reflector":
         return "Lunar Authority"
@@ -216,6 +302,8 @@ def build_chart(birth_datetime_iso: str) -> dict:
     defined = defined_centers(active_gates)
     type_name, strategy = determine_type(defined, active_gates)
     authority = determine_authority(defined, type_name)
+    channels = active_channels(active_gates)
+    definition = determine_definition(defined, channels)
 
     _personality_sun_gate, personality_sun_line = gate_and_line(personality_points["Sun"])
     _design_sun_gate, design_sun_line = gate_and_line(design_points["Sun"])
@@ -227,7 +315,11 @@ def build_chart(birth_datetime_iso: str) -> dict:
         "strategy": strategy,
         "authority": authority,
         "profile": profile,
+        "definition": definition,
         "defined_centers": sorted(defined),
         "undefined_centers": sorted(all_centers - defined),
         "active_gates": sorted(active_gates),
+        "active_channels": [
+            {"gates": [a, b], "name": CHANNEL_NAMES.get((a, b), f"Channel {a}-{b}")} for a, b in channels
+        ],
     }

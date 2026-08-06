@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import HumanDesignBodygraph from "@/components/HumanDesignBodygraph";
 import type { HumanDesignChart } from "@/lib/api";
 import { postHumanDesignChart } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
@@ -100,6 +101,9 @@ export default function HumanDesignPage() {
 
       {chart && (
         <>
+          <div className="card" style={{ display: "flex", justifyContent: "center" }}>
+            <HumanDesignBodygraph chart={chart} />
+          </div>
           <div className="card">
             <div className="stat-row">
               <div className="stat">
@@ -114,12 +118,28 @@ export default function HumanDesignPage() {
                 <div className="val">{chart.profile}</div>
                 <div className="lbl">Profile</div>
               </div>
+              <div className="stat">
+                <div className="val">{chart.definition}</div>
+                <div className="lbl">Definition</div>
+              </div>
             </div>
           </div>
           <div className="card">
             <div className="label">Strategy</div>
             <p>{chart.strategy}</p>
           </div>
+          {chart.active_channels.length > 0 && (
+            <div className="card">
+              <div className="label">Active channels</div>
+              <ul style={{ margin: 0, paddingLeft: 18, color: "var(--text-dim)", fontSize: 14 }}>
+                {chart.active_channels.map((c) => (
+                  <li key={c.gates.join("-")}>
+                    {c.gates[0]}–{c.gates[1]} · {c.name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="dash-grid">
             <div className="card">
               <div className="label">Defined centers</div>
