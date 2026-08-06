@@ -69,10 +69,17 @@ export default function FengShuiPage() {
       }
       const { data } = await supabase
         .from("profiles")
-        .select("subscription_tier")
+        .select("subscription_tier, birth_date, gender")
         .eq("id", session.user.id)
-        .maybeSingle();
-      if (!cancelled) setTier((data?.subscription_tier as SubscriptionTier) ?? "free");
+        .maybeSingle<{ subscription_tier: SubscriptionTier; birth_date: string | null; gender: string | null }>();
+      if (cancelled) return;
+      setTier(data?.subscription_tier ?? "free");
+      if (data?.birth_date) setBirthYear(data.birth_date.slice(0, 4));
+      // Kua's formula genuinely only has a male/female branch -- "rather not
+      // say" (or never answered) can't be mapped to either, so this only
+      // pre-fills when the profile actually has a usable value, and still
+      // asks otherwise rather than guessing.
+      if (data?.gender === "male" || data?.gender === "female") setGender(data.gender);
     }
     loadTier();
     return () => {
