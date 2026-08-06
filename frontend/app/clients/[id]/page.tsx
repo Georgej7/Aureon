@@ -4,22 +4,94 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import ChartWheel from "@/components/ChartWheel";
+import NatalPlacementList from "@/components/NatalPlacementList";
 import type { NatalChart, NumerologyProfile } from "@/lib/api";
-import { zodiacSign } from "@/lib/astrology";
+import { postProgressedChart, postSolarReturn } from "@/lib/api";
+import { offsetToIso, zodiacSign } from "@/lib/astrology";
 import { createClient } from "@/lib/supabase/client";
 
 type ClientDetail = {
   id: string;
   full_name: string;
   birth_date: string;
+  birth_time: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  utc_offset: number | null;
   chart: NatalChart;
   numerology: NumerologyProfile;
 };
+
+function currentYear(): number {
+  return new Date().getFullYear();
+}
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// A client's stored birth data is enough to recompute any chart type on
+// demand -- reused here for Solar return / Progressed instead of only ever
+// showing the one natal chart captured when the client was added.
+function birthPayload(client: ClientDetail) {
+  const hasTime = !!client.birth_time;
+  const hasLocation = client.latitude !== null && client.longitude !== null;
+  const datetime = `${client.birth_date}T${hasTime ? client.birth_time : "12:00"}:00${offsetToIso(
+    client.utc_offset ?? 0
+  )}`;
+  return {
+    datetime,
+    time_known: hasTime,
+    ...(hasLocation ? { latitude: client.latitude!, longitude: client.longitude! } : {}),
+    hasLocation,
+  };
+}
+
+function ChartSection({
+  title,
+  blurb,
+  chart,
+  subtitle,
+  error,
+}: {
+  title: string;
+  blurb: string;
+  chart: NatalChart | null;
+  subtitle: string | null;
+  error: string | null;
+}) {
+  return (
+    <div style={{ marginTop: 40 }} className="print-section">
+      <h3 style={{ margin: "0 0 4px" }}>{title}</h3>
+      <p className="sub" style={{ margin: "0 0 16px", maxWidth: 640 }}>
+        {blurb}
+        {subtitle && ` — ${subtitle}`}
+      </p>
+      {error && <p style={{ color: "#c96a4a", fontSize: 13, marginBottom: 16 }}>{error}</p>}
+      {chart && (
+        <>
+          <div className="card" style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+            <ChartWheel chart={chart} />
+          </div>
+          <NatalPlacementList chart={chart} />
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function ClientDetailPage() {
   const params = useParams<{ id: string }>();
   const [client, setClient] = useState<ClientDetail | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
+
+  const [solarReturn, setSolarReturn] = useState<NatalChart | null>(null);
+  const [solarReturnDate, setSolarReturnDate] = useState<string | null>(null);
+  const [solarReturnError, setSolarReturnError] = useState<string | null>(null);
+
+  const [progressed, setProgressed] = useState<NatalChart | null>(null);
+  const [progressedDate, setProgressedDate] = useState<string | null>(null);
+  const [progressedError, setProgressedError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -27,7 +99,7 @@ export default function ClientDetailPage() {
       const supabase = createClient();
       const { data, error: fetchError } = await supabase
         .from("clients")
-        .select("id, full_name, birth_date, chart, numerology")
+        .select("id, full_name, birth_date, birth_time, latitude, longitude, utc_offset, chart, numerology")
         .eq("id", params.id)
         .maybeSingle();
       if (cancelled) return;
@@ -36,7 +108,38 @@ export default function ClientDetailPage() {
         setClient(null);
         return;
       }
-      setClient(data as ClientDetail);
+      const row = data as ClientDetail;
+      setClient(row);
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session || cancelled) return;
+
+      const { hasLocation, ...birth } = birthPayload(row);
+
+      postSolarReturn(
+        { birth, target_year: currentYear(), ...(hasLocation ? { latitude: row.latitude!, longitude: row.longitude! } : {}) },
+        session.access_token
+      )
+        .then((result) => {
+          if (cancelled) return;
+          setSolarReturn(result.chart);
+          setSolarReturnDate(result.exact_datetime);
+        })
+        .catch(() => {
+          if (!cancelled) setSolarReturnError("Couldn't compute this year's solar return.");
+        });
+
+      postProgressedChart({ birth, target_date: `${todayIso()}T12:00:00+00:00` }, session.access_token)
+        .then((result) => {
+          if (cancelled) return;
+          setProgressed(result.chart);
+          setProgressedDate(result.progressed_datetime);
+        })
+        .catch(() => {
+          if (!cancelled) setProgressedError("Couldn't compute the progressed chart.");
+        });
     }
     load();
     return () => {
@@ -107,20 +210,31 @@ export default function ClientDetailPage() {
             </div>
           )}
         </div>
-        <div>
-          <div className="card">
-            <div className="label">Planets</div>
-            <ul style={{ margin: 0, paddingLeft: 18, color: "var(--text-dim)", fontSize: 14 }}>
-              {client.chart.planets.map((p) => (
-                <li key={p.name}>
-                  {p.name} in {p.sign} {p.house !== null && `· House ${p.house}`}
-                  {p.retrograde ? " (retrograde)" : ""}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
       </div>
+
+      <div style={{ marginTop: 40 }}>
+        <h3 style={{ margin: "0 0 4px" }}>Full reading</h3>
+        <p className="sub" style={{ margin: "0 0 16px", maxWidth: 640 }}>
+          Every placement, with traditional, modern, and psychological interpretations.
+        </p>
+        <NatalPlacementList chart={client.chart} />
+      </div>
+
+      <ChartSection
+        title="Solar return"
+        blurb={`The chart cast for the exact moment the Sun returns to its natal position in ${currentYear()}`}
+        subtitle={solarReturnDate}
+        chart={solarReturn}
+        error={solarReturnError}
+      />
+
+      <ChartSection
+        title="Progressed chart"
+        blurb="Where the natal chart has symbolically moved to as of today"
+        subtitle={progressedDate}
+        chart={progressed}
+        error={progressedError}
+      />
     </section>
   );
 }
