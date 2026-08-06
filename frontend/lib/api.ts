@@ -419,6 +419,22 @@ export function postVoidOfCourse(
   return postJson<VoidOfCourseResponse>("/api/ephemeris/void-of-course", { start_date: startDate, days }, token);
 }
 
+export type MatrixPoint = {
+  number: number;
+  arcana: string;
+};
+
+export type MatrixOfDestinyResponse = {
+  day: MatrixPoint;
+  month: MatrixPoint;
+  year: MatrixPoint;
+  life_purpose: MatrixPoint;
+};
+
+export function postMatrixOfDestiny(birthDate: string, token: string): Promise<MatrixOfDestinyResponse> {
+  return postJson<MatrixOfDestinyResponse>("/api/matrix-of-destiny/chart", { birth_date: birthDate }, token);
+}
+
 export type KuaRequest = {
   birth_year: number;
   gender: "male" | "female";

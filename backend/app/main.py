@@ -18,6 +18,7 @@ from app.api import (  # noqa: E402 (must follow load_dotenv())
     ephemeris,
     feng_shui,
     human_design,
+    matrix_of_destiny,
     numerology,
     tarot,
 )
@@ -52,6 +53,7 @@ app.include_router(human_design.router)
 app.include_router(electional.router)
 app.include_router(ephemeris.router)
 app.include_router(astrocartography.router)
+app.include_router(matrix_of_destiny.router)
 
 
 @app.get("/health")

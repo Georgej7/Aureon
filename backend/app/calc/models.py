@@ -410,6 +410,22 @@ class VoidOfCourseResponse(BaseModel):
     periods: list[VoidOfCoursePeriod]
 
 
+class MatrixOfDestinyRequest(BaseModel):
+    birth_date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+
+
+class MatrixPoint(BaseModel):
+    number: int
+    arcana: str
+
+
+class MatrixOfDestinyResponse(BaseModel):
+    day: MatrixPoint
+    month: MatrixPoint
+    year: MatrixPoint
+    life_purpose: MatrixPoint
+
+
 class NumerologyProfile(BaseModel):
     life_path: int
     expression: int

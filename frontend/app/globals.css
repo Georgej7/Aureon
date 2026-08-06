@@ -147,6 +147,11 @@ body.prototype-fullscreen{overflow:hidden;}
 }
 .tools-menu-item:hover{background:var(--bg-raised);color:var(--text);}
 .tools-menu-item.active{color:var(--gold);font-weight:600;}
+.tools-menu-heading{
+  padding:8px 12px 4px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--gold-soft);
+}
+.tools-menu-divider{height:1px;background:var(--line);margin:4px 6px;}
 
 .screen{padding:56px 0 90px;}
 

@@ -21,23 +21,50 @@ const TABS = [
   { href: "/compatibility", label: "Compatibility" },
 ];
 
-const TOOLS = [
-  { href: "/onboarding", label: "Create / edit profile" },
-  { href: "/vedic", label: "Vedic chart" },
-  { href: "/solar-return", label: "Solar return" },
-  { href: "/progressed", label: "Progressed chart" },
-  { href: "/composite", label: "Composite & Davison" },
-  { href: "/human-design", label: "Human Design" },
-  { href: "/tarot", label: "Tarot draw" },
-  { href: "/chinese-zodiac", label: "Chinese zodiac" },
-  { href: "/timing", label: "Financial timing" },
-  { href: "/feng-shui", label: "Feng shui" },
-  { href: "/ephemeris", label: "Ephemeris tables" },
-  { href: "/aspect-search", label: "Aspect search" },
-  { href: "/astrocartography", label: "AstroCartography" },
-  { href: "/void-of-course", label: "Void-of-course Moon" },
-  { href: "/famous-people", label: "Famous people" },
+// Grouped into labeled sections rather than one flat 15-item list -- also
+// naturally clusters the Practitioner-gated items (Solar return, Progressed,
+// Composite & Davison, AstroCartography) under "Chart types" instead of
+// scattering them alphabetically through everything else, which was its own
+// piece of reported feedback ("separate practitioner tools from regular
+// customer tools").
+const TOOL_SECTIONS: { label: string; items: { href: string; label: string }[] }[] = [
+  {
+    label: "Manage profile",
+    items: [{ href: "/onboarding", label: "Create / edit profile" }],
+  },
+  {
+    label: "Chart types",
+    items: [
+      { href: "/vedic", label: "Vedic chart" },
+      { href: "/solar-return", label: "Solar return" },
+      { href: "/progressed", label: "Progressed chart" },
+      { href: "/composite", label: "Composite & Davison" },
+      { href: "/astrocartography", label: "AstroCartography" },
+      { href: "/matrix-of-destiny", label: "Matrix of Destiny" },
+    ],
+  },
+  {
+    label: "Systems & draws",
+    items: [
+      { href: "/human-design", label: "Human Design" },
+      { href: "/tarot", label: "Tarot draw" },
+      { href: "/chinese-zodiac", label: "Chinese zodiac" },
+      { href: "/feng-shui", label: "Feng shui" },
+      { href: "/baby-compatibility", label: "Baby compatibility" },
+    ],
+  },
+  {
+    label: "Reference & timing",
+    items: [
+      { href: "/ephemeris", label: "Ephemeris tables" },
+      { href: "/aspect-search", label: "Aspect search" },
+      { href: "/void-of-course", label: "Void-of-course Moon" },
+      { href: "/timing", label: "Financial timing" },
+      { href: "/famous-people", label: "Famous people" },
+    ],
+  },
 ];
+const TOOLS = TOOL_SECTIONS.flatMap((section) => section.items);
 
 const TAIL_TABS = [
   { href: "/clients", label: "Clients" },
@@ -163,15 +190,21 @@ export default function TopNav() {
                 ref={toolsMenuRef}
                 style={{ position: "fixed", top: menuPos.top, left: menuPos.left }}
               >
-                {TOOLS.map((tool) => (
-                  <Link
-                    key={tool.href}
-                    href={tool.href}
-                    className={`tools-menu-item${pathname === tool.href ? " active" : ""}`}
-                    onClick={() => setToolsOpen(false)}
-                  >
-                    {tool.label}
-                  </Link>
+                {TOOL_SECTIONS.map((section, i) => (
+                  <div key={section.label}>
+                    {i > 0 && <div className="tools-menu-divider" />}
+                    <div className="tools-menu-heading">{section.label}</div>
+                    {section.items.map((tool) => (
+                      <Link
+                        key={tool.href}
+                        href={tool.href}
+                        className={`tools-menu-item${pathname === tool.href ? " active" : ""}`}
+                        onClick={() => setToolsOpen(false)}
+                      >
+                        {tool.label}
+                      </Link>
+                    ))}
+                  </div>
                 ))}
               </div>,
               document.body
