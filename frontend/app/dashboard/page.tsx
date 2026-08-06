@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import ChartWheel from "@/components/ChartWheel";
+import ElementModalityBreakdown from "@/components/ElementModalityBreakdown";
 import KnowledgeDetail from "@/components/KnowledgeDetail";
 import type { KnowledgeEntry, NatalChart, NumerologyProfile, SubscriptionTier, Transits, TransitAspect } from "@/lib/api";
 import { postTransits } from "@/lib/api";
@@ -208,6 +209,7 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+          {profile && <ElementModalityBreakdown chart={profile.chart} />}
           {profile && sunSign && (
             <div className="card">
               <div className="label">Birthstone</div>
