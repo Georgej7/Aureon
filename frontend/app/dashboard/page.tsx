@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ChartWheel from "@/components/ChartWheel";
 import ElementModalityBreakdown from "@/components/ElementModalityBreakdown";
@@ -35,11 +36,27 @@ function describeAspect(a: TransitAspect): string {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [transits, setTransits] = useState<Transits | null | undefined>(undefined);
   const [birthstoneEntry, setBirthstoneEntry] = useState<KnowledgeEntry | null>(null);
   const [manageLoading, setManageLoading] = useState<"payment" | "cancel" | null>(null);
   const [manageError, setManageError] = useState<string | null>(null);
+  const [justUpgraded, setJustUpgraded] = useState(false);
+
+  // Paddle's checkout.completed redirect appends ?upgraded=1 (see
+  // pricing/page.tsx) but nothing ever read it -- a customer could pay and
+  // land back here with zero confirmation anything happened. Read via
+  // window.location rather than useSearchParams so this stays a plain
+  // client-only effect (no Suspense boundary needed for the page's static
+  // prerender). The URL is cleaned up immediately so a refresh doesn't
+  // keep re-showing the banner.
+  useEffect(() => {
+    if (window.location.search.includes("upgraded=1")) {
+      setJustUpgraded(true);
+      router.replace("/dashboard");
+    }
+  }, [router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,6 +143,20 @@ export default function DashboardPage() {
 
   return (
     <section className="screen active" id="dashboard">
+      {justUpgraded && (
+        <div
+          className="card print-hide"
+          style={{ marginBottom: 24, borderColor: "var(--gold)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}
+        >
+          <div>
+            <div className="label">Payment received</div>
+            <p style={{ margin: 0 }}>Welcome in — your new access is live. It can take a few seconds to appear below.</p>
+          </div>
+          <button className="btn btn-ghost" onClick={() => setJustUpgraded(false)}>
+            Dismiss
+          </button>
+        </div>
+      )}
       {profile && (
         <>
           <div className="print-hide" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
