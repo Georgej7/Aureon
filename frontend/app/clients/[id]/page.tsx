@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import ChartWheel from "@/components/ChartWheel";
+import ElementModalityBreakdown from "@/components/ElementModalityBreakdown";
 import NatalPlacementList from "@/components/NatalPlacementList";
+import PositionTable from "@/components/PositionTable";
 import type { NatalChart, NumerologyProfile } from "@/lib/api";
 import { postProgressedChart, postSolarReturn } from "@/lib/api";
 import { offsetToIso, zodiacSign } from "@/lib/astrology";
@@ -72,6 +74,10 @@ function ChartSection({
         <>
           <div className="card" style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
             <ChartWheel chart={chart} />
+          </div>
+          <div className="dash-grid" style={{ marginBottom: 20 }}>
+            <PositionTable chart={chart} />
+            <ElementModalityBreakdown chart={chart} />
           </div>
           <NatalPlacementList chart={chart} />
         </>
@@ -217,6 +223,10 @@ export default function ClientDetailPage() {
         <p className="sub" style={{ margin: "0 0 16px", maxWidth: 640 }}>
           Every placement, with traditional, modern, and psychological interpretations.
         </p>
+        <div className="dash-grid" style={{ marginBottom: 20 }}>
+          <PositionTable chart={client.chart} />
+          <ElementModalityBreakdown chart={client.chart} />
+        </div>
         <NatalPlacementList chart={client.chart} />
       </div>
 

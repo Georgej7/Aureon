@@ -68,6 +68,18 @@ export function dominantElement(planetSigns: string[]): Element | null {
   return best;
 }
 
+export type Modality = "Cardinal" | "Fixed" | "Mutable";
+
+const MODALITY_BY_SIGN: Record<string, Modality> = {
+  Aries: "Cardinal", Cancer: "Cardinal", Libra: "Cardinal", Capricorn: "Cardinal",
+  Taurus: "Fixed", Leo: "Fixed", Scorpio: "Fixed", Aquarius: "Fixed",
+  Gemini: "Mutable", Virgo: "Mutable", Sagittarius: "Mutable", Pisces: "Mutable",
+};
+
+export function modalityForSign(sign: string): Modality | null {
+  return MODALITY_BY_SIGN[sign] ?? null;
+}
+
 /** Converts a plain UTC-offset number (e.g. 4, -5.5) into an ISO 8601 offset
  * suffix (e.g. "+04:00", "-05:30") for building a datetime string the
  * backend's BirthData model can parse. */

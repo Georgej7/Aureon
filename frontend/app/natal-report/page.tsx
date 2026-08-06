@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ElementModalityBreakdown from "@/components/ElementModalityBreakdown";
 import NatalPlacementList from "@/components/NatalPlacementList";
+import PositionTable from "@/components/PositionTable";
 import type { NatalChart } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
@@ -62,6 +64,10 @@ export default function NatalReportPage() {
         Tap any placement to expand its full interpretation — traditional, modern, and
         psychological readings, plus strengths, challenges, career, relationships, and growth.
       </p>
+      <div className="dash-grid" style={{ marginBottom: 20 }}>
+        <PositionTable chart={chart} />
+        <ElementModalityBreakdown chart={chart} />
+      </div>
       <NatalPlacementList chart={chart} />
     </section>
   );

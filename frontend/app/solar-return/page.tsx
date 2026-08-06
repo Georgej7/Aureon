@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import ChartWheel from "@/components/ChartWheel";
+import ElementModalityBreakdown from "@/components/ElementModalityBreakdown";
 import NatalPlacementList from "@/components/NatalPlacementList";
+import PositionTable from "@/components/PositionTable";
 import type { NatalChart, SubscriptionTier } from "@/lib/api";
 import { postSolarReturn } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
@@ -186,6 +188,10 @@ export default function SolarReturnPage() {
           )}
           <div className="card" style={{ display: "flex", justifyContent: "center" }}>
             <ChartWheel chart={chart} />
+          </div>
+          <div className="dash-grid" style={{ margin: "20px 0" }}>
+            <PositionTable chart={chart} />
+            <ElementModalityBreakdown chart={chart} />
           </div>
           <NatalPlacementList chart={chart} />
         </>
