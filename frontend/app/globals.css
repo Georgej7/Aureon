@@ -423,7 +423,17 @@ footer.note{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);co
    cx/cy average out to roughly 50%/46%), so what you see before clicking
    is an actual dim view of the solar system, not a blank screen with a
    dot on it. The entry point sits at that same 50%/46% spot -- you're
-   clicking the Sun. */
+   clicking the Sun.
+   .app and the footer both sit *behind* the backdrop in paint order but
+   still fully visible content -- with the backdrop translucent, hiding
+   them outright (not just disabling interaction) is what actually keeps
+   the reveal to "starfield only" instead of the real nav/hero/footer
+   ghosting through underneath. LandingGate.tsx toggles this class instead
+   of relying on the inert-wrapper alone, since that only ever covered the
+   page content, never the nav (a sibling of it, not a descendant). */
+body.gate-active .app,
+body.gate-active .site-footer{visibility:hidden;}
+
 .landing-gate-backdrop{
   position:fixed;inset:0;z-index:100;
   background:radial-gradient(ellipse at 50% 46%, rgba(5,4,3,0.32) 0%, rgba(5,4,3,0.9) 78%);
