@@ -442,32 +442,38 @@ body.gate-active .site-footer{visibility:hidden;}
 .landing-gate-point{
   /* Content, not a decorative dot -- tonight's actual Moon phase and
      illumination, so the very first thing a visitor can click on is real
-     data instead of a generic "click to begin" prompt. Sits over the
-     Sun's own screen position (see .landing-gate-backdrop above) with a
-     soft ambient glow standing in for a literal dot, since Starfield.tsx
-     is already drawing the actual Sun right there. */
-  position:absolute;top:46%;left:50%;transform:translate(-50%,-50%);
-  display:flex;flex-direction:column;align-items:center;gap:5px;
-  background:none;border:none;cursor:pointer;padding:30px 40px;border-radius:20px;
-  box-shadow:0 0 60px 20px rgba(201,162,74,0.12);
-  animation:gateGlow 4s ease-in-out infinite;
+     data instead of a generic "click to begin" prompt. Sits low, clear of
+     the Sun/planets (see .landing-gate-backdrop above for where those
+     actually are) -- an earlier version centered this over the Sun with
+     padding + a box-shadow glow, and even fully transparent, that much
+     padding plus solid text plus a blurred rounded-rect shadow behind it
+     still read as an opaque card sitting on top of the Sun, blocking the
+     exact thing meant to be visible. No box at all now -- just text with
+     a glow on the text itself, positioned as a caption instead of an
+     overlay. */
+  position:absolute;bottom:9%;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  background:none;border:none;cursor:pointer;padding:8px;
   white-space:nowrap;
 }
 .landing-gate-point:focus-visible{outline:2px solid var(--gold);outline-offset:6px;}
-@keyframes gateGlow{
-  0%,100%{box-shadow:0 0 60px 20px rgba(201,162,74,0.12);}
-  50%{box-shadow:0 0 80px 28px rgba(201,162,74,0.2);}
-}
 .landing-gate-eyebrow{color:var(--gold);font-size:11px;letter-spacing:2.5px;text-transform:uppercase;}
-.landing-gate-phase{font-size:27px;font-weight:500;color:var(--text);}
+.landing-gate-phase{
+  font-size:24px;font-weight:500;color:var(--text);
+  animation:gateGlow 4s ease-in-out infinite;
+}
+@keyframes gateGlow{
+  0%,100%{text-shadow:0 0 18px rgba(201,162,74,0.35);}
+  50%{text-shadow:0 0 30px rgba(201,162,74,0.6);}
+}
 .landing-gate-illum{font-size:13px;color:var(--starlight);}
 .landing-gate-hint{
-  margin-top:10px;color:var(--text-faint);font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  margin-top:8px;color:var(--text-faint);font-size:11px;letter-spacing:2px;text-transform:uppercase;
   opacity:0;transition:opacity 1s ease;
 }
 .landing-gate-hint.visible{opacity:1;}
 @media (prefers-reduced-motion: reduce){
-  .landing-gate-point{animation:none;}
+  .landing-gate-phase{animation:none;}
 }
 
 /* ---- Site footer ---- */
