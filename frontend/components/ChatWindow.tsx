@@ -39,6 +39,17 @@ function isToday(isoTimestamp: string): boolean {
   );
 }
 
+// Entry point disabled: this doesn't actually listen (no speech recognition
+// -- the "voice" input is a text box) and doesn't reply with anything
+// AI/chart-aware -- it cycles through 3 hardcoded canned lines regardless of
+// what's typed. It was also reachable by every tier despite the "VIP"
+// badge, no gating existed. Showing this to a real, especially paying, user
+// would read as the product being fake. Keep the UI/TTS plumbing in place
+// (it's a real head start -- speakText() genuinely works) but don't surface
+// the entry point until it's wired to real speech-to-text and the same
+// postChatReply() the text chat already uses.
+const VOICE_CALL_ENABLED = false;
+
 const VOICE_REPLIES = [
   "I hear that. Let's slow down for a second — what does your gut say when you picture actually saying yes?",
   "That makes sense given your chart right now. Your Personal Year rewards patience — this doesn't need to be decided today.",
@@ -422,9 +433,11 @@ export default function ChatWindow() {
         <div className="chat-head">
           <span className="dot-live" />
           <span style={{ fontSize: 13, color: "var(--text-dim)" }}>Aureon — remembers your conversations</span>
-          <button className="voice-cta" onClick={openVoiceCall}>
-            <span className="vip-tag">VIP</span> Start voice call
-          </button>
+          {VOICE_CALL_ENABLED && (
+            <button className="voice-cta" onClick={openVoiceCall}>
+              <span className="vip-tag">VIP</span> Start voice call
+            </button>
+          )}
         </div>
 
         {!voiceActive && (
