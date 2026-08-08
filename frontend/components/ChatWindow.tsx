@@ -662,7 +662,22 @@ export default function ChatWindow() {
           handleVoiceUtterance(said);
         };
         recognition.onerror = (event) => {
-          if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+          console.error("Voice call: recognition.onerror", event.error);
+          // getUserMedia succeeding (this handler only ever gets attached
+          // after that) but recognition.start() still failing here is a
+          // different failure than a real mic-permission denial --
+          // "service-not-allowed" specifically means the browser itself
+          // refused the actual speech-recognition *service* (Chromium's
+          // implementation phones home to Google's servers for this;
+          // privacy-focused forks like Brave are known to restrict that
+          // by design, separately from the standard mic permission this
+          // site already has). Reported live: exactly this, mic
+          // permission genuinely granted, still denied -- no setting
+          // fixes a browser that blocks the service outright.
+          if (event.error === "service-not-allowed") {
+            fatalErrorRef.current = true;
+            setVoiceStatus("This browser blocks online speech recognition — try Chrome, or type below.");
+          } else if (event.error === "not-allowed") {
             fatalErrorRef.current = true;
             setVoiceStatus("Microphone access denied — allow mic access, or type below.");
           } else if (event.error !== "no-speech" && event.error !== "aborted") {

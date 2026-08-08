@@ -364,7 +364,23 @@ footer.note{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);co
   0%,100%{box-shadow:0 0 0 0 rgba(168,220,232,0.4);}
   50%{box-shadow:0 0 0 16px rgba(168,220,232,0);}
 }
-.voice-transcript{width:100%;max-width:440px;min-height:70px;color:var(--text-dim);font-size:14px;text-align:center;line-height:1.6;}
+/* Reported live: a long AI reply rendered enormous on iOS Safari -- this
+   is WebKit's "text autosizing," a heuristic that inflates font size for
+   blocks of text it decides are too small to read comfortably, and
+   nothing on the site disabled it anywhere. text-size-adjust:100% turns
+   that heuristic off so the specified font-size actually applies.
+   max-height+scroll (same gold-scrollbar treatment as .chat-body)
+   because a long reply could otherwise grow this tall enough to push
+   the input row and End call button off-screen on a short phone. */
+.voice-transcript{
+  width:100%;max-width:440px;min-height:70px;max-height:38vh;overflow-y:auto;
+  color:var(--text-dim);font-size:14px;text-align:center;line-height:1.6;
+  -webkit-text-size-adjust:100%;text-size-adjust:100%;
+}
+.voice-transcript{scrollbar-width:thin;scrollbar-color:var(--gold-soft) transparent;}
+.voice-transcript::-webkit-scrollbar{width:6px;}
+.voice-transcript::-webkit-scrollbar-track{background:transparent;}
+.voice-transcript::-webkit-scrollbar-thumb{background:var(--gold-soft);border-radius:999px;}
 .voice-transcript .said{color:var(--text);font-weight:500;}
 .voice-input-row{display:flex;gap:10px;width:100%;max-width:440px;}
 .voice-input-row input{flex:1;background:var(--bg-raised);border:1px solid var(--line);border-radius:8px;padding:11px 14px;color:var(--text);font-family:inherit;font-size:14px;}
