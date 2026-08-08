@@ -585,10 +585,16 @@ export default function ChatWindow() {
         <div className="chat-head">
           <span className="dot-live" />
           <span style={{ fontSize: 13, color: "var(--text-dim)" }}>Aureon — remembers your conversations</span>
-          {tier === "vip" && (
+          {tier === "vip" ? (
             <button className="voice-cta" onClick={openVoiceCall}>
               <span className="vip-tag">VIP</span> Start voice call
             </button>
+          ) : (
+            tier === "premium" && (
+              <Link href="/pricing" className="voice-upsell">
+                VIP unlocks voice calls — sometimes saying it out loud gets you further than typing it
+              </Link>
+            )
           )}
         </div>
 
