@@ -678,10 +678,26 @@ export default function ChatWindow() {
           if (!voiceActiveRef.current || gotResultRef.current || fatalErrorRef.current) return;
           startListening();
         };
-      } catch {
+      } catch (err) {
         if (!voiceActiveRef.current) return;
         fatalErrorRef.current = true;
-        setVoiceStatus("Microphone access denied — allow mic access, or type below.");
+        // Was blindly reporting "access denied" for *any* getUserMedia
+        // failure -- reported live with the site's own permission already
+        // showing as Allowed in browser settings, so it genuinely wasn't
+        // a permission denial. getUserMedia throws a real, specific
+        // DOMException name; surface what it actually is instead of
+        // guessing wrong every time it's not a plain permission issue.
+        const name = err instanceof DOMException ? err.name : "Unknown";
+        console.error("Voice call: getUserMedia failed", name, err);
+        const message =
+          name === "NotAllowedError" || name === "SecurityError"
+            ? "Microphone access denied — allow mic access, or type below."
+            : name === "NotFoundError"
+              ? "No microphone found — check it's connected, or type below."
+              : name === "NotReadableError"
+                ? "Microphone is in use by another app (or blocked by your OS) — close other apps using it, or type below."
+                : `Couldn't access the microphone (${name}) — or type below.`;
+        setVoiceStatus(message);
       }
     }
 
