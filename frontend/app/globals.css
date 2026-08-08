@@ -346,6 +346,14 @@ footer.note{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);co
   0%,100%{box-shadow:0 0 0 0 rgba(201,162,74,0.35);}
   50%{box-shadow:0 0 0 16px rgba(201,162,74,0);}
 }
+/* Cold starlight instead of warm gold while listening -- same warm-
+   instrument/cold-precision split the rest of the site uses for
+   "Aureon talking" vs "your live input" (see .data-accent). */
+.orb.listening{animation:pulseListening 1.4s ease-in-out infinite;}
+@keyframes pulseListening{
+  0%,100%{box-shadow:0 0 0 0 rgba(168,220,232,0.4);}
+  50%{box-shadow:0 0 0 16px rgba(168,220,232,0);}
+}
 .voice-transcript{width:100%;max-width:440px;min-height:70px;color:var(--text-dim);font-size:14px;text-align:center;line-height:1.6;}
 .voice-transcript .said{color:var(--text);font-weight:500;}
 .voice-input-row{display:flex;gap:10px;width:100%;max-width:440px;}

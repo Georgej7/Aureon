@@ -9,6 +9,51 @@ import { createClient } from "@/lib/supabase/client";
 
 type Message = { id: string; role: "user" | "assistant"; content: string; created_at: string };
 
+// Web Speech API isn't in TS's default lib types, and there's no official
+// @types package for it -- just enough shape for what's actually used
+// here. Supported un-prefixed in Chrome/Edge, webkit-prefixed in Safari;
+// not supported in Firefox, hence the runtime feature-detect in
+// createRecognition() rather than assuming it exists.
+interface SpeechRecognitionResultLike {
+  isFinal: boolean;
+  [index: number]: { transcript: string };
+}
+interface SpeechRecognitionEventLike extends Event {
+  results: ArrayLike<SpeechRecognitionResultLike>;
+  resultIndex: number;
+}
+interface SpeechRecognitionErrorEventLike extends Event {
+  error: string;
+}
+interface SpeechRecognitionLike extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
+  onend: (() => void) | null;
+}
+declare global {
+  interface Window {
+    SpeechRecognition?: new () => SpeechRecognitionLike;
+    webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+  }
+}
+
+function createRecognition(): SpeechRecognitionLike | null {
+  if (typeof window === "undefined") return null;
+  const Ctor = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+  if (!Ctor) return null;
+  const recognition = new Ctor();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = "en-US";
+  return recognition;
+}
+
 const FREE_DAILY_MESSAGE_LIMIT = 3;
 
 const KNOWLEDGE_COLUMNS =
@@ -38,23 +83,6 @@ function isToday(isoTimestamp: string): boolean {
     d.getUTCDate() === now.getUTCDate()
   );
 }
-
-// Entry point disabled: this doesn't actually listen (no speech recognition
-// -- the "voice" input is a text box) and doesn't reply with anything
-// AI/chart-aware -- it cycles through 3 hardcoded canned lines regardless of
-// what's typed. It was also reachable by every tier despite the "VIP"
-// badge, no gating existed. Showing this to a real, especially paying, user
-// would read as the product being fake. Keep the UI/TTS plumbing in place
-// (it's a real head start -- speakText() genuinely works) but don't surface
-// the entry point until it's wired to real speech-to-text and the same
-// postChatReply() the text chat already uses.
-const VOICE_CALL_ENABLED = false;
-
-const VOICE_REPLIES = [
-  "I hear that. Let's slow down for a second — what does your gut say when you picture actually saying yes?",
-  "That makes sense given your chart right now. Your Personal Year rewards patience — this doesn't need to be decided today.",
-  "Worth naming: is this fear about the move itself, or fear of choosing wrong? Those call for different next steps.",
-];
 
 function pickVoice(): SpeechSynthesisVoice | undefined {
   const voices = speechSynthesis.getVoices();
@@ -168,13 +196,35 @@ export default function ChatWindow() {
   const [sendError, setSendError] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const chatBodyRef = useRef<HTMLDivElement | null>(null);
+  // sendMessage() is called from speech-recognition callbacks that are set
+  // up once per call and can otherwise close over a stale messages array --
+  // this ref is the source of truth for "what's the history right now"
+  // inside that helper, kept in sync via the effect below.
+  const messagesRef = useRef<Message[]>([]);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   const [voiceActive, setVoiceActive] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState("Connecting…");
   const [voiceTranscript, setVoiceTranscript] = useState<{ speaker: string; text: string } | null>(null);
   const [voiceInput, setVoiceInput] = useState("");
   const [orbSpeaking, setOrbSpeaking] = useState(false);
-  const voiceTurn = useRef(0);
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  // Mirrors voiceActive for the same stale-closure reason as messagesRef --
+  // recognition/TTS callbacks fire well after the render that set them up.
+  const voiceActiveRef = useRef(false);
+  // Whether the recognition session that just ended captured a real
+  // utterance (via onresult) -- distinguishes "ended because the user
+  // spoke" (don't auto-restart, handleVoiceUtterance will once the reply's
+  // done) from "ended from silence/no-speech" (do auto-restart, keep
+  // waiting) inside onend, the one place that decides whether to restart.
+  const gotResultRef = useRef(false);
+  // Set on a non-recoverable error (mic permission denied) -- onend checks
+  // this too, so it doesn't loop restarting a recognition that will just
+  // fail the same way again.
+  const fatalErrorRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -281,6 +331,79 @@ export default function ChatWindow() {
   ).length;
   const freeLimitReached = tier === "free" && todaysUserMessageCount >= FREE_DAILY_MESSAGE_LIMIT;
 
+  // Shared by both the text box and voice call -- both are the same
+  // conversation (same sessionId/messages), just a different input/output
+  // modality. Throws on failure; callers translate that into their own
+  // UI (an inline error for text, a spoken/status message for voice).
+  async function sendMessage(text: string): Promise<string> {
+    if (!sessionId || !profile) throw new Error("not-ready");
+    const supabase = createClient();
+
+    const { data: inserted, error: insertError } = await supabase
+      .from("chat_messages")
+      .insert({ session_id: sessionId, role: "user", content: text })
+      .select("id, role, content, created_at")
+      .single();
+    if (insertError || !inserted) throw new Error("insert-failed");
+
+    const nextMessages = [...messagesRef.current, inserted as Message];
+    setMessages(nextMessages);
+    scrollToBottom();
+
+    const topics = topicsForProfile(profile.chart, profile.numerology, transits);
+    const [{ data: topicMatches }, { data: searchMatches }] = await Promise.all([
+      supabase.from("knowledge_base").select(KNOWLEDGE_COLUMNS).in("topic", topics),
+      // Full-text search on the user's actual message, so a freeform question can surface
+      // relevant content even when it doesn't name one of the known topics above exactly.
+      supabase
+        .from("knowledge_base")
+        .select(KNOWLEDGE_COLUMNS)
+        .textSearch("search_vector", text, { type: "websearch", config: "english" })
+        .limit(5),
+    ]);
+    const knowledge = dedupeKnowledge([...(topicMatches ?? []), ...(searchMatches ?? [])]);
+
+    // Fetched fresh right before the call (not read from earlier state) so a stale or
+    // just-expired session can't silently slip through — the backend verifies this
+    // token itself and enforces the free-tier daily limit server-side.
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) throw new ApiError(401, "Session expired");
+
+    const { reply } = await postChatReply(
+      {
+        chart: profile.chart,
+        numerology: profile.numerology,
+        knowledge,
+        messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
+        transits,
+      },
+      session.access_token
+    );
+
+    const { data: assistantRow, error: assistantInsertError } = await supabase
+      .from("chat_messages")
+      .insert({ session_id: sessionId, role: "assistant", content: reply })
+      .select("id, role, content, created_at")
+      .single();
+
+    const { error: sessionUpdateError } = await supabase
+      .from("chat_sessions")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", sessionId);
+    if (sessionUpdateError) {
+      console.error("Failed to bump chat_sessions.updated_at", sessionUpdateError);
+    }
+
+    if (assistantInsertError) throw assistantInsertError;
+    if (assistantRow) {
+      setMessages((m) => [...m, assistantRow as Message]);
+      scrollToBottom();
+    }
+    return reply;
+  }
+
   async function sendChatMsg() {
     const text = chatInput.trim();
     if (!text || sending || !sessionId || !profile) return;
@@ -292,81 +415,10 @@ export default function ChatWindow() {
     }
     setSendError(null);
     setChatInput("");
-    const supabase = createClient();
-
-    const { data: inserted, error: insertError } = await supabase
-      .from("chat_messages")
-      .insert({ session_id: sessionId, role: "user", content: text })
-      .select("id, role, content, created_at")
-      .single();
-    if (insertError || !inserted) {
-      setSendError("Couldn't send your message. Try again.");
-      return;
-    }
-
     trackEvent("chat_message_sent");
-    const nextMessages = [...messages, inserted as Message];
-    setMessages(nextMessages);
-    scrollToBottom();
     setSending(true);
-
     try {
-      const topics = topicsForProfile(profile.chart, profile.numerology, transits);
-      const [{ data: topicMatches }, { data: searchMatches }] = await Promise.all([
-        supabase.from("knowledge_base").select(KNOWLEDGE_COLUMNS).in("topic", topics),
-        // Full-text search on the user's actual message, so a freeform question can surface
-        // relevant content even when it doesn't name one of the known topics above exactly.
-        supabase
-          .from("knowledge_base")
-          .select(KNOWLEDGE_COLUMNS)
-          .textSearch("search_vector", text, { type: "websearch", config: "english" })
-          .limit(5),
-      ]);
-      const knowledge = dedupeKnowledge([...(topicMatches ?? []), ...(searchMatches ?? [])]);
-
-      // Fetched fresh right before the call (not read from earlier state) so a stale or
-      // just-expired session can't silently slip through — the backend verifies this
-      // token itself and enforces the free-tier daily limit server-side.
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        setSendError("Your session expired — please sign in again.");
-        return;
-      }
-
-      const { reply } = await postChatReply(
-        {
-          chart: profile.chart,
-          numerology: profile.numerology,
-          knowledge,
-          messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
-          transits,
-        },
-        session.access_token
-      );
-
-      const { data: assistantRow, error: assistantInsertError } = await supabase
-        .from("chat_messages")
-        .insert({ session_id: sessionId, role: "assistant", content: reply })
-        .select("id, role, content, created_at")
-        .single();
-
-      const { error: sessionUpdateError } = await supabase
-        .from("chat_sessions")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", sessionId);
-      if (sessionUpdateError) {
-        console.error("Failed to bump chat_sessions.updated_at", sessionUpdateError);
-      }
-
-      if (assistantInsertError) {
-        throw assistantInsertError;
-      }
-      if (assistantRow) {
-        setMessages((m) => [...m, assistantRow as Message]);
-        scrollToBottom();
-      }
+      await sendMessage(text);
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
         setSendError(
@@ -396,43 +448,134 @@ export default function ChatWindow() {
     speakText(text, undefined, () => setPlayingId(null));
   }
 
-  function openVoiceCall() {
-    setVoiceActive(true);
-    setVoiceStatus("Connecting…");
-    setVoiceTranscript(null);
-    setTimeout(() => {
-      setVoiceStatus("Connected");
-      setVoiceTranscript({
-        speaker: "Aureon",
-        text: "Good to hear your voice — what's on your mind today?",
-      });
-      speakText(
-        "Good to hear your voice — what's on your mind today?",
-        () => setOrbSpeaking(true),
-        () => setOrbSpeaking(false)
-      );
-    }, 900);
+  // Starts (or restarts) listening -- the one place recognition.start() is
+  // called, so every caller (open, onend's auto-restart, after speaking a
+  // reply) goes through the same reset of gotResultRef.
+  function startListening() {
+    const recognition = recognitionRef.current;
+    if (!recognition || !voiceActiveRef.current) return;
+    gotResultRef.current = false;
+    setVoiceStatus("Listening…");
+    setListening(true);
+    try {
+      recognition.start();
+    } catch {
+      // start() throws if recognition is already running -- harmless,
+      // it's already in the state we wanted.
+    }
   }
 
+  // A spoken (or, via the text fallback below, typed-as-if-spoken) turn.
+  async function handleVoiceUtterance(said: string) {
+    const text = said.trim();
+    if (!text) {
+      if (voiceActiveRef.current) startListening();
+      return;
+    }
+    setVoiceTranscript({ speaker: "You said", text });
+    setVoiceStatus("Thinking…");
+    try {
+      const reply = await sendMessage(text);
+      if (!voiceActiveRef.current) return;
+      setVoiceTranscript({ speaker: "Aureon", text: reply });
+      setVoiceStatus("Aureon is speaking…");
+      speakText(
+        reply,
+        () => setOrbSpeaking(true),
+        () => {
+          setOrbSpeaking(false);
+          if (voiceActiveRef.current) startListening();
+        }
+      );
+    } catch (err) {
+      if (!voiceActiveRef.current) return;
+      setVoiceStatus(
+        err instanceof ApiError && err.status === 429
+          ? "You've used today's free messages — upgrade for unlimited."
+          : err instanceof ApiError && err.status === 401
+            ? "Your session expired — please sign in again."
+            : "Couldn't reach Aureon just now — try again."
+      );
+      if (voiceActiveRef.current) startListening();
+    }
+  }
+
+  function openVoiceCall() {
+    voiceActiveRef.current = true;
+    fatalErrorRef.current = false;
+    setVoiceActive(true);
+    setVoiceTranscript(null);
+
+    const recognition = createRecognition();
+    if (!recognition) {
+      // Firefox and a few others don't implement this at all -- the text
+      // fallback below still works, this just means no mic loop.
+      setVoiceStatus("Voice recognition isn't supported in this browser — type below instead.");
+    } else {
+      recognitionRef.current = recognition;
+      setVoiceStatus("Connecting…");
+
+      recognition.onresult = (event) => {
+        gotResultRef.current = true;
+        const result = event.results[event.results.length - 1];
+        const said = result?.[0]?.transcript ?? "";
+        setListening(false);
+        handleVoiceUtterance(said);
+      };
+      recognition.onerror = (event) => {
+        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+          fatalErrorRef.current = true;
+          setVoiceStatus("Microphone access denied — allow mic access, or type below.");
+        } else if (event.error !== "no-speech" && event.error !== "aborted") {
+          setVoiceStatus("Didn't catch that — listening again…");
+        }
+      };
+      recognition.onend = () => {
+        setListening(false);
+        // onresult already kicked off handleVoiceUtterance (which restarts
+        // listening itself once the reply's done speaking); a fatal error
+        // shouldn't loop-retry. Anything else ending here is silence/no-
+        // speech timing out -- just keep waiting.
+        if (!voiceActiveRef.current || gotResultRef.current || fatalErrorRef.current) return;
+        startListening();
+      };
+    }
+
+    const greeting = "Good to hear your voice — what's on your mind today?";
+    setTimeout(() => {
+      if (!voiceActiveRef.current) return;
+      setVoiceStatus("Aureon is speaking…");
+      setVoiceTranscript({ speaker: "Aureon", text: greeting });
+      speakText(
+        greeting,
+        () => setOrbSpeaking(true),
+        () => {
+          setOrbSpeaking(false);
+          if (voiceActiveRef.current) startListening();
+        }
+      );
+    }, 500);
+  }
+
+  // Text fallback inside the voice overlay -- same handler real speech
+  // results go through, so a browser without speech recognition (or a
+  // mis-heard phrase, or just a quiet room) still gets a real, spoken-back
+  // reply rather than the call being unusable.
   function sendVoiceMsg() {
     const said = voiceInput.trim();
     if (!said) return;
     setVoiceInput("");
-    setVoiceTranscript({ speaker: "You said", text: said });
-    setVoiceStatus("Thinking…");
-    setTimeout(() => {
-      setVoiceStatus("Connected");
-      const reply = VOICE_REPLIES[voiceTurn.current % VOICE_REPLIES.length];
-      voiceTurn.current++;
-      setVoiceTranscript({ speaker: "Aureon", text: reply });
-      speakText(reply, () => setOrbSpeaking(true), () => setOrbSpeaking(false));
-    }, 700);
+    handleVoiceUtterance(said);
   }
 
   function closeVoiceCall() {
+    voiceActiveRef.current = false;
     speechSynthesis.cancel();
+    recognitionRef.current?.abort();
+    recognitionRef.current = null;
     setVoiceActive(false);
-    voiceTurn.current = 0;
+    setListening(false);
+    setOrbSpeaking(false);
   }
 
   return (
@@ -442,7 +585,7 @@ export default function ChatWindow() {
         <div className="chat-head">
           <span className="dot-live" />
           <span style={{ fontSize: 13, color: "var(--text-dim)" }}>Aureon — remembers your conversations</span>
-          {VOICE_CALL_ENABLED && (
+          {tier === "vip" && (
             <button className="voice-cta" onClick={openVoiceCall}>
               <span className="vip-tag">VIP</span> Start voice call
             </button>
@@ -540,14 +683,14 @@ export default function ChatWindow() {
         <div className={`voice-overlay${voiceActive ? " active" : ""}`}>
           <div className="status">{voiceStatus}</div>
           <div className="orb-wrap">
-            <div className={`orb${orbSpeaking ? " speaking" : ""}`} />
+            <div className={`orb${orbSpeaking ? " speaking" : listening ? " listening" : ""}`} />
             <div className="voice-transcript">
               {voiceTranscript ? (
                 <>
                   <span className="said">{voiceTranscript.speaker}:</span> {voiceTranscript.text}
                 </>
               ) : (
-                "Say something, or type below to simulate speaking."
+                "Say something, or type below."
               )}
             </div>
           </div>
