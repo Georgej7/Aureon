@@ -129,9 +129,28 @@ const PLANET_SURFACES: Record<string, SurfaceSpot[]> = {
   Earth: scatterSpots(5, 0.16, 0.3, 0.55),
 };
 
+// Simplified, calendar-standard date ranges -- same ones virtually every
+// astrology app uses. Real tropical sign boundaries drift by about a day
+// year to year; not worth surfacing that nuance for a quick info click.
+const ZODIAC_INFO: Record<string, string> = {
+  Aries: "Mar 21 – Apr 19",
+  Taurus: "Apr 20 – May 20",
+  Gemini: "May 21 – Jun 20",
+  Cancer: "Jun 21 – Jul 22",
+  Leo: "Jul 23 – Aug 22",
+  Virgo: "Aug 23 – Sep 22",
+  Libra: "Sep 23 – Oct 22",
+  Scorpio: "Oct 23 – Nov 21",
+  Sagittarius: "Nov 22 – Dec 21",
+  Capricorn: "Dec 22 – Jan 19",
+  Aquarius: "Jan 20 – Feb 18",
+  Pisces: "Feb 19 – Mar 20",
+};
+
 export default function Starfield() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null);
+  const [selectedZodiac, setSelectedZodiac] = useState<string | null>(null);
   const selectedRef = useRef<string | null>(null);
   const latestPositionsRef = useRef<{ name: string; px: number; py: number; r: number }[]>([]);
   const [rareEventLabel, setRareEventLabel] = useState<string | null>(null);
@@ -368,7 +387,13 @@ export default function Starfield() {
       )
         return;
       const hit = hitTestPlanet(e.clientX, e.clientY);
-      setSelectedPlanet((prev) => (hit ? (prev === hit ? null : hit) : null));
+      if (hit && ZODIAC_INFO[hit]) {
+        setSelectedZodiac((prev) => (prev === hit ? null : hit));
+        setSelectedPlanet(null);
+      } else {
+        setSelectedPlanet((prev) => (hit ? (prev === hit ? null : hit) : null));
+        setSelectedZodiac(null);
+      }
     }
 
     window.addEventListener("resize", handleResize);
@@ -407,7 +432,21 @@ export default function Starfield() {
     let t = 0;
     let comets: { x: number; y: number; vx: number; vy: number; life: number; maxLife: number }[] = [];
     let nextCometAt = 90 + Math.random() * 180;
-    const ZODIAC = ["♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓"];
+    // name pairs with ZODIAC_INFO (module-level, above) for the click panel.
+    const ZODIAC = [
+      { symbol: "♈", name: "Aries" },
+      { symbol: "♉", name: "Taurus" },
+      { symbol: "♊", name: "Gemini" },
+      { symbol: "♋", name: "Cancer" },
+      { symbol: "♌", name: "Leo" },
+      { symbol: "♍", name: "Virgo" },
+      { symbol: "♎", name: "Libra" },
+      { symbol: "♏", name: "Scorpio" },
+      { symbol: "♐", name: "Sagittarius" },
+      { symbol: "♑", name: "Capricorn" },
+      { symbol: "♒", name: "Aquarius" },
+      { symbol: "♓", name: "Pisces" },
+    ];
     let rafId = 0;
     // Selecting a planet freezes it in place rather than following its
     // orbit -- easier to read the info panel against a moving target
@@ -572,6 +611,13 @@ export default function Starfield() {
         { name: "Neptune", a: scale * 0.41, b: scale * 0.14, speed: 0.00012, size: 0.0088, color: "78,104,205", phase: 2.2, dTilt: -0.03, retro: false, ring: false, hasMoon: false, banded: false, atmosphere: "140,170,235", surface: "none" as const },
       ];
 
+      // Declared here (rather than down where the Sun's hit target used to
+      // start this array) so the zodiac ring's click targets -- pushed
+      // below, right where each symbol's screen position is computed --
+      // land in the same array the Sun/planets/Moon push into further
+      // down. One hitTargets list, one hit-test path, for the whole scene.
+      const hitTargets: { name: string; px: number; py: number; r: number }[] = [];
+
       const zR = scale * 0.47;
       ctx.beginPath();
       ctx.ellipse(cx, cy, zR, zR * 0.34, rot, 0, Math.PI * 2);
@@ -589,7 +635,8 @@ export default function Starfield() {
         // Deliberately no U+FE0E text-presentation selector here — the
         // colorful emoji rendering on iOS/Safari is preferred over plain
         // gold text for these symbols (confirmed after seeing both).
-        ctx.fillText(ZODIAC[i], cx + zx, cy + zy);
+        ctx.fillText(ZODIAC[i].symbol, cx + zx, cy + zy);
+        hitTargets.push({ name: ZODIAC[i].name, px: cx + zx, py: cy + zy, r: Math.max(scale * 0.016 * 0.7, 12) });
       }
 
       const sunR = scale * 0.03;
@@ -650,9 +697,7 @@ export default function Starfield() {
         ctx.lineWidth = 1.2;
         ctx.stroke();
       }
-      const hitTargets: { name: string; px: number; py: number; r: number }[] = [
-        { name: "Sun", px: cx, py: cy, r: Math.max(sunR * (sunSelected ? 1.6 : 1), 10) },
-      ];
+      hitTargets.push({ name: "Sun", px: cx, py: cy, r: Math.max(sunR * (sunSelected ? 1.6 : 1), 10) });
 
       const positions = [];
       for (const p of planets) {
@@ -1045,6 +1090,20 @@ export default function Starfield() {
             ))}
           </ul>
           <p className="mono data-accent planet-info-astro">{info.astro}</p>
+        </div>
+      )}
+      {selectedZodiac && ZODIAC_INFO[selectedZodiac] && (
+        <div className="planet-info-panel" onClick={(e) => e.stopPropagation()}>
+          <button
+            className="planet-info-close"
+            onClick={() => setSelectedZodiac(null)}
+            aria-label="Close"
+          >
+            ×
+          </button>
+          <p className="planet-info-label">Zodiac sign</p>
+          <h3>{selectedZodiac}</h3>
+          <p className="mono data-accent planet-info-astro">{ZODIAC_INFO[selectedZodiac]}</p>
         </div>
       )}
       {rareEventLabel && <div className="rare-event-toast">✨ {rareEventLabel}</div>}
