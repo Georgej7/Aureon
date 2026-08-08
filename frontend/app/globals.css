@@ -176,6 +176,13 @@ body.sky-view .sky-view-exit{display:flex;}
   padding:6px;display:flex;flex-direction:column;gap:2px;
   box-shadow:0 12px 32px rgba(0,0,0,0.4);
 }
+/* Default browser scrollbar (thick, light gray) reads as visibly broken
+   against this dark theme -- same thin gold treatment as .chat-body. */
+.tools-menu{scrollbar-width:thin;scrollbar-color:var(--gold-soft) transparent;}
+.tools-menu::-webkit-scrollbar{width:8px;}
+.tools-menu::-webkit-scrollbar-track{background:transparent;}
+.tools-menu::-webkit-scrollbar-thumb{background:var(--gold-soft);border-radius:999px;}
+.tools-menu::-webkit-scrollbar-thumb:hover{background:var(--gold);}
 .tools-menu-item{
   display:block;padding:9px 12px;border-radius:6px;font-size:13px;color:var(--text-dim);
   text-decoration:none;white-space:nowrap;transition:background .15s,color .15s;
