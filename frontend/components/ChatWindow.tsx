@@ -500,6 +500,22 @@ export default function ChatWindow() {
                   {FREE_DAILY_MESSAGE_LIMIT - todaysUserMessageCount === 1 ? "" : "s"} left today
                 </p>
               )}
+              {!loading && !loadError && freeLimitReached && (
+                <div
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+                    background: "var(--bg-raised)", border: "1px solid var(--line)", borderRadius: 10,
+                    padding: "10px 14px",
+                  }}
+                >
+                  <span style={{ color: "var(--text-dim)", fontSize: 12 }}>
+                    You&apos;ve used today&apos;s free messages — Premium is unlimited.
+                  </span>
+                  <Link href="/pricing" className="btn btn-gold" style={{ padding: "7px 14px", fontSize: 12, whiteSpace: "nowrap" }}>
+                    Upgrade to Premium
+                  </Link>
+                </div>
+              )}
             </div>
             <div className="chat-input">
               <input
