@@ -123,10 +123,21 @@ export default function TopNav() {
 
   useEffect(() => {
     if (!toolsOpen) return;
+    // Clamp against the viewport, not just the button -- the tab bar
+    // scrolls horizontally on mobile, so the button (and therefore
+    // rect.left) can sit far enough right that an unclamped menu spills
+    // off the right edge of the screen and gets cut off. toolsMenuRef
+    // isn't mounted yet on the very first call (menuPos is still null, so
+    // the portal hasn't rendered), so fall back to the CSS min-width as
+    // the estimate for that first pass.
     function updatePosition() {
       const rect = toolsButtonRef.current?.getBoundingClientRect();
       if (!rect) return;
-      setMenuPos({ top: rect.bottom + 8, left: rect.left });
+      const menuWidth = toolsMenuRef.current?.offsetWidth ?? 200;
+      const margin = 16;
+      const maxLeft = window.innerWidth - menuWidth - margin;
+      const left = Math.max(margin, Math.min(rect.left, maxLeft));
+      setMenuPos({ top: rect.bottom + 8, left });
     }
     updatePosition();
     // Keeps the portalled menu glued to the button on resize -- it's
@@ -136,6 +147,22 @@ export default function TopNav() {
     window.addEventListener("resize", updatePosition);
     return () => window.removeEventListener("resize", updatePosition);
   }, [toolsOpen]);
+
+  // Re-clamp once the menu has actually mounted and toolsMenuRef has a real
+  // measured width -- the pass above ran before the portal existed, so it
+  // only had the 200px CSS min-width to estimate with, which undershoots
+  // for the longer item labels (e.g. "Composite & Davison").
+  useEffect(() => {
+    if (!toolsOpen || !menuPos) return;
+    const rect = toolsButtonRef.current?.getBoundingClientRect();
+    const menuWidth = toolsMenuRef.current?.offsetWidth;
+    if (!rect || !menuWidth) return;
+    const margin = 16;
+    const maxLeft = window.innerWidth - menuWidth - margin;
+    const left = Math.max(margin, Math.min(rect.left, maxLeft));
+    if (left !== menuPos.left) setMenuPos({ top: rect.bottom + 8, left });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toolsOpen, menuPos?.left]);
 
   useEffect(() => {
     setToolsOpen(false);

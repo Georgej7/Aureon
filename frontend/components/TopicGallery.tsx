@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 type Topic = {
@@ -118,92 +118,22 @@ const TOPICS: Topic[] = [
 ];
 
 /**
- * Curved 3D topic wall: mouse-reactive cylindrical arc of topic tiles, plus the
- * sample-reading preview modal opened by clicking a tile. Ported from the
- * prototype's curvedGallery IIFE + openTopicPreview/closeTopicPreview.
+ * Topic wall: a horizontally-scrollable row of topic tiles, plus the
+ * sample-reading preview modal opened by clicking a tile.
  */
 export default function TopicGallery() {
-  const wrapRef = useRef<HTMLDivElement | null>(null);
-  const galleryRef = useRef<HTMLDivElement | null>(null);
-  const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
   const router = useRouter();
   const [preview, setPreview] = useState<Topic | null>(null);
-
-  useEffect(() => {
-    const gallery = galleryRef.current;
-    const wrap = wrapRef.current;
-    if (!gallery || !wrap) return;
-
-    const tiles = tileRefs.current.filter((t): t is HTMLDivElement => t !== null);
-    const center = (tiles.length - 1) / 2;
-    const angleStep = 15;
-    const maxThetaRad = (center * angleStep * Math.PI) / 180;
-    let sway = 0;
-    const thetas: number[] = new Array(tiles.length).fill(0);
-    const zs: number[] = new Array(tiles.length).fill(0);
-
-    function layout() {
-      const wrapW = wrap!.clientWidth;
-      const centerX = wrapW / 2;
-      // radius was a fixed 480px regardless of viewport width, so the fan of
-      // tiles overflowed badly below ~900px wide (extreme tiles land off the
-      // left/right edge of the screen). Cap it so the outermost tile's edge
-      // never exceeds the wrap's own width, at any viewport size.
-      const radius = Math.min(480, Math.max(80, (wrapW / 2 - 74) / Math.sin(maxThetaRad)));
-      tiles.forEach((tile, i) => {
-        const offset = i - center;
-        const theta = offset * angleStep;
-        const rad = (theta * Math.PI) / 180;
-        const x = radius * Math.sin(rad);
-        const z = -radius * (1 - Math.cos(rad));
-        const y = Math.pow(Math.abs(offset), 2) * 3;
-        tile.style.left = centerX + x - 74 + "px";
-        tile.style.top = y + "px";
-        thetas[i] = -theta;
-        zs[i] = z;
-      });
-      render();
-    }
-
-    function render() {
-      gallery!.style.transform = "rotateX(6deg) rotateY(" + sway.toFixed(2) + "deg)";
-      tiles.forEach((tile, i) => {
-        tile.style.transform = "rotateY(" + thetas[i].toFixed(2) + "deg) translateZ(" + zs[i].toFixed(1) + "px)";
-      });
-    }
-
-    function handleMouseMove(e: MouseEvent) {
-      const rect = gallery!.getBoundingClientRect();
-      const rel = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2 || 1);
-      sway = Math.max(-1, Math.min(1, rel)) * -6;
-      render();
-    }
-
-    layout();
-    window.addEventListener("resize", layout);
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => {
-      window.removeEventListener("resize", layout);
-      window.removeEventListener("mousemove", handleMouseMove);
-    };
-  }, []);
 
   return (
     <>
       <p className="eyebrow" style={{ marginTop: 70, textAlign: "center" }}>
         What Aureon reads
       </p>
-      <div className="gallery-wrap" ref={wrapRef}>
-        <div className="gallery" ref={galleryRef}>
-          {TOPICS.map((topic, i) => (
-            <div
-              key={topic.title}
-              className="tile"
-              ref={(el) => {
-                tileRefs.current[i] = el;
-              }}
-              onClick={() => setPreview(topic)}
-            >
+      <div className="gallery-wrap">
+        <div className="gallery">
+          {TOPICS.map((topic) => (
+            <div key={topic.title} className="tile" onClick={() => setPreview(topic)}>
               {topic.icon}
               <div>
                 <p className="tname">{topic.title}</p>

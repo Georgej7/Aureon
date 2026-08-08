@@ -142,7 +142,7 @@ body.prototype-fullscreen{overflow:hidden;}
   box-shadow:0 12px 32px rgba(0,0,0,0.4);
 }
 .tools-menu-item{
-  padding:9px 12px;border-radius:6px;font-size:13px;color:var(--text-dim);
+  display:block;padding:9px 12px;border-radius:6px;font-size:13px;color:var(--text-dim);
   text-decoration:none;white-space:nowrap;transition:background .15s,color .15s;
 }
 .tools-menu-item:hover{background:var(--bg-raised);color:var(--text);}
@@ -323,11 +323,20 @@ footer.note{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);co
 #revealCanvas{width:min(90vw,420px);height:min(90vw,420px);}
 .reveal-text{margin-top:22px;font-family:var(--font-fraunces),serif;font-size:18px;color:var(--text-dim);letter-spacing:0.3px;}
 
-/* ---- Curved cosmos topic wall ---- */
-.gallery-wrap{perspective:1000px;overflow:visible;padding:60px 0 40px;}
-.gallery{position:relative;height:250px;max-width:1100px;margin:0 auto;transform-style:preserve-3d;}
+/* ---- Topic wall ----
+   Used to be a mouse-reactive 3D perspective fan (rotateY + translateZ tiles
+   packed along an arc). Scrapped it -- at any radius small enough to fit a
+   phone-width viewport, 8 tiles at a 15deg step overlap each other by most
+   of their own width, and it turned out this browser's 3D compositing
+   picks whichever tile is later in DOM order for the shared region rather
+   than the visually-topmost one. In practice that left only the 1-2
+   dead-center tiles clickable -- confirmed on both mobile and desktop, not
+   a viewport-specific bug. A plain scrollable row can never overlap, and
+   behaves identically for touch and mouse. */
+.gallery-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:24px 0 40px;}
+.gallery{display:flex;gap:16px;max-width:1100px;margin:0 auto;padding:0 4px;}
 .tile{
-  position:absolute;top:0;width:148px;height:184px;
+  flex:none;width:148px;height:184px;
   border-radius:14px;
   background:rgba(33,29,25,0.62);backdrop-filter:blur(6px);
   border:1px solid rgba(201,162,74,0.25);
@@ -440,6 +449,14 @@ footer.note{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);co
      tall one. Scale with the viewport instead, clamped so it never gets
      uncomfortably small or swallows the whole screen. */
   .chat-window{height:clamp(380px, calc(100dvh - 300px), 620px);}
+
+  /* The rare-event toast's top:28px assumes a single-row desktop nav. On
+     mobile the topnav wraps to 2-3 rows (brand row, auth row, scrollable
+     tabs row), so the toast at 28px lands squarely on top of the logo and
+     tabs instead of below the nav. Push it down past the wrapped nav and
+     keep it narrower than the viewport so it can never force horizontal
+     overflow on a phone this narrow. */
+  .rare-event-toast{top:150px;max-width:calc(100vw - 32px);text-align:center;}
 }
 
 /* ---- Print / "Save as PDF" reports ----
