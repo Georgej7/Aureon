@@ -41,7 +41,7 @@ export default function TermsPage() {
           under your account. Tell us immediately if you suspect unauthorized access.
         </p>
 
-        <h2>4. Subscriptions and billing</h2>
+        <h2>4. Subscriptions, billing, and refunds</h2>
         <p>
           Aureon offers a free tier and paid subscription tiers (currently Premium, billed monthly).
           Paid subscriptions are processed by Paddle.com, our merchant of record — Paddle handles
@@ -55,6 +55,13 @@ export default function TermsPage() {
           </li>
           <li>Prices may change; we&apos;ll give reasonable notice before any change takes effect for existing subscribers.</li>
         </ul>
+        <p>
+          <strong>Refunds:</strong> because access is granted immediately on payment, subscription fees
+          are generally non-refundable once a billing period has started. If you believe you were
+          charged in error, or a technical issue with the Service prevented you from using what you
+          paid for, contact us and we&apos;ll review it in good faith — refunds may also be issued where
+          required by applicable law.
+        </p>
 
         <h2>5. Acceptable use</h2>
         <p>You agree not to:</p>
