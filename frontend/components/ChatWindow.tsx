@@ -465,6 +465,45 @@ export default function ChatWindow() {
     }
   }
 
+  // Wraps speakText() for the call flow specifically (greeting + replies),
+  // not the per-message speak button -- those are one-off, this one gates
+  // whether listening ever resumes. Confirmed live on mobile: some
+  // browsers (iOS Safari especially) silently drop speechSynthesis.speak()
+  // entirely -- no error, no onstart, no onend -- if it's not close enough
+  // to a direct user gesture. Without a safety net, that leaves the call
+  // hung forever waiting for a reply that never plays.
+  //
+  // Two different timeouts, not one: if speech never even *started* within
+  // ~2s, the browser almost certainly dropped the call silently -- move on
+  // quickly. But if it did start, a reply can legitimately take well over
+  // 2s to finish speaking -- cutting it off there would start listening
+  // again while Aureon's still mid-sentence (the exact mic-hearing-its-
+  // own-voice problem turn-taking is built to avoid). Once started, trust
+  // onend; the 30s ceiling only guards the rare case where onend itself
+  // never fires despite speech actually having played.
+  function speakInCall(text: string, onDone: () => void) {
+    let started = false;
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      setOrbSpeaking(false);
+      onDone();
+    };
+    speakText(
+      text,
+      () => {
+        started = true;
+        setOrbSpeaking(true);
+      },
+      finish
+    );
+    setTimeout(() => {
+      if (!started) finish();
+    }, 2000);
+    setTimeout(finish, 30000);
+  }
+
   // A spoken (or, via the text fallback below, typed-as-if-spoken) turn.
   async function handleVoiceUtterance(said: string) {
     const text = said.trim();
@@ -479,14 +518,9 @@ export default function ChatWindow() {
       if (!voiceActiveRef.current) return;
       setVoiceTranscript({ speaker: "Aureon", text: reply });
       setVoiceStatus("Aureon is speaking…");
-      speakText(
-        reply,
-        () => setOrbSpeaking(true),
-        () => {
-          setOrbSpeaking(false);
-          if (voiceActiveRef.current) startListening();
-        }
-      );
+      speakInCall(reply, () => {
+        if (voiceActiveRef.current) startListening();
+      });
     } catch (err) {
       if (!voiceActiveRef.current) return;
       setVoiceStatus(
@@ -506,6 +540,21 @@ export default function ChatWindow() {
     setVoiceActive(true);
     setVoiceTranscript(null);
     setVoiceStatus("Connecting…");
+
+    // Same category of bug as the mic-permission timing fix above, for
+    // speech synthesis instead of recognition: iOS Safari in particular
+    // silently drops speechSynthesis.speak() calls that aren't close
+    // enough to a direct user gesture -- confirmed live, the greeting and
+    // every reply after it just never played, no error. Speaking a near-
+    // silent utterance synchronously right here, in this click handler,
+    // "unlocks" speech synthesis for the rest of the session so the later
+    // async speak() calls (the greeting after this setTimeout, and every
+    // AI reply after that) actually play.
+    if ("speechSynthesis" in window) {
+      const unlock = new SpeechSynthesisUtterance(" ");
+      unlock.volume = 0;
+      speechSynthesis.speak(unlock);
+    }
 
     const recognition = createRecognition();
     if (!recognition) {
@@ -568,14 +617,9 @@ export default function ChatWindow() {
       if (!voiceActiveRef.current) return;
       setVoiceStatus((s) => (s.startsWith("Microphone") ? s : "Aureon is speaking…"));
       setVoiceTranscript({ speaker: "Aureon", text: greeting });
-      speakText(
-        greeting,
-        () => setOrbSpeaking(true),
-        () => {
-          setOrbSpeaking(false);
-          if (voiceActiveRef.current && !fatalErrorRef.current) startListening();
-        }
-      );
+      speakInCall(greeting, () => {
+        if (voiceActiveRef.current && !fatalErrorRef.current) startListening();
+      });
     }, 500);
   }
 
