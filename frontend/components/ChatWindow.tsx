@@ -383,6 +383,15 @@ export default function ChatWindow() {
   }
 
   function speakMsg(id: string, text: string) {
+    // Clicking the speak button on the message already playing should stop
+    // it, not restart it -- speakText() always calls speechSynthesis.cancel()
+    // then starts a fresh utterance, so without this check a second click
+    // just re-cancelled-and-restarted from the beginning every time.
+    if (playingId === id) {
+      speechSynthesis.cancel();
+      setPlayingId(null);
+      return;
+    }
     setPlayingId(id);
     speakText(text, undefined, () => setPlayingId(null));
   }
