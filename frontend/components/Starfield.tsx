@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { dominantElement, type Element } from "@/lib/astrology";
+import { getMoonPhase } from "@/lib/moonPhase";
 import { createClient } from "@/lib/supabase/client";
 
 // Per-element palette bias -- the ambient background subtly shifts toward
@@ -394,6 +395,12 @@ export default function Starfield() {
         setSelectedPlanet((prev) => (hit ? (prev === hit ? null : hit) : null));
         setSelectedZodiac(null);
       }
+      // LandingGate.tsx listens for this while its entrance screen is up --
+      // clicking any real planet or zodiac sign in the sky doubles as the
+      // "enter" action there, instead of a separate button sitting over
+      // the scene. Fired on every real hit regardless of gate state; it's
+      // a no-op once the gate's already been dismissed.
+      if (hit) window.dispatchEvent(new CustomEvent("aureon:sky-click"));
     }
 
     window.addEventListener("resize", handleResize);
@@ -1069,6 +1076,11 @@ export default function Starfield() {
   }, []);
 
   const info = selectedPlanet ? PLANET_INFO[selectedPlanet] : null;
+  // Computed once per mount, not per click -- illumination shifts too
+  // slowly to matter within one page visit. Real data (see lib/moonPhase.ts),
+  // not decoration -- shown only on the Moon's own panel since it's specific
+  // to it, not a fact about the Moon as a body the way the others are.
+  const moon = useMemo(() => getMoonPhase(), []);
 
   return (
     <>
@@ -1089,6 +1101,11 @@ export default function Starfield() {
               <li key={fact}>{fact}</li>
             ))}
           </ul>
+          {selectedPlanet === "Moon" && (
+            <p className="mono data-accent planet-info-live">
+              Tonight: {moon.name}, {moon.illuminationPct}% illuminated
+            </p>
+          )}
           <p className="mono data-accent planet-info-astro">{info.astro}</p>
         </div>
       )}

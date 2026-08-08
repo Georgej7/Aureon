@@ -1,37 +1,37 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { getMoonPhase } from "@/lib/moonPhase";
 
 /**
- * Cinematic entrance for the landing page: instead of a generic "click to
- * begin" prompt, the click target itself shows tonight's actual Moon phase
- * and illumination -- real, changes every day, and ties the very first
- * thing a visitor sees to what the product actually does (real
- * astronomical data), rather than decorative copy. Sits over the Sun's
- * position in the already-running Starfield behind it. Click/keyboard-
- * activated -- the backdrop just fades away on click, revealing the same
- * scene that's been animating underneath the whole time rather than
- * cutting to a different one or playing a separate transition over it.
- * Shows once per browser session (sessionStorage), not on every visit.
+ * Landing-page entrance. Four straight passes at "restyle a click-to-enter
+ * button" all still read as a generic splash gate -- restyling the button
+ * was never going to fix that, since the button-over-a-scene pattern is
+ * itself the generic part. This one changes the mechanic instead: there's
+ * no dedicated entry button sitting over the solar system at all. Entry is
+ * tied to the interaction the rest of the site already teaches -- clicking
+ * a planet or zodiac sign. Starfield.tsx dispatches a window
+ * "aureon:sky-click" event on every real hit (see its handleWindowClick);
+ * this component just listens for that while the gate is up and treats it
+ * as "entered." The only UI is a small caption near the bottom -- an
+ * instruction, plus an accessible click/keyboard fallback for anyone who'd
+ * rather not go hunting for a planet -- so nothing ever floats over the
+ * scene itself.
  *
  * The backdrop is portalled to document.body rather than rendered inline
  * as this component's child -- {children} here lives inside .app, which
  * establishes its own stacking context (see globals.css's note on the
  * Tools dropdown for the same trap). Rendered inline, the backdrop's own
- * z-index only ever wins *within* .app, so making it translucent let the
+ * z-index only ever wins *within* .app, so a translucent backdrop let the
  * real nav/hero/footer underneath bleed through instead of the Starfield
- * (confirmed live -- looked like a double exposure of the actual site,
- * not a dim view of the sky). Portalled + a body class that hides .app
- * and the footer outright while the gate is up, the backdrop now sits
- * directly above #starfield/.vignette with nothing else in between.
+ * (confirmed live -- looked like a double exposure of the actual site).
+ * Portalled + a body class that hides .app and the footer outright while
+ * the gate is up, the backdrop sits directly above #starfield/.vignette
+ * with nothing else in between.
  *
- * Previously played a light-streak "warp" burst (2D canvas, with an
- * unfinished WebGL flythrough as an even more ambitious version) between
- * click and reveal. Scrapped both -- didn't read well, and a plain fade
- * that keeps the same persistent background is a more honest match for
- * "click to look at the sky" than a flashy transition covering it up.
+ * The click-to-enter fades the backdrop away rather than playing a
+ * transition over it -- same persistent Starfield scene throughout, never
+ * cut to a different one. Shows once per browser session (sessionStorage).
  */
 
 type Phase = "gate" | "arrived";
@@ -45,9 +45,6 @@ export default function LandingGate({ children }: { children: React.ReactNode })
   const [backdropOpacity, setBackdropOpacity] = useState(1);
   const [mounted, setMounted] = useState(false);
   const gateBtnRef = useRef<HTMLButtonElement | null>(null);
-  // Computed once per mount, not on every render -- illumination shifts too
-  // slowly for this to ever need recomputing within a single page visit.
-  const moon = useMemo(() => getMoonPhase(), []);
 
   // Runs before paint so a returning visitor never sees the gate flash in.
   useLayoutEffect(() => {
@@ -89,6 +86,15 @@ export default function LandingGate({ children }: { children: React.ReactNode })
     setTimeout(() => setPhase("arrived"), FADE_MS);
   }
 
+  // The actual entrance mechanic: any real click Starfield registers
+  // against a planet or zodiac sign counts as "entered."
+  useEffect(() => {
+    if (phase !== "gate") return;
+    window.addEventListener("aureon:sky-click", enter);
+    return () => window.removeEventListener("aureon:sky-click", enter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   return (
     <>
       {children}
@@ -104,7 +110,7 @@ export default function LandingGate({ children }: { children: React.ReactNode })
               ref={gateBtnRef}
               type="button"
               className="landing-gate-point"
-              aria-label={`Enter Aureon — tonight's Moon is ${moon.name}, ${moon.illuminationPct}% illuminated`}
+              aria-label="Enter Aureon"
               onClick={enter}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -113,10 +119,10 @@ export default function LandingGate({ children }: { children: React.ReactNode })
                 }
               }}
             >
-              <span className="landing-gate-eyebrow">Tonight&apos;s sky</span>
-              <span className="landing-gate-phase serif">{moon.name}</span>
-              <span className="mono data-accent landing-gate-illum">{moon.illuminationPct}% illuminated</span>
-              <span className={`landing-gate-hint${hintVisible ? " visible" : ""}`}>Click to enter</span>
+              <span className="landing-gate-phase serif">Find something in the sky</span>
+              <span className={`landing-gate-hint${hintVisible ? " visible" : ""}`}>
+                Click a planet, a zodiac sign — or press Enter
+              </span>
             </button>
           </div>,
           document.body
