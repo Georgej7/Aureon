@@ -223,6 +223,10 @@ export default function ChatWindow() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [sending, setSending] = useState(false);
+  // Distinct from a generic "thinking" label -- set once sendMessage's
+  // internal retry has actually kicked in, so a slow cold-start reads as
+  // "still working on it" instead of looking hung.
+  const [retryingAfterColdStart, setRetryingAfterColdStart] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const chatBodyRef = useRef<HTMLDivElement | null>(null);
@@ -365,7 +369,9 @@ export default function ChatWindow() {
   // conversation (same sessionId/messages), just a different input/output
   // modality. Throws on failure; callers translate that into their own
   // UI (an inline error for text, a spoken/status message for voice).
-  async function sendMessage(text: string): Promise<string> {
+  // onRetry fires each time a cold-start-looking failure is about to be
+  // retried, so the caller can show something better than a silent wait.
+  async function sendMessage(text: string, onRetry?: () => void): Promise<string> {
     if (!sessionId || !profile) throw new Error("not-ready");
     const supabase = createClient();
 
@@ -402,15 +408,16 @@ export default function ChatWindow() {
     if (!session) throw new ApiError(401, "Session expired");
 
     // The backend is a free-tier Render service that spins down after
-    // idle and can take 30-50s to cold-start on the next request --
-    // reported live as a voice-call reply that just failed outright with
-    // no obvious cause. Retry a couple of times with real gaps (not a
-    // tight loop) rather than surfacing an error for what's often just
-    // "still booting." 401/429 aren't retried -- those need the user to
-    // actually do something (sign in again / upgrade), not another
-    // attempt at the same request.
+    // idle and can take 30-50s to cold-start on the next request. The
+    // first retry attempt (2.5s/5s gaps, ~10s total) was too short-sighted
+    // -- it gave up long before a real cold start would've finished
+    // booting, so it barely helped. These gaps (5s/15s/20s, ~40s total
+    // across 4 attempts) actually span a realistic cold-start window.
+    // 401/429 still aren't retried -- those need the user to actually do
+    // something (sign in again / upgrade), not another attempt.
+    const retryDelaysMs = [5000, 15000, 20000];
     let reply: string | undefined;
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt <= retryDelaysMs.length; attempt++) {
       try {
         reply = (
           await postChatReply(
@@ -427,8 +434,9 @@ export default function ChatWindow() {
         break;
       } catch (err) {
         const retryable = !(err instanceof ApiError) || err.status >= 500;
-        if (attempt === 2 || !retryable) throw err;
-        await new Promise((r) => setTimeout(r, 2500 * (attempt + 1)));
+        if (attempt === retryDelaysMs.length || !retryable) throw err;
+        onRetry?.();
+        await new Promise((r) => setTimeout(r, retryDelaysMs[attempt]));
       }
     }
     // Unreachable in practice -- the loop above only exits via `break`
@@ -471,8 +479,9 @@ export default function ChatWindow() {
     setChatInput("");
     trackEvent("chat_message_sent");
     setSending(true);
+    setRetryingAfterColdStart(false);
     try {
-      await sendMessage(text);
+      await sendMessage(text, () => setRetryingAfterColdStart(true));
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
         setSendError(
@@ -485,6 +494,7 @@ export default function ChatWindow() {
       }
     } finally {
       setSending(false);
+      setRetryingAfterColdStart(false);
     }
   }
 
@@ -568,7 +578,9 @@ export default function ChatWindow() {
     setVoiceTranscript({ speaker: "You said", text });
     setVoiceStatus("Thinking…");
     try {
-      const reply = await sendMessage(text);
+      const reply = await sendMessage(text, () => {
+        if (voiceActiveRef.current) setVoiceStatus("Waking up the server — this can take up to a minute…");
+      });
       if (!voiceActiveRef.current) return;
       setVoiceTranscript({ speaker: "Aureon", text: reply });
       setVoiceStatus("Aureon is speaking…");
@@ -757,7 +769,13 @@ export default function ChatWindow() {
                     )}
                   </div>
                 ))}
-              {sending && <p style={{ color: "var(--text-dim)", fontSize: 13 }}>Aureon is thinking…</p>}
+              {sending && (
+                <p style={{ color: "var(--text-dim)", fontSize: 13 }}>
+                  {retryingAfterColdStart
+                    ? "Still working on it — the server may be waking up, this can take up to a minute…"
+                    : "Aureon is thinking…"}
+                </p>
+              )}
               {sendError && (
                 <p style={{ color: "#c96a4a", fontSize: 13 }}>
                   {sendError}
