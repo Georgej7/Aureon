@@ -334,6 +334,13 @@ footer.note{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);co
    a viewport-specific bug. A plain scrollable row can never overlap, and
    behaves identically for touch and mouse. */
 .gallery-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:24px 0 40px;}
+/* Default browser scrollbar (thick, light gray) reads as visibly broken
+   against this dark theme -- same thin gold treatment as .chat-body. */
+.gallery-wrap{scrollbar-width:thin;scrollbar-color:var(--gold-soft) transparent;}
+.gallery-wrap::-webkit-scrollbar{height:8px;}
+.gallery-wrap::-webkit-scrollbar-track{background:transparent;}
+.gallery-wrap::-webkit-scrollbar-thumb{background:var(--gold-soft);border-radius:999px;}
+.gallery-wrap::-webkit-scrollbar-thumb:hover{background:var(--gold);}
 .gallery{display:flex;gap:16px;max-width:1100px;margin:0 auto;padding:0 4px;}
 .tile{
   flex:none;width:148px;height:184px;
