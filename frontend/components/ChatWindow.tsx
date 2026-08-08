@@ -84,10 +84,36 @@ function isToday(isoTimestamp: string): boolean {
   );
 }
 
+if (typeof window !== "undefined" && "speechSynthesis" in window) {
+  // Voices load asynchronously in most browsers -- getVoices() often
+  // returns empty on the very first call, which meant pickVoice() below
+  // had nothing to choose from yet and utter.voice was never set, falling
+  // back to whatever the engine's absolute default is (usually the most
+  // robotic option it has). Calling getVoices() once here at module load
+  // has the side effect of kicking off the browser's voice-list load, and
+  // the listener re-primes it once actually ready -- by the time a real
+  // speakText() call happens (well after this module loaded), the list is
+  // populated. Deliberately NOT awaited inside speakText() itself -- that
+  // would add an async hop into a call path that specifically needs to
+  // stay synchronous with the user gesture that triggered it (see
+  // openVoiceCall's unlock-utterance comment for why that matters).
+  speechSynthesis.getVoices();
+  speechSynthesis.addEventListener("voiceschanged", () => speechSynthesis.getVoices());
+}
+
 function pickVoice(): SpeechSynthesisVoice | undefined {
   const voices = speechSynthesis.getVoices();
+  // Plain "first English voice" was often whatever low-quality default
+  // engine ships (e.g. Chrome's flat "Google US English"), not the best
+  // voice actually installed. Try known warmer/more natural ones first --
+  // ordered roughly best-to-worst across platforms.
+  const preferred = [/Ava/i, /Samantha/i, /Siri/i, /Natural/i, /Google UK English Female/i, /Google US English/i];
+  for (const pattern of preferred) {
+    const match = voices.find((v) => pattern.test(v.name) && /en/i.test(v.lang));
+    if (match) return match;
+  }
   return (
-    voices.find((v) => /en/i.test(v.lang) && /female|samantha|victoria|karen/i.test(v.name)) ||
+    voices.find((v) => /en/i.test(v.lang) && /female|victoria|karen/i.test(v.name)) ||
     voices.find((v) => /en/i.test(v.lang)) ||
     voices[0]
   );
@@ -102,8 +128,12 @@ function speakText(text: string, onStart?: () => void, onEnd?: () => void) {
   const utter = new SpeechSynthesisUtterance(text);
   const v = pickVoice();
   if (v) utter.voice = v;
-  utter.rate = 0.98;
-  utter.pitch = 1.02;
+  // Slower and unshifted, not faster/higher -- rushed pace and pitch
+  // shifting are what usually make TTS read as obviously synthetic; a
+  // touch slower and the voice's own natural pitch reads calmer and less
+  // "AI voice," within what a free browser voice can actually do.
+  utter.rate = 0.93;
+  utter.pitch = 1.0;
   utter.onstart = () => onStart?.();
   utter.onend = () => onEnd?.();
   speechSynthesis.speak(utter);
@@ -523,13 +553,21 @@ export default function ChatWindow() {
       });
     } catch (err) {
       if (!voiceActiveRef.current) return;
-      setVoiceStatus(
+      // A failure here was previously only visible as a small status-line
+      // change up top -- easy to miss, and reported live as "the AI just
+      // wasn't responding" (the "You said" line was still on screen, so
+      // it read as silence rather than an error). Put it in the
+      // transcript itself too, impossible to miss the same way a real
+      // reply wouldn't be.
+      console.error("Voice call: sendMessage failed", err);
+      const message =
         err instanceof ApiError && err.status === 429
           ? "You've used today's free messages — upgrade for unlimited."
           : err instanceof ApiError && err.status === 401
             ? "Your session expired — please sign in again."
-            : "Couldn't reach Aureon just now — try again."
-      );
+            : "Couldn't reach Aureon just now — try again.";
+      setVoiceStatus(message);
+      setVoiceTranscript({ speaker: "⚠ Error", text: message });
       if (voiceActiveRef.current) startListening();
     }
   }
