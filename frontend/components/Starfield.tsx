@@ -246,9 +246,22 @@ export default function Starfield() {
     ];
 
     function resize() {
-      if (!canvas) return;
-      w = canvas.width = window.innerWidth;
-      h = canvas.height = window.innerHeight;
+      if (!canvas || !ctx) return;
+      // canvas.width/height were being set directly to CSS pixel counts,
+      // so on any high-DPI phone (2x-3x is standard) the backing store was
+      // rendered at a lower resolution than the display and the browser
+      // upscaled it to fill #starfield's CSS width/height -- soft/blurry
+      // stars and planets. Render the backing store at device-pixel
+      // resolution instead, and scale the context so every existing
+      // drawing call (which all use w/h as CSS-pixel coordinates) is
+      // unaffected. Capped at 3x -- diminishing returns beyond that for a
+      // background layer, and it keeps the pixel count sane on 4x+ panels.
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+      w = window.innerWidth;
+      h = window.innerHeight;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const count = Math.round((w * h) / 4500);
       const palette = element ? ELEMENT_PALETTE[element] : null;
       stars = Array.from({ length: count }, () => {
