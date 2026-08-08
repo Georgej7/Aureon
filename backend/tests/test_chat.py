@@ -77,7 +77,10 @@ def test_chat_reply_blocks_free_tier_over_daily_limit(monkeypatch):
             return FakeResponse(200, {"id": "user-123"})
         if "profiles" in url:
             return FakeResponse(200, [{"subscription_tier": "free"}])
-        return FakeResponse(200, [], headers={"content-range": "0-2/3"})
+        # Caller already inserted the user's message before this endpoint is
+        # hit, so a count of 4 here means this would be the 4th message
+        # against a limit of 3 -- genuinely over, unlike count == limit.
+        return FakeResponse(200, [], headers={"content-range": "0-3/4"})
 
     monkeypatch.setattr(httpx, "get", fake_get)
     client = TestClient(app)

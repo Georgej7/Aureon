@@ -71,11 +71,24 @@ def test_enforce_free_tier_limit_allows_free_under_limit(monkeypatch):
     enforce_free_tier_limit("user-123", "token")  # 2 messages today, limit is 3 -> allowed
 
 
-def test_enforce_free_tier_limit_blocks_free_at_limit(monkeypatch):
+def test_enforce_free_tier_limit_allows_free_at_the_limit(monkeypatch):
+    # The caller inserts the user's message before this check runs, so a
+    # count equal to the limit means *this* message is the Nth (final
+    # allowed) one and must go through -- only count > limit blocks.
     def fake_get(url, **kwargs):
         if "profiles" in url:
             return FakeResponse(200, [{"subscription_tier": "free"}])
         return FakeResponse(200, [], headers={"content-range": "0-2/3"})
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+    enforce_free_tier_limit("user-123", "token")  # should not raise
+
+
+def test_enforce_free_tier_limit_blocks_free_over_limit(monkeypatch):
+    def fake_get(url, **kwargs):
+        if "profiles" in url:
+            return FakeResponse(200, [{"subscription_tier": "free"}])
+        return FakeResponse(200, [], headers={"content-range": "0-3/4"})
 
     monkeypatch.setattr(httpx, "get", fake_get)
     with pytest.raises(HTTPException) as exc:
@@ -87,7 +100,7 @@ def test_enforce_free_tier_limit_defaults_to_free_when_profile_row_missing(monke
     def fake_get(url, **kwargs):
         if "profiles" in url:
             return FakeResponse(200, [])  # no matching profile row
-        return FakeResponse(200, [], headers={"content-range": "0-2/3"})
+        return FakeResponse(200, [], headers={"content-range": "0-3/4"})
 
     monkeypatch.setattr(httpx, "get", fake_get)
     with pytest.raises(HTTPException) as exc:

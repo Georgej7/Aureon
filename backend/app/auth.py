@@ -101,5 +101,12 @@ def enforce_free_tier_limit(user_id: str, token: str) -> None:
         if total.isdigit():
             count = int(total)
 
-    if count >= FREE_DAILY_MESSAGE_LIMIT:
+    # The caller (ChatWindow.tsx) inserts the user's message into
+    # chat_messages directly via Supabase *before* calling this endpoint --
+    # so by the time this count runs, it already includes the message
+    # currently being sent. On the Nth (final allowed) message, count == N,
+    # and >= N would reject a message that should go through, silently
+    # leaving it stuck in history with no reply. Only the (N+1)th message
+    # should actually be blocked.
+    if count > FREE_DAILY_MESSAGE_LIMIT:
         raise HTTPException(status_code=429, detail="Daily free message limit reached")
