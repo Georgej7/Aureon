@@ -440,40 +440,34 @@ body.gate-active .site-footer{visibility:hidden;}
   transition:opacity .7s ease;
 }
 .landing-gate-point{
-  /* Actual hit area is 44px (WCAG tap-target minimum) — the visible glow
-     stays small via the gradient's own stops, not the box size. Echoes
-     Aureon's own ring-and-dot mark (see TopNav.tsx's brand-mark svg)
-     rather than a generic glowing button. */
+  /* Content, not a decorative dot -- tonight's actual Moon phase and
+     illumination, so the very first thing a visitor can click on is real
+     data instead of a generic "click to begin" prompt. Sits over the
+     Sun's own screen position (see .landing-gate-backdrop above) with a
+     soft ambient glow standing in for a literal dot, since Starfield.tsx
+     is already drawing the actual Sun right there. */
   position:absolute;top:46%;left:50%;transform:translate(-50%,-50%);
-  width:44px;height:44px;border-radius:50%;cursor:pointer;padding:0;
-  background:radial-gradient(circle,#fff7e1 0%,var(--gold) 22%,transparent 46%);
-  border:1.5px solid rgba(201,162,74,0.75);
-  box-shadow:0 0 22px 6px rgba(201,162,74,0.5);
-  animation:gatePulse 2.6s ease-in-out infinite;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  background:none;border:none;cursor:pointer;padding:30px 40px;border-radius:20px;
+  box-shadow:0 0 60px 20px rgba(201,162,74,0.12);
+  animation:gateGlow 4s ease-in-out infinite;
+  white-space:nowrap;
 }
-.landing-gate-point::before{
-  content:'';position:absolute;inset:-4px;border-radius:50%;
-  border:1px solid rgba(201,162,74,0.55);
-  animation:gateSonar 2.6s ease-out infinite;
+.landing-gate-point:focus-visible{outline:2px solid var(--gold);outline-offset:6px;}
+@keyframes gateGlow{
+  0%,100%{box-shadow:0 0 60px 20px rgba(201,162,74,0.12);}
+  50%{box-shadow:0 0 80px 28px rgba(201,162,74,0.2);}
 }
-.landing-gate-point:focus-visible{outline:2px solid var(--gold);outline-offset:10px;}
-@keyframes gatePulse{
-  0%,100%{box-shadow:0 0 22px 6px rgba(201,162,74,0.5);}
-  50%{box-shadow:0 0 30px 9px rgba(201,162,74,0.75);}
-}
-@keyframes gateSonar{
-  0%{transform:scale(1);opacity:0.7;}
-  100%{transform:scale(2.5);opacity:0;}
-}
+.landing-gate-eyebrow{color:var(--gold);font-size:11px;letter-spacing:2.5px;text-transform:uppercase;}
+.landing-gate-phase{font-size:27px;font-weight:500;color:var(--text);}
+.landing-gate-illum{font-size:13px;color:var(--starlight);}
 .landing-gate-hint{
-  position:absolute;top:calc(46% + 44px);left:50%;transform:translateX(-50%);
-  color:var(--text-faint);font-size:11px;letter-spacing:2px;text-transform:uppercase;
-  white-space:nowrap;opacity:0;transition:opacity 1s ease;
+  margin-top:10px;color:var(--text-faint);font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  opacity:0;transition:opacity 1s ease;
 }
 .landing-gate-hint.visible{opacity:1;}
 @media (prefers-reduced-motion: reduce){
   .landing-gate-point{animation:none;}
-  .landing-gate-point::before{animation:none;opacity:0;}
 }
 
 /* ---- Site footer ---- */

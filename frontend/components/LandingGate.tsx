@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { getMoonPhase } from "@/lib/moonPhase";
 
 /**
- * Cinematic entrance for the landing page: a single glowing point, styled
- * after Aureon's own ring-and-dot mark, sitting over the Sun's position in
- * the already-running Starfield behind it. Click/keyboard-activated -- the
- * backdrop just fades away on click, revealing the same scene that's been
- * animating underneath the whole time rather than cutting to a different
- * one or playing a separate transition over it. Shows once per browser
- * session (sessionStorage), not on every visit.
+ * Cinematic entrance for the landing page: instead of a generic "click to
+ * begin" prompt, the click target itself shows tonight's actual Moon phase
+ * and illumination -- real, changes every day, and ties the very first
+ * thing a visitor sees to what the product actually does (real
+ * astronomical data), rather than decorative copy. Sits over the Sun's
+ * position in the already-running Starfield behind it. Click/keyboard-
+ * activated -- the backdrop just fades away on click, revealing the same
+ * scene that's been animating underneath the whole time rather than
+ * cutting to a different one or playing a separate transition over it.
+ * Shows once per browser session (sessionStorage), not on every visit.
  *
  * The backdrop is portalled to document.body rather than rendered inline
  * as this component's child -- {children} here lives inside .app, which
@@ -41,6 +45,9 @@ export default function LandingGate({ children }: { children: React.ReactNode })
   const [backdropOpacity, setBackdropOpacity] = useState(1);
   const [mounted, setMounted] = useState(false);
   const gateBtnRef = useRef<HTMLButtonElement | null>(null);
+  // Computed once per mount, not on every render -- illumination shifts too
+  // slowly for this to ever need recomputing within a single page visit.
+  const moon = useMemo(() => getMoonPhase(), []);
 
   // Runs before paint so a returning visitor never sees the gate flash in.
   useLayoutEffect(() => {
@@ -97,7 +104,7 @@ export default function LandingGate({ children }: { children: React.ReactNode })
               ref={gateBtnRef}
               type="button"
               className="landing-gate-point"
-              aria-label="Enter"
+              aria-label={`Enter Aureon — tonight's Moon is ${moon.name}, ${moon.illuminationPct}% illuminated`}
               onClick={enter}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -105,8 +112,12 @@ export default function LandingGate({ children }: { children: React.ReactNode })
                   enter();
                 }
               }}
-            />
-            <span className={`landing-gate-hint${hintVisible ? " visible" : ""}`}>Click to begin</span>
+            >
+              <span className="landing-gate-eyebrow">Tonight&apos;s sky</span>
+              <span className="landing-gate-phase serif">{moon.name}</span>
+              <span className="mono data-accent landing-gate-illum">{moon.illuminationPct}% illuminated</span>
+              <span className={`landing-gate-hint${hintVisible ? " visible" : ""}`}>Click to enter</span>
+            </button>
           </div>,
           document.body
         )}
