@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import PasswordField from "@/components/PasswordField";
 import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
@@ -68,14 +69,7 @@ export default function RegisterPage() {
                 <label>Email</label>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
-              <div className="field">
-                <label>Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
+              <PasswordField label="Password" value={password} onChange={setPassword} autoComplete="new-password" />
 
               {error && <p style={{ color: "#c96a4a", fontSize: 13, margin: "0 0 8px" }}>{error}</p>}
 
