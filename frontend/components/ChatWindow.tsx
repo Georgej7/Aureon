@@ -867,7 +867,19 @@ export default function ChatWindow() {
           <div className="status">{voiceStatus}</div>
           <div className="orb-wrap">
             <div className={`orb${orbSpeaking ? " speaking" : listening ? " listening" : ""}`} />
-            <div className="voice-transcript">
+            <div
+              className="voice-transcript"
+              // Set inline, not just in globals.css -- the build's CSS
+              // minifier strips -webkit-text-size-adjust from the
+              // stylesheet entirely (confirmed in the deployed output),
+              // deciding it's unnecessary for its target browsers. Safari
+              // is the one browser that's actually still needed it for
+              // years after everyone else dropped the prefix, so losing
+              // it there silently undoes the fix for exactly the browser
+              // that had the bug. Inline styles bypass that pipeline
+              // entirely -- this can't get minified away.
+              style={{ WebkitTextSizeAdjust: "100%" } as React.CSSProperties}
+            >
               {voiceTranscript ? (
                 <>
                   <span className="said">{voiceTranscript.speaker}:</span> {voiceTranscript.text}
