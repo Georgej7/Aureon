@@ -500,58 +500,80 @@ export default function ChatWindow() {
     }
   }
 
-  function openVoiceCall() {
+  async function openVoiceCall() {
     voiceActiveRef.current = true;
     fatalErrorRef.current = false;
     setVoiceActive(true);
     setVoiceTranscript(null);
+    setVoiceStatus("Connecting…");
 
     const recognition = createRecognition();
     if (!recognition) {
       // Firefox and a few others don't implement this at all -- the text
       // fallback below still works, this just means no mic loop.
       setVoiceStatus("Voice recognition isn't supported in this browser — type below instead.");
+    } else if (!navigator.mediaDevices?.getUserMedia) {
+      setVoiceStatus("Microphone access isn't available here — type below instead.");
     } else {
-      recognitionRef.current = recognition;
-      setVoiceStatus("Connecting…");
+      // Ask for mic permission *here*, synchronously in this click
+      // handler -- recognition.start() itself doesn't happen until after
+      // the greeting finishes speaking (see below), which by then is
+      // several seconds and a couple of async hops removed from the
+      // actual click. Some browsers won't reliably show the permission
+      // prompt that late, and just silently refuse instead -- confirmed
+      // live, no prompt ever appeared. getUserMedia here is still a
+      // direct response to the click, so the browser shows its real
+      // prompt; the stream itself is discarded immediately since
+      // SpeechRecognition manages its own capture once permission's
+      // already granted.
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((t) => t.stop());
+        recognitionRef.current = recognition;
 
-      recognition.onresult = (event) => {
-        gotResultRef.current = true;
-        const result = event.results[event.results.length - 1];
-        const said = result?.[0]?.transcript ?? "";
-        setListening(false);
-        handleVoiceUtterance(said);
-      };
-      recognition.onerror = (event) => {
-        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-          fatalErrorRef.current = true;
-          setVoiceStatus("Microphone access denied — allow mic access, or type below.");
-        } else if (event.error !== "no-speech" && event.error !== "aborted") {
-          setVoiceStatus("Didn't catch that — listening again…");
-        }
-      };
-      recognition.onend = () => {
-        setListening(false);
-        // onresult already kicked off handleVoiceUtterance (which restarts
-        // listening itself once the reply's done speaking); a fatal error
-        // shouldn't loop-retry. Anything else ending here is silence/no-
-        // speech timing out -- just keep waiting.
-        if (!voiceActiveRef.current || gotResultRef.current || fatalErrorRef.current) return;
-        startListening();
-      };
+        recognition.onresult = (event) => {
+          gotResultRef.current = true;
+          const result = event.results[event.results.length - 1];
+          const said = result?.[0]?.transcript ?? "";
+          setListening(false);
+          handleVoiceUtterance(said);
+        };
+        recognition.onerror = (event) => {
+          if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+            fatalErrorRef.current = true;
+            setVoiceStatus("Microphone access denied — allow mic access, or type below.");
+          } else if (event.error !== "no-speech" && event.error !== "aborted") {
+            setVoiceStatus("Didn't catch that — listening again…");
+          }
+        };
+        recognition.onend = () => {
+          setListening(false);
+          // onresult already kicked off handleVoiceUtterance (which restarts
+          // listening itself once the reply's done speaking); a fatal error
+          // shouldn't loop-retry. Anything else ending here is silence/no-
+          // speech timing out -- just keep waiting.
+          if (!voiceActiveRef.current || gotResultRef.current || fatalErrorRef.current) return;
+          startListening();
+        };
+      } catch {
+        if (!voiceActiveRef.current) return;
+        fatalErrorRef.current = true;
+        setVoiceStatus("Microphone access denied — allow mic access, or type below.");
+      }
     }
 
+    if (!voiceActiveRef.current) return;
     const greeting = "Good to hear your voice — what's on your mind today?";
     setTimeout(() => {
       if (!voiceActiveRef.current) return;
-      setVoiceStatus("Aureon is speaking…");
+      setVoiceStatus((s) => (s.startsWith("Microphone") ? s : "Aureon is speaking…"));
       setVoiceTranscript({ speaker: "Aureon", text: greeting });
       speakText(
         greeting,
         () => setOrbSpeaking(true),
         () => {
           setOrbSpeaking(false);
-          if (voiceActiveRef.current) startListening();
+          if (voiceActiveRef.current && !fatalErrorRef.current) startListening();
         }
       );
     }, 500);
