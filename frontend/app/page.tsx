@@ -1,5 +1,6 @@
 import Link from "next/link";
 import LandingGate from "@/components/LandingGate";
+import SkyViewButton from "@/components/SkyViewButton";
 import TopicGallery from "@/components/TopicGallery";
 
 export default function LandingPage() {
@@ -29,6 +30,7 @@ export default function LandingPage() {
                 See a sample reading
               </Link>
             </div>
+            <SkyViewButton />
           </div>
         </div>
 

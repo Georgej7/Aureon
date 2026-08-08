@@ -87,6 +87,38 @@ body.prototype-fullscreen{overflow:hidden;}
 }
 .app{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 24px;}
 
+/* ---- Sky view: hide all page chrome, just the animated background ----
+   #starfield and .vignette already render outside/underneath .app at
+   z-index:0, so hiding .app + the footer is enough to expose them fully.
+   SkyViewExit.tsx lives outside .app too (see layout.tsx) so it survives
+   being hidden along with everything else. */
+body.sky-view .app,
+body.sky-view .site-footer{display:none;}
+body.sky-view{overflow:hidden;}
+
+.sky-view-btn{
+  display:inline-flex;align-items:center;gap:8px;margin-top:18px;
+  background:none;border:none;padding:0;color:var(--text-faint);
+  font-family:inherit;font-size:13px;cursor:pointer;transition:color .2s;
+}
+.sky-view-btn svg{width:15px;height:15px;flex:none;}
+.sky-view-btn:hover{color:var(--gold-soft);}
+
+.sky-view-exit{
+  display:none;position:fixed;top:24px;right:24px;z-index:70;
+  align-items:center;gap:8px;
+  background:rgba(18,21,42,0.7);backdrop-filter:blur(8px);
+  border:1px solid rgba(180,146,79,0.35);border-radius:999px;
+  padding:10px 18px;color:var(--text);font-family:inherit;font-size:13px;
+  cursor:pointer;box-shadow:0 8px 28px rgba(0,0,0,0.35);
+}
+body.sky-view .sky-view-exit{display:flex;}
+.sky-view-exit:hover{border-color:var(--gold);}
+.sky-view-exit svg{width:14px;height:14px;flex:none;}
+@media (max-width:720px){
+  .sky-view-exit{top:16px;right:16px;padding:9px 14px;}
+}
+
 @keyframes riseIn{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
 .rise{animation:riseIn .9s cubic-bezier(.16,1,.3,1) both;}
 .rise-1{animation-delay:.05s;} .rise-2{animation-delay:.18s;} .rise-3{animation-delay:.3s;} .rise-4{animation-delay:.42s;}

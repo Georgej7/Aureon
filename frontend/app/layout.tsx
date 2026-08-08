@@ -5,6 +5,7 @@ import Link from "next/link";
 import Analytics from "@/components/Analytics";
 import BfcacheGuard from "@/components/BfcacheGuard";
 import Starfield from "@/components/Starfield";
+import SkyViewExit from "@/components/SkyViewExit";
 import TopNav from "@/components/TopNav";
 
 const fraunces = Fraunces({
@@ -44,6 +45,7 @@ export default function RootLayout({
         <BfcacheGuard />
         <Starfield />
         <div className="vignette" />
+        <SkyViewExit />
         <div className="app">
           <TopNav />
           {children}
