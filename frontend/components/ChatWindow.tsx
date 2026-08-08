@@ -401,16 +401,40 @@ export default function ChatWindow() {
     } = await supabase.auth.getSession();
     if (!session) throw new ApiError(401, "Session expired");
 
-    const { reply } = await postChatReply(
-      {
-        chart: profile.chart,
-        numerology: profile.numerology,
-        knowledge,
-        messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
-        transits,
-      },
-      session.access_token
-    );
+    // The backend is a free-tier Render service that spins down after
+    // idle and can take 30-50s to cold-start on the next request --
+    // reported live as a voice-call reply that just failed outright with
+    // no obvious cause. Retry a couple of times with real gaps (not a
+    // tight loop) rather than surfacing an error for what's often just
+    // "still booting." 401/429 aren't retried -- those need the user to
+    // actually do something (sign in again / upgrade), not another
+    // attempt at the same request.
+    let reply: string | undefined;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        reply = (
+          await postChatReply(
+            {
+              chart: profile.chart,
+              numerology: profile.numerology,
+              knowledge,
+              messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
+              transits,
+            },
+            session.access_token
+          )
+        ).reply;
+        break;
+      } catch (err) {
+        const retryable = !(err instanceof ApiError) || err.status >= 500;
+        if (attempt === 2 || !retryable) throw err;
+        await new Promise((r) => setTimeout(r, 2500 * (attempt + 1)));
+      }
+    }
+    // Unreachable in practice -- the loop above only exits via `break`
+    // (reply is set) or `throw` (attempt===2 or non-retryable), never by
+    // falling off the end. Narrows reply back to `string` for TS.
+    if (reply === undefined) throw new Error("no-reply");
 
     const { data: assistantRow, error: assistantInsertError } = await supabase
       .from("chat_messages")
