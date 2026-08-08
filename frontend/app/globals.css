@@ -231,6 +231,13 @@ body.prototype-fullscreen{overflow:hidden;}
 .chat-head{padding:30px 20px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;}
 .chat-head .dot-live{width:7px;height:7px;border-radius:50%;background:#7cb87c;}
 .chat-body{flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
+/* Default browser scrollbar (thick, light gray) reads as visibly broken
+   against this dark theme -- style it to match instead of leaving it raw. */
+.chat-body{scrollbar-width:thin;scrollbar-color:var(--line) transparent;}
+.chat-body::-webkit-scrollbar{width:8px;}
+.chat-body::-webkit-scrollbar-track{background:transparent;}
+.chat-body::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px;}
+.chat-body::-webkit-scrollbar-thumb:hover{background:var(--gold-soft);}
 .msg{max-width:80%;padding:12px 15px;border-radius:14px;font-size:14px;line-height:1.55;}
 .msg.ai{background:var(--bg-raised);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px;}
 .msg.user{background:var(--gold);color:#1c1509;align-self:flex-end;border-bottom-right-radius:4px;font-weight:500;}
