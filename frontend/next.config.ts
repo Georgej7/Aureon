@@ -40,7 +40,18 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          // microphone=(self) -- was () (hard blocked, no exceptions) from
+          // before the voice call feature existed. This header overrides
+          // any browser/OS mic permission the user grants; with it at (),
+          // getUserMedia/SpeechRecognition were *always* going to fail
+          // with NotAllowedError on this origin no matter what the user
+          // did in their browser or OS settings -- confirmed live across
+          // Brave and Chrome, both correctly configured, both still
+          // denied, because the actual block was here, not in either
+          // browser. (self) allows the site's own pages to request it
+          // while still blocking any third-party iframe from doing so.
+          // camera/geolocation stay blocked -- genuinely unused.
+          { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=()" },
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
         ],
       },
