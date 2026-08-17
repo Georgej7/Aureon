@@ -19,6 +19,22 @@ class FakeResponse:
         return self._json_data
 
 
+def _tier_get(tier: str):
+    # vedic and bagua now also check subscription_tier server-side (see
+    # test_chart_tier_gating.py) -- a single flat FakeResponse for every
+    # httpx.get call no longer works for those two, since the tier-check
+    # hits a *second* URL (/rest/v1/profiles, expecting a list of rows)
+    # after the auth check (/auth/v1/user, expecting a dict).
+    def fake_get(url, **kwargs):
+        if "/auth/v1/user" in url:
+            return FakeResponse(200, {"id": "user-123"})
+        if "profiles" in url:
+            return FakeResponse(200, [{"subscription_tier": tier}])
+        return FakeResponse(200, [])
+
+    return fake_get
+
+
 @pytest.fixture(autouse=True)
 def supabase_env(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
@@ -54,7 +70,7 @@ def test_vedic_chart_requires_authorization(client):
 
 
 def test_vedic_chart_succeeds_with_valid_auth(client, monkeypatch):
-    monkeypatch.setattr(httpx, "get", lambda *a, **k: FakeResponse(200, {"id": "user-123"}))
+    monkeypatch.setattr(httpx, "get", _tier_get("premium"))
     resp = client.post(
         "/api/chart/vedic", json=_valid_birth(), headers={"Authorization": "Bearer valid-token"}
     )
@@ -117,7 +133,7 @@ def test_bagua_requires_authorization(client):
 
 
 def test_bagua_succeeds_with_valid_auth(client, monkeypatch):
-    monkeypatch.setattr(httpx, "get", lambda *a, **k: FakeResponse(200, {"id": "user-123"}))
+    monkeypatch.setattr(httpx, "get", _tier_get("vip"))
     resp = client.post(
         "/api/feng-shui/bagua",
         json={"facing_direction": "N"},

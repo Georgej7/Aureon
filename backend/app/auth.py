@@ -63,27 +63,72 @@ def require_user(authorization: str | None = Header(default=None)) -> str:
     return verify_supabase_user(authorization)
 
 
-def enforce_free_tier_limit(user_id: str, token: str) -> None:
-    """Raises 429 if this user is on the free tier and has already sent
-    FREE_DAILY_MESSAGE_LIMIT user messages today. Queries through the
-    caller's own token (not service_role), so existing RLS policies already
-    scope every read to this user's own rows."""
+def _get_subscription_tier(user_id: str, token: str) -> str:
+    """Reads the caller's own subscription_tier through their own token (not
+    service_role), so existing RLS policies already scope the read to this
+    user's own row."""
     url, anon_key = _supabase_config()
     headers = {"apikey": anon_key, "Authorization": f"Bearer {token}"}
-
     profile_resp = httpx.get(
         f"{url}/rest/v1/profiles",
         params={"id": f"eq.{user_id}", "select": "subscription_tier"},
         headers=headers,
         timeout=10,
     )
-    tier = "free"
     if profile_resp.status_code == 200:
         rows = profile_resp.json()
         if rows:
-            tier = rows[0].get("subscription_tier") or "free"
+            return rows[0].get("subscription_tier") or "free"
+    return "free"
+
+
+# Every tier above free explicitly includes "everything in Premium" (see
+# pricing copy in frontend/app/pricing/PricingClient.tsx) -- vip and
+# practitioner are parallel add-ons *on top of* premium, not a strict
+# vip > practitioner ladder, but that distinction doesn't matter for any
+# check actually needed here: "premium or higher" only needs to exclude
+# free, and "practitioner" only needs to match exactly that tier, both of
+# which this ordering gets right regardless of vip's own rank.
+TIER_RANK = {"free": 0, "premium": 1, "vip": 2, "practitioner": 3}
+
+
+def enforce_min_tier(user_id: str, token: str, minimum: str) -> None:
+    """Raises 403 if the caller's subscription_tier doesn't meet `minimum`.
+
+    Without this, the Practitioner/Premium gates on synastry, solar-return,
+    progressed, davison, and composite chart endpoints existed only as
+    frontend React conditionals -- anyone with a valid session token could
+    call these endpoints directly and get the paid chart data for free, no
+    subscription required, the same class of bypass enforce_free_tier_limit
+    exists to close for /api/chat/reply."""
+    tier = _get_subscription_tier(user_id, token)
+    if TIER_RANK.get(tier, 0) < TIER_RANK[minimum]:
+        raise HTTPException(status_code=403, detail=f"This feature requires the {minimum} tier or higher")
+
+
+def enforce_exact_tier(user_id: str, token: str, required: str) -> None:
+    """Raises 403 unless the caller's subscription_tier is exactly
+    `required` -- for tier-*exclusive* features like VIP's feng shui bagua
+    mapping, which Practitioner tier does not include despite costing more.
+    vip and practitioner are parallel add-ons on top of premium (see
+    TIER_RANK's comment above), not a linear ladder -- a practitioner
+    subscriber shouldn't pass a VIP-only gate just because their rank
+    number happens to be higher. Use enforce_min_tier instead for genuine
+    "at least X" checks, where every qualifying tier's own pricing copy
+    explicitly includes "everything in Premium"."""
+    tier = _get_subscription_tier(user_id, token)
+    if tier != required:
+        raise HTTPException(status_code=403, detail=f"This feature requires the {required} tier")
+
+
+def enforce_free_tier_limit(user_id: str, token: str) -> None:
+    """Raises 429 if this user is on the free tier and has already sent
+    FREE_DAILY_MESSAGE_LIMIT user messages today."""
+    tier = _get_subscription_tier(user_id, token)
     if tier != "free":
         return
+    url, anon_key = _supabase_config()
+    headers = {"apikey": anon_key, "Authorization": f"Bearer {token}"}
 
     today_start = datetime.now(timezone.utc).replace(
         hour=0, minute=0, second=0, microsecond=0
