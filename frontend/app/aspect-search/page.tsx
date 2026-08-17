@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { AspectSearchHit } from "@/lib/api";
-import { postAspectSearch } from "@/lib/api";
+import { ApiError, postAspectSearch } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
 const PLANETS = [
@@ -50,8 +50,12 @@ export default function AspectSearchPage() {
         session.access_token
       );
       setHits(result.hits);
-    } catch {
-      setError("Couldn't run the search — is the backend running? Try again in a moment.");
+    } catch (err) {
+      setError(
+        err instanceof ApiError && err.status === 429
+          ? "This search is rate-limited (6/minute) — you're running them a bit fast. Wait about a minute and try again."
+          : "Couldn't run the search — is the backend running? Try again in a moment."
+      );
     } finally {
       setSearching(false);
     }

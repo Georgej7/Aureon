@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { EphemerisDayResponse } from "@/lib/api";
-import { postEphemerisDay } from "@/lib/api";
+import { ApiError, postEphemerisDay } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
 function todayIso(): string {
@@ -45,8 +45,14 @@ export default function EphemerisPage() {
         }
         const result = await postEphemerisDay(date, session.access_token);
         if (!cancelled) setData(result);
-      } catch {
-        if (!cancelled) setError("Couldn't load the ephemeris — is the backend running? Try again in a moment.");
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof ApiError && err.status === 429
+              ? "You're checking dates a bit fast — wait about a minute and try again."
+              : "Couldn't load the ephemeris — is the backend running? Try again in a moment."
+          );
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }

@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import HumanDesignBodygraph from "@/components/HumanDesignBodygraph";
-import type { HumanDesignChart } from "@/lib/api";
+import KnowledgeDetail from "@/components/KnowledgeDetail";
+import type { HumanDesignChart, KnowledgeEntry } from "@/lib/api";
 import { postHumanDesignChart } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
 import { createClient } from "@/lib/supabase/client";
+
+const KNOWLEDGE_COLUMNS =
+  "system, category, topic, definition, traditional_interpretation, modern_interpretation, psychological_interpretation, positive_aspects, challenges, career_meaning, relationship_meaning, growth_meaning, sources, confidence_level, context_notes";
 
 type ProfileRow = {
   birth_date: string | null;
@@ -17,6 +21,8 @@ type ProfileRow = {
 export default function HumanDesignPage() {
   const [hasProfile, setHasProfile] = useState<boolean | undefined>(undefined);
   const [chart, setChart] = useState<HumanDesignChart | null>(null);
+  const [typeEntry, setTypeEntry] = useState<KnowledgeEntry | null>(null);
+  const [authorityEntry, setAuthorityEntry] = useState<KnowledgeEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +58,20 @@ export default function HumanDesignPage() {
         )}`;
         const result = await postHumanDesignChart(datetime, session.access_token);
         if (!cancelled) setChart(result);
+        // Was never queried at all before -- the page only ever showed
+        // the raw type/authority/profile/definition words with zero
+        // explanation of what any of them meant, unlike every sibling
+        // reading page. Topics match chart.type/chart.authority exactly
+        // (see backend/knowledge_base/human_design/{types,authorities}.json).
+        const { data: entries } = await supabase
+          .from("knowledge_base")
+          .select(KNOWLEDGE_COLUMNS)
+          .in("topic", [result.type, result.authority]);
+        if (!cancelled) {
+          const rows = (entries as KnowledgeEntry[]) ?? [];
+          setTypeEntry(rows.find((e) => e.topic === result.type) ?? null);
+          setAuthorityEntry(rows.find((e) => e.topic === result.authority) ?? null);
+        }
       } catch {
         if (!cancelled) setError("Couldn't compute your Human Design chart — is the backend running? Try again in a moment.");
       } finally {
@@ -124,6 +144,20 @@ export default function HumanDesignPage() {
               </div>
             </div>
           </div>
+          {typeEntry && (
+            <div className="card">
+              <div className="label">{chart.type}</div>
+              <p style={{ marginBottom: 12 }}>{typeEntry.definition}</p>
+              <KnowledgeDetail entry={typeEntry} />
+            </div>
+          )}
+          {authorityEntry && (
+            <div className="card">
+              <div className="label">{chart.authority}</div>
+              <p style={{ marginBottom: 12 }}>{authorityEntry.definition}</p>
+              <KnowledgeDetail entry={authorityEntry} />
+            </div>
+          )}
           <div className="card">
             <div className="label">Strategy</div>
             <p>{chart.strategy}</p>

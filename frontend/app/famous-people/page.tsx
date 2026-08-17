@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import ChartWheel from "@/components/ChartWheel";
 import type { NatalChart } from "@/lib/api";
-import { postNatalChart } from "@/lib/api";
+import { ApiError, postNatalChart } from "@/lib/api";
 import { zodiacSign } from "@/lib/astrology";
 import { createClient } from "@/lib/supabase/client";
 
@@ -67,10 +67,17 @@ export default function FamousPeoplePage() {
   const [chart, setChart] = useState<NatalChart | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Guards against a stale response overwriting newer state -- reported
+  // live: clicking a second figure before the first's request resolves
+  // could let the stale response land last (no artificial delay needed,
+  // any latency jitter is enough) and silently show the wrong chart under
+  // the right figure's name.
+  const requestIdRef = useRef(0);
 
   const filtered = FIGURES.filter((f) => f.name.toLowerCase().includes(query.toLowerCase()));
 
   async function selectFigure(figure: (typeof FIGURES)[number]) {
+    const requestId = ++requestIdRef.current;
     setSelected(figure);
     setChart(null);
     setError(null);
@@ -81,18 +88,24 @@ export default function FamousPeoplePage() {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        setError("Sign in to view charts.");
+        if (requestId === requestIdRef.current) setError("Sign in to view charts.");
         return;
       }
       const result = await postNatalChart(
         { datetime: `${figure.date}T12:00:00+00:00`, time_known: false },
         session.access_token
       );
-      setChart(result);
-    } catch {
-      setError("Couldn't compute this chart — is the backend running? Try again in a moment.");
+      if (requestId === requestIdRef.current) setChart(result);
+    } catch (err) {
+      if (requestId === requestIdRef.current) {
+        setError(
+          err instanceof ApiError && err.status === 429
+            ? "You're switching figures a bit fast — wait a moment and try again."
+            : "Couldn't compute this chart — is the backend running? Try again in a moment."
+        );
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }
 
@@ -126,6 +139,8 @@ export default function FamousPeoplePage() {
               key={f.name}
               className={`btn${selected?.name === f.name ? " btn-gold" : " btn-ghost"}`}
               onClick={() => selectFigure(f)}
+              disabled={loading}
+              style={{ opacity: loading ? 0.6 : 1 }}
             >
               {f.name}
             </button>

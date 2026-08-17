@@ -87,7 +87,13 @@ export default function FengShuiPage() {
     };
   }, []);
 
-  const canSubmit = /^\d{4}$/.test(birthYear.trim());
+  // Matches the backend's actual bound (KuaRequest.birth_year: 1900-2100) --
+  // this used to just check "4 digits", so a typo like "1899" passed here
+  // and got a 422 from the backend, which the catch block then reported as
+  // the generic "is the backend running?" message instead of a validation
+  // error.
+  const birthYearNum = Number(birthYear.trim());
+  const canSubmit = /^\d{4}$/.test(birthYear.trim()) && birthYearNum >= 1900 && birthYearNum <= 2100;
   const personalDirections = profile
     ? new Set(DIRECTION_LABELS.map(({ key }) => FULL_TO_ABBR[profile[key] as string]))
     : new Set<Compass>();

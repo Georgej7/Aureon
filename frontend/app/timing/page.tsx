@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { ElectionalDay, SubscriptionTier } from "@/lib/api";
-import { postFinancialTiming } from "@/lib/api";
+import { ApiError, postFinancialTiming } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
 type ProfileRow = {
@@ -75,8 +75,12 @@ export default function TimingPage() {
         session.access_token
       );
       setDays(result.days);
-    } catch {
-      setError("Couldn't run the scan — is the backend running? Try again in a moment.");
+    } catch (err) {
+      setError(
+        err instanceof ApiError && err.status === 429
+          ? "This is rate-limited — you're running scans a bit fast. Wait about a minute and try again."
+          : "Couldn't run the scan — is the backend running? Try again in a moment."
+      );
     } finally {
       setScanning(false);
     }

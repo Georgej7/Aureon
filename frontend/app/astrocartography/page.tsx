@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { AstrocartographyResponse, PlanetLines, SubscriptionTier } from "@/lib/api";
-import { postAstrocartography } from "@/lib/api";
+import { ApiError, postAstrocartography } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
 import { createClient } from "@/lib/supabase/client";
 
@@ -127,8 +127,14 @@ export default function AstrocartographyPage() {
           session.access_token
         );
         if (!cancelled) setData(result);
-      } catch {
-        if (!cancelled) setError("Couldn't compute your astrocartography lines — is the backend running? Try again in a moment.");
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof ApiError && err.status === 429
+              ? "You're loading this a bit fast — wait about a minute and try again."
+              : "Couldn't compute your astrocartography lines — is the backend running? Try again in a moment."
+          );
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }

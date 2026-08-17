@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { VoidOfCoursePeriod } from "@/lib/api";
-import { postVoidOfCourse } from "@/lib/api";
+import { ApiError, postVoidOfCourse } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
 function todayIso(): string {
@@ -24,33 +24,52 @@ export default function VoidOfCoursePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Matches the backend's ge=1 validation -- clearing the field to
+    // retype a new value gives Number("") = 0 for a moment, which would
+    // otherwise fire a request guaranteed to 400.
+    if (!Number.isInteger(days) || days < 1) return;
+
     let cancelled = false;
-    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-        const supabase = createClient();
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (!session) {
-          if (!cancelled) {
-            setError("Sign in to view void-of-course periods.");
-            setLoading(false);
+    // Debounced -- this endpoint is rate-limited to 10/minute, and `days`
+    // is a plain controlled number input, so every keystroke while
+    // editing it (e.g. clearing "14" and retyping "30") used to fire its
+    // own request. A few such edits could burn the whole per-minute
+    // budget before the user even finishes typing.
+    const timer = setTimeout(() => {
+      async function load() {
+        setLoading(true);
+        setError(null);
+        try {
+          const supabase = createClient();
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (!session) {
+            if (!cancelled) {
+              setError("Sign in to view void-of-course periods.");
+              setLoading(false);
+            }
+            return;
           }
-          return;
+          const result = await postVoidOfCourse(startDate, days, session.access_token);
+          if (!cancelled) setPeriods(result.periods);
+        } catch (err) {
+          if (!cancelled) {
+            setError(
+              err instanceof ApiError && err.status === 429
+                ? "This is rate-limited (10/minute) — you're changing the range a bit fast. Wait about a minute and try again."
+                : "Couldn't load void-of-course periods — is the backend running? Try again in a moment."
+            );
+          }
+        } finally {
+          if (!cancelled) setLoading(false);
         }
-        const result = await postVoidOfCourse(startDate, days, session.access_token);
-        if (!cancelled) setPeriods(result.periods);
-      } catch {
-        if (!cancelled) setError("Couldn't load void-of-course periods — is the backend running? Try again in a moment.");
-      } finally {
-        if (!cancelled) setLoading(false);
       }
-    }
-    load();
+      load();
+    }, 500);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [startDate, days]);
 
