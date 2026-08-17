@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms of Service — Aureon",
+  description: "The terms that govern your use of Aureon.",
+};
+
 export default function TermsPage() {
   return (
     <section className="screen active" id="terms">

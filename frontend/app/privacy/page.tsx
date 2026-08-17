@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy — Aureon",
+  description: "What information Aureon collects, how it's used, and the choices you have.",
+};
+
 export default function PrivacyPage() {
   return (
     <section className="screen active" id="privacy">
