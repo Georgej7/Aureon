@@ -7,6 +7,7 @@ import LocationField, { LocationValue } from "@/components/LocationField";
 import type { KnowledgeEntry, SubscriptionTier, Synastry } from "@/lib/api";
 import { postSynastry } from "@/lib/api";
 import { offsetToIso, zodiacSign } from "@/lib/astrology";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 type PersonInput = {
@@ -141,6 +142,10 @@ export default function CompatibilityPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (tier === "free") trackEvent("paywall_viewed", { tool: "compatibility", required_tier: "premium" });
+  }, [tier]);
+
   const canSubmit =
     personA.name.trim() !== "" &&
     personA.birthDate !== "" &&
@@ -171,6 +176,7 @@ export default function CompatibilityPage() {
         session.access_token
       );
       setResult(synastry);
+      trackEvent("tool_used", { tool: "compatibility" });
 
       const aspectTypes = Array.from(new Set(synastry.aspects.map((a) => `Synastry ${a.aspect_type}`)));
       if (aspectTypes.length > 0) {
@@ -204,7 +210,11 @@ export default function CompatibilityPage() {
               Compare your chart with someone else&apos;s and see how your planets interact — this
               is part of Aureon Premium.
             </p>
-            <Link className="btn btn-gold" href="/pricing">
+            <Link
+              className="btn btn-gold"
+              href="/pricing"
+              onClick={() => trackEvent("upgrade_cta_clicked", { tool: "compatibility", required_tier: "premium" })}
+            >
               Upgrade to Premium
             </Link>
           </div>

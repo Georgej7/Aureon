@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { ElectionalDay, SubscriptionTier } from "@/lib/api";
 import { ApiError, postFinancialTiming } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 type ProfileRow = {
@@ -56,6 +57,10 @@ export default function TimingPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (tier === "free") trackEvent("paywall_viewed", { tool: "financial_timing", required_tier: "premium" });
+  }, [tier]);
+
   async function handleScan() {
     if (!birthDate) return;
     setScanning(true);
@@ -75,6 +80,7 @@ export default function TimingPage() {
         session.access_token
       );
       setDays(result.days);
+      trackEvent("tool_used", { tool: "financial_timing" });
     } catch (err) {
       setError(
         err instanceof ApiError && err.status === 429
@@ -100,7 +106,11 @@ export default function TimingPage() {
               numerology cycle with real astronomical signals like Mercury retrograde. Part of
               Aureon Premium.
             </p>
-            <Link className="btn btn-gold" href="/pricing">
+            <Link
+              className="btn btn-gold"
+              href="/pricing"
+              onClick={() => trackEvent("upgrade_cta_clicked", { tool: "financial_timing", required_tier: "premium" })}
+            >
               Upgrade to Premium
             </Link>
           </div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import KnowledgeDetail from "@/components/KnowledgeDetail";
 import type { KnowledgeEntry, TarotCard } from "@/lib/api";
 import { postTarotDraw } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 const KNOWLEDGE_COLUMNS =
@@ -30,6 +31,7 @@ export default function TarotPage() {
       const seed = `${session.user.id}:${Date.now()}`;
       const result = await postTarotDraw(seed, session.access_token);
       setCard(result);
+      trackEvent("tool_used", { tool: "tarot_draw" });
       // The card draw and its written meaning are two separate systems
       // (backend/app/calc/tarot.py just picks a name; the interpretation
       // lives in the knowledge base, same pattern as every other reading in

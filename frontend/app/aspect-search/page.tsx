@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { AspectSearchHit } from "@/lib/api";
 import { ApiError, postAspectSearch } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 const PLANETS = [
@@ -50,6 +51,7 @@ export default function AspectSearchPage() {
         session.access_token
       );
       setHits(result.hits);
+      trackEvent("tool_used", { tool: "aspect_search" });
     } catch (err) {
       setError(
         err instanceof ApiError && err.status === 429

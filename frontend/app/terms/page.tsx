@@ -10,7 +10,7 @@ export default function TermsPage() {
     <section className="screen active" id="terms">
       <div className="legal-page">
         <h1>Terms of Service</h1>
-        <p className="updated">Last updated: [DATE — fill in when published]</p>
+        <p className="updated">Last updated: September 29, 2026</p>
 
         <p>
           These Terms of Service (&quot;Terms&quot;) govern your use of Aureon (the

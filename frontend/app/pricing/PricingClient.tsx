@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import { trackEvent } from "@/lib/analytics";
@@ -13,6 +13,15 @@ export default function PricingClient() {
   const [vipError, setVipError] = useState<string | null>(null);
   const [practitionerError, setPractitionerError] = useState<string | null>(null);
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+  // Set right before Checkout.open() below, read back in eventCallback --
+  // Paddle's checkout.completed payload doesn't reliably echo which plan a
+  // caller *attempted* to buy in a shape convenient to read here, and this
+  // is simpler than parsing it back out of the completed transaction.
+  const attemptedCheckout = useRef<{ tier: "premium" | "vip" | "practitioner"; billing: "monthly" | "annual" } | null>(null);
+
+  useEffect(() => {
+    trackEvent("pricing_viewed");
+  }, []);
 
   useEffect(() => {
     const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
@@ -41,6 +50,15 @@ export default function PricingClient() {
       environment: process.env.NEXT_PUBLIC_PADDLE_ENV === "production" ? "production" : "sandbox",
       eventCallback: (event) => {
         if (event.name === "checkout.completed") {
+          // Reflects Paddle's own checkout-UI-succeeded signal, which is
+          // the best available client-side purchase-completion moment --
+          // not a guarantee the webhook's DB write (the actual source of
+          // truth for subscription_tier/access) has landed yet. This is a
+          // marketing-funnel signal only; nothing in the app grants access
+          // based on this event, only on the database.
+          if (attemptedCheckout.current) {
+            trackEvent("checkout_completed", attemptedCheckout.current);
+          }
           router.push(`${returnTo}?upgraded=1`);
         }
       },
@@ -77,6 +95,7 @@ export default function PricingClient() {
     }
 
     trackEvent("checkout_started", { tier, billing });
+    attemptedCheckout.current = { tier, billing };
     paddle.Checkout.open({
       items: [{ priceId, quantity: 1 }],
       ...(user.email && { customer: { email: user.email } }),

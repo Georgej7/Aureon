@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { postNatalChart, postNumerology, type SubscriptionTier } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 type ClientRow = {
@@ -70,6 +71,10 @@ export default function ClientsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (tier && tier !== "practitioner") trackEvent("paywall_viewed", { tool: "client_roster", required_tier: "practitioner" });
+  }, [tier]);
+
   async function handleAddClient() {
     if (!canSubmit || submitting) return;
     setSubmitting(true);
@@ -111,6 +116,7 @@ export default function ClientsPage() {
         numerology,
       });
       if (insertError) throw insertError;
+      trackEvent("tool_used", { tool: "client_added" });
 
       setFullName("");
       setBirthDate("");
@@ -140,7 +146,11 @@ export default function ClientsPage() {
               Save and manage charts for multiple people — built for practitioners working with real
               clients, not just your own reading. Part of Aureon Practitioner.
             </p>
-            <Link className="btn btn-gold" href="/pricing">
+            <Link
+              className="btn btn-gold"
+              href="/pricing"
+              onClick={() => trackEvent("upgrade_cta_clicked", { tool: "client_roster", required_tier: "practitioner" })}
+            >
               Upgrade to Practitioner
             </Link>
           </div>

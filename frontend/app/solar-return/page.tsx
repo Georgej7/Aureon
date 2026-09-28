@@ -9,6 +9,7 @@ import PositionTable from "@/components/PositionTable";
 import type { NatalChart, SubscriptionTier } from "@/lib/api";
 import { postSolarReturn } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 type ProfileRow = {
@@ -64,6 +65,10 @@ export default function SolarReturnPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (tier && tier !== "practitioner") trackEvent("paywall_viewed", { tool: "solar_return", required_tier: "practitioner" });
+  }, [tier]);
+
   async function handleCompute() {
     if (!profileRow?.birth_date) return;
     setComputing(true);
@@ -97,6 +102,7 @@ export default function SolarReturnPage() {
       );
       setChart(result.chart);
       setExactDatetime(result.exact_datetime);
+      trackEvent("tool_used", { tool: "solar_return" });
     } catch {
       setError("Couldn't compute the solar return — is the backend running? Try again in a moment.");
     } finally {
@@ -118,7 +124,11 @@ export default function SolarReturnPage() {
               year — a map of the themes for that birthday-to-birthday cycle. Part of Aureon
               Practitioner.
             </p>
-            <Link className="btn btn-gold" href="/pricing">
+            <Link
+              className="btn btn-gold"
+              href="/pricing"
+              onClick={() => trackEvent("upgrade_cta_clicked", { tool: "solar_return", required_tier: "practitioner" })}
+            >
               Upgrade to Practitioner
             </Link>
           </div>

@@ -9,6 +9,7 @@ import PositionTable from "@/components/PositionTable";
 import type { NatalChart, SubscriptionTier } from "@/lib/api";
 import { postProgressedChart } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 type ProfileRow = {
@@ -64,6 +65,10 @@ export default function ProgressedPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (tier && tier !== "practitioner") trackEvent("paywall_viewed", { tool: "progressed_chart", required_tier: "practitioner" });
+  }, [tier]);
+
   async function handleCompute() {
     if (!profileRow?.birth_date) return;
     setComputing(true);
@@ -102,6 +107,7 @@ export default function ProgressedPage() {
       );
       setChart(result.chart);
       setProgressedDatetime(result.progressed_datetime);
+      trackEvent("tool_used", { tool: "progressed_chart" });
     } catch {
       setError("Couldn't compute the progressed chart — is the backend running? Try again in a moment.");
     } finally {
@@ -123,7 +129,11 @@ export default function ProgressedPage() {
               life, showing how you&apos;ve psychologically developed since birth. Part of Aureon
               Practitioner.
             </p>
-            <Link className="btn btn-gold" href="/pricing">
+            <Link
+              className="btn btn-gold"
+              href="/pricing"
+              onClick={() => trackEvent("upgrade_cta_clicked", { tool: "progressed_chart", required_tier: "practitioner" })}
+            >
               Upgrade to Practitioner
             </Link>
           </div>

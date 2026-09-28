@@ -1,8 +1,19 @@
-fastapi
-uvicorn[standard]
-pyswisseph
-pytest
-anthropic
-python-dotenv
-httpx
-slowapi
+# Pinned to the exact versions this codebase is actually developed and
+# tested against (from `pip freeze` in the working .venv) -- previously
+# fully unpinned, meaning a fresh `pip install -r requirements.txt` at any
+# future point could silently pull a breaking major-version change with no
+# lockfile safety net. These are direct dependencies only; pip still
+# resolves their own sub-dependencies at install time, so this isn't a full
+# hash-locked reproducible build (that would mean adopting pip-tools/poetry,
+# a bigger tooling change than this fix calls for) -- but it pins the
+# versions that actually matter for compatibility. To intentionally bump a
+# version, upgrade it deliberately, rerun the full test suite, then update
+# the pin here.
+fastapi==0.141.1
+uvicorn[standard]==0.52.0
+pyswisseph==2.10.3.2
+pytest==9.1.1
+anthropic==0.120.2
+python-dotenv==1.2.2
+httpx==0.28.1
+slowapi==0.1.10
