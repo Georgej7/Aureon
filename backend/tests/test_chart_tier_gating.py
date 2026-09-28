@@ -1,10 +1,10 @@
-"""Verifies vedic/synastry/solar-return/progressed/davison/composite/bagua
-now actually enforce their subscription-tier gate server-side. Before this,
-the gate existed only as a frontend React conditional -- anyone with a valid
-session token could call these endpoints directly and get the paid chart
-data for free. Mocks httpx.get so no real network calls reach Supabase;
-follows the same fake_get-inspects-url pattern as test_chat.py's tier
-tests."""
+"""Verifies vedic/synastry/solar-return/progressed/davison/composite/bagua/
+astrocartography/financial-timing all actually enforce their
+subscription-tier gate server-side. Before this, the gate existed only as a
+frontend React conditional -- anyone with a valid session token could call
+these endpoints directly and get the paid chart data for free. Mocks
+httpx.get so no real network calls reach Supabase; follows the same
+fake_get-inspects-url pattern as test_chat.py's tier tests."""
 
 import httpx
 from fastapi.testclient import TestClient
@@ -251,3 +251,78 @@ def test_kua_remains_ungated_by_tier(monkeypatch):
         headers=_auth_headers(),
     )
     assert resp.status_code == 200
+
+
+# ---- astrocartography: requires premium or higher ----
+# Previously ungated server-side at all (Depends(require_user) only
+# confirmed sign-in) -- any free-tier session could call this directly.
+
+
+def test_astrocartography_blocks_free_tier(monkeypatch):
+    _env(monkeypatch)
+    monkeypatch.setattr(httpx, "get", _tier_get("free"))
+    client = TestClient(app)
+    resp = client.post(
+        "/api/astrocartography/lines",
+        json={"birth": _valid_birth()},
+        headers=_auth_headers(),
+    )
+    assert resp.status_code == 403
+
+
+def test_astrocartography_allows_premium(monkeypatch):
+    _env(monkeypatch)
+    monkeypatch.setattr(httpx, "get", _tier_get("premium"))
+    client = TestClient(app)
+    resp = client.post(
+        "/api/astrocartography/lines",
+        json={"birth": _valid_birth()},
+        headers=_auth_headers(),
+    )
+    assert resp.status_code == 200
+
+
+def test_astrocartography_still_requires_authorization(monkeypatch):
+    _env(monkeypatch)
+    client = TestClient(app)
+    resp = client.post("/api/astrocartography/lines", json={"birth": _valid_birth()})
+    assert resp.status_code == 401
+
+
+# ---- financial-timing: requires premium or higher ----
+# Same previously-ungated bypass as astrocartography above.
+
+
+def _valid_electional_body():
+    return {"birth_date": "1990-01-15", "start_date": "2026-08-01", "days": 5}
+
+
+def test_financial_timing_blocks_free_tier(monkeypatch):
+    _env(monkeypatch)
+    monkeypatch.setattr(httpx, "get", _tier_get("free"))
+    client = TestClient(app)
+    resp = client.post(
+        "/api/electional/financial-timing",
+        json=_valid_electional_body(),
+        headers=_auth_headers(),
+    )
+    assert resp.status_code == 403
+
+
+def test_financial_timing_allows_premium(monkeypatch):
+    _env(monkeypatch)
+    monkeypatch.setattr(httpx, "get", _tier_get("premium"))
+    client = TestClient(app)
+    resp = client.post(
+        "/api/electional/financial-timing",
+        json=_valid_electional_body(),
+        headers=_auth_headers(),
+    )
+    assert resp.status_code == 200
+
+
+def test_financial_timing_still_requires_authorization(monkeypatch):
+    _env(monkeypatch)
+    client = TestClient(app)
+    resp = client.post("/api/electional/financial-timing", json=_valid_electional_body())
+    assert resp.status_code == 401

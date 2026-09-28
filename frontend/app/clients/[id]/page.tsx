@@ -10,6 +10,7 @@ import PositionTable from "@/components/PositionTable";
 import type { NatalChart, NumerologyProfile } from "@/lib/api";
 import { postProgressedChart, postSolarReturn } from "@/lib/api";
 import { offsetToIso, zodiacSign } from "@/lib/astrology";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 type ClientDetail = {
@@ -116,6 +117,7 @@ export default function ClientDetailPage() {
       }
       const row = data as ClientDetail;
       setClient(row);
+      trackEvent("tool_used", { tool: "client_chart_viewed" });
 
       const {
         data: { session },

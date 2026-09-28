@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, requestIp } from "@/lib/rate-limit";
 
 // Proxies Komoot's Photon (photon.komoot.io) -- free, no API key, no billing
 // dependency (deliberately avoided Google Places / Mapbox, which both need
@@ -37,6 +38,14 @@ function formatDisplayName(props: PhotonFeature["properties"]): string {
 }
 
 export async function GET(request: NextRequest) {
+  // No auth requirement here (unlike emails/welcome) -- this is read-only,
+  // proxies a free public API, and is used during onboarding location
+  // autocomplete. A per-IP cap is still worth having so this can't be used
+  // as an open, unlimited proxy in front of Photon.
+  if (!rateLimit(`geocode:${requestIp(request)}`, 30, 60 * 1000)) {
+    return NextResponse.json({ results: [] }, { status: 429 });
+  }
+
   const q = request.nextUrl.searchParams.get("q")?.trim();
   if (!q || q.length < 2) {
     return NextResponse.json({ results: [] });

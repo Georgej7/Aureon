@@ -6,6 +6,7 @@ import KnowledgeDetail from "@/components/KnowledgeDetail";
 import type { KnowledgeEntry, SubscriptionTier, VedicChart } from "@/lib/api";
 import { postVedicChart } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 type ProfileRow = {
@@ -77,6 +78,7 @@ export default function VedicPage() {
         );
         if (cancelled) return;
         setChart(result);
+        trackEvent("tool_used", { tool: "vedic_chart" });
 
         const topics = [
           result.moon_nakshatra.name,
@@ -107,6 +109,10 @@ export default function VedicPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (tier === "free") trackEvent("paywall_viewed", { tool: "vedic_chart", required_tier: "premium" });
+  }, [tier]);
+
   if (tier === undefined || loading) return null;
 
   if (tier === "free") {
@@ -121,7 +127,11 @@ export default function VedicPage() {
               different, older tradition from the Western chart you already have. Part of Aureon
               Premium.
             </p>
-            <Link className="btn btn-gold" href="/pricing">
+            <Link
+              className="btn btn-gold"
+              href="/pricing"
+              onClick={() => trackEvent("upgrade_cta_clicked", { tool: "vedic_chart", required_tier: "premium" })}
+            >
               Upgrade to Premium
             </Link>
           </div>

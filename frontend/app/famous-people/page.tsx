@@ -5,6 +5,7 @@ import ChartWheel from "@/components/ChartWheel";
 import type { NatalChart } from "@/lib/api";
 import { ApiError, postNatalChart } from "@/lib/api";
 import { zodiacSign } from "@/lib/astrology";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 // Birth dates only -- no birth time or coordinates. Exact birth times aren't
@@ -95,7 +96,10 @@ export default function FamousPeoplePage() {
         { datetime: `${figure.date}T12:00:00+00:00`, time_known: false },
         session.access_token
       );
-      if (requestId === requestIdRef.current) setChart(result);
+      if (requestId === requestIdRef.current) {
+        setChart(result);
+        trackEvent("tool_used", { tool: "famous_people" });
+      }
     } catch (err) {
       if (requestId === requestIdRef.current) {
         setError(

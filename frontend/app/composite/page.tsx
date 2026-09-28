@@ -10,6 +10,7 @@ import PositionTable from "@/components/PositionTable";
 import type { NatalChart, SubscriptionTier } from "@/lib/api";
 import { postCompositeChart, postDavisonChart } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 type PersonInput = {
@@ -145,6 +146,10 @@ export default function CompositePage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (tier && tier !== "practitioner") trackEvent("paywall_viewed", { tool: "composite_davison", required_tier: "practitioner" });
+  }, [tier]);
+
   const canSubmit =
     personA.name.trim() !== "" &&
     personA.birthDate !== "" &&
@@ -174,6 +179,7 @@ export default function CompositePage() {
           session.access_token
         );
         setChart(result);
+        trackEvent("tool_used", { tool: "composite_chart" });
       } else {
         const result = await postDavisonChart(
           { person_a: toBirthDataPayload(personA), person_b: toBirthDataPayload(personB) },
@@ -181,6 +187,7 @@ export default function CompositePage() {
         );
         setChart(result.chart);
         setMidpointDatetime(result.midpoint_datetime);
+        trackEvent("tool_used", { tool: "davison_chart" });
       }
     } catch {
       setError("Couldn't compute the chart — is the backend running? Try again in a moment.");
@@ -203,7 +210,11 @@ export default function CompositePage() {
               from the midpoint of each planet pair) or a Davison chart (a real chart cast for
               the midpoint moment and place in time). Part of Aureon Practitioner.
             </p>
-            <Link className="btn btn-gold" href="/pricing">
+            <Link
+              className="btn btn-gold"
+              href="/pricing"
+              onClick={() => trackEvent("upgrade_cta_clicked", { tool: "composite_davison", required_tier: "practitioner" })}
+            >
               Upgrade to Practitioner
             </Link>
           </div>

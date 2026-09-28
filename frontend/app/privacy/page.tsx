@@ -10,7 +10,7 @@ export default function PrivacyPage() {
     <section className="screen active" id="privacy">
       <div className="legal-page">
         <h1>Privacy Policy</h1>
-        <p className="updated">Last updated: [DATE — fill in when published]</p>
+        <p className="updated">Last updated: September 29, 2026</p>
 
         <p>
           This Privacy Policy explains what information Aureon (&quot;we&quot;, &quot;us&quot;)

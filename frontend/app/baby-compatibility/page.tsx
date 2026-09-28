@@ -7,6 +7,7 @@ import LocationField, { LocationValue } from "@/components/LocationField";
 import type { KnowledgeEntry, SubscriptionTier, Synastry } from "@/lib/api";
 import { postSynastry } from "@/lib/api";
 import { offsetToIso, zodiacSign } from "@/lib/astrology";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 type PersonInput = {
@@ -164,6 +165,10 @@ export default function BabyCompatibilityPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (tier === "free") trackEvent("paywall_viewed", { tool: "baby_compatibility", required_tier: "premium" });
+  }, [tier]);
+
   const canSubmit =
     personA.name.trim() !== "" &&
     personA.birthDate !== "" &&
@@ -194,6 +199,7 @@ export default function BabyCompatibilityPage() {
         session.access_token
       );
       setResult(synastry);
+      trackEvent("tool_used", { tool: "baby_compatibility" });
 
       const aspectTypes = Array.from(new Set(synastry.aspects.map((a) => `Synastry ${a.aspect_type}`)));
       if (aspectTypes.length > 0) {
@@ -227,7 +233,11 @@ export default function BabyCompatibilityPage() {
               See how two parents&apos; charts line up on nurturing, structure, and communication —
               part of Aureon Premium.
             </p>
-            <Link className="btn btn-gold" href="/pricing">
+            <Link
+              className="btn btn-gold"
+              href="/pricing"
+              onClick={() => trackEvent("upgrade_cta_clicked", { tool: "baby_compatibility", required_tier: "premium" })}
+            >
               Upgrade to Premium
             </Link>
           </div>

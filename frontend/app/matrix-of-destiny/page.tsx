@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import KnowledgeDetail from "@/components/KnowledgeDetail";
 import type { KnowledgeEntry, MatrixOfDestinyResponse, MatrixPoint } from "@/lib/api";
 import { postMatrixOfDestiny } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 const KNOWLEDGE_COLUMNS =
@@ -93,7 +94,10 @@ export default function MatrixOfDestinyPage() {
       setHasProfile(true);
       try {
         const result = await postMatrixOfDestiny(data.birth_date, session.access_token);
-        if (!cancelled) setMatrix(result);
+        if (!cancelled) {
+          setMatrix(result);
+          trackEvent("tool_used", { tool: "matrix_of_destiny" });
+        }
         // Matrix of Destiny explicitly borrows Tarot's 22 Major Arcana
         // numbering/meanings (see backend/app/calc/matrix_of_destiny.py) --
         // reusing the same already-verified tarot knowledge_base content

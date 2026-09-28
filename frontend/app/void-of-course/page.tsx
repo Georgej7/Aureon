@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { VoidOfCoursePeriod } from "@/lib/api";
 import { ApiError, postVoidOfCourse } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 function todayIso(): string {
@@ -52,7 +53,10 @@ export default function VoidOfCoursePage() {
             return;
           }
           const result = await postVoidOfCourse(startDate, days, session.access_token);
-          if (!cancelled) setPeriods(result.periods);
+          if (!cancelled) {
+            setPeriods(result.periods);
+            trackEvent("tool_used", { tool: "void_of_course" });
+          }
         } catch (err) {
           if (!cancelled) {
             setError(

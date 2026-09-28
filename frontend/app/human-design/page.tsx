@@ -7,6 +7,7 @@ import KnowledgeDetail from "@/components/KnowledgeDetail";
 import type { HumanDesignChart, KnowledgeEntry } from "@/lib/api";
 import { postHumanDesignChart } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 const KNOWLEDGE_COLUMNS =
@@ -57,7 +58,10 @@ export default function HumanDesignPage() {
           data.utc_offset ?? 0
         )}`;
         const result = await postHumanDesignChart(datetime, session.access_token);
-        if (!cancelled) setChart(result);
+        if (!cancelled) {
+          setChart(result);
+          trackEvent("tool_used", { tool: "human_design" });
+        }
         // Was never queried at all before -- the page only ever showed
         // the raw type/authority/profile/definition words with zero
         // explanation of what any of them meant, unlike every sibling

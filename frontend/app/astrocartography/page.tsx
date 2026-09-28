@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { AstrocartographyResponse, PlanetLines, SubscriptionTier } from "@/lib/api";
 import { ApiError, postAstrocartography } from "@/lib/api";
 import { offsetToIso } from "@/lib/astrology";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 type ProfileRow = {
@@ -126,7 +127,10 @@ export default function AstrocartographyPage() {
           },
           session.access_token
         );
-        if (!cancelled) setData(result);
+        if (!cancelled) {
+          setData(result);
+          trackEvent("tool_used", { tool: "astrocartography" });
+        }
       } catch (err) {
         if (!cancelled) {
           setError(
@@ -145,6 +149,10 @@ export default function AstrocartographyPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (tier === "free") trackEvent("paywall_viewed", { tool: "astrocartography", required_tier: "premium" });
+  }, [tier]);
+
   if (tier === undefined || loading) return null;
 
   if (tier === "free") {
@@ -158,7 +166,11 @@ export default function AstrocartographyPage() {
               See where on Earth each planet was rising, setting, or angular at the moment you
               were born — a real relocation-astrology map. Part of Aureon Premium.
             </p>
-            <Link className="btn btn-gold" href="/pricing">
+            <Link
+              className="btn btn-gold"
+              href="/pricing"
+              onClick={() => trackEvent("upgrade_cta_clicked", { tool: "astrocartography", required_tier: "premium" })}
+            >
               Upgrade to Premium
             </Link>
           </div>

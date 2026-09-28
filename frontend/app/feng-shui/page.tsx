@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import KnowledgeDetail from "@/components/KnowledgeDetail";
 import type { BaguaZone, Compass, KnowledgeEntry, KuaProfile, SubscriptionTier } from "@/lib/api";
 import { postBagua, postKua } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 const DIRECTION_LABELS: { key: keyof KuaProfile; label: string; meaning: string }[] = [
@@ -87,6 +88,10 @@ export default function FengShuiPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (tier && tier !== "vip") trackEvent("paywall_viewed", { tool: "feng_shui_bagua", required_tier: "vip" });
+  }, [tier]);
+
   // Matches the backend's actual bound (KuaRequest.birth_year: 1900-2100) --
   // this used to just check "4 digits", so a typo like "1899" passed here
   // and got a 422 from the backend, which the catch block then reported as
@@ -116,6 +121,7 @@ export default function FengShuiPage() {
 
       const result = await postKua({ birth_year: Number(birthYear), gender }, session.access_token);
       setProfile(result);
+      trackEvent("tool_used", { tool: "feng_shui_kua" });
 
       const { data: entries } = await supabase
         .from("knowledge_base")
@@ -152,6 +158,7 @@ export default function FengShuiPage() {
 
       const result = await postBagua({ facing_direction: facingDirection }, session.access_token);
       setZones(result.zones);
+      trackEvent("tool_used", { tool: "feng_shui_bagua" });
 
       const topics = [
         ...result.zones.map((z) => z.zone),
@@ -277,7 +284,11 @@ export default function FengShuiPage() {
               where your entrance is — cross-referenced with your own personal Kua directions
               above. Part of Aureon VIP.
             </p>
-            <Link className="btn btn-gold" href="/pricing">
+            <Link
+              className="btn btn-gold"
+              href="/pricing"
+              onClick={() => trackEvent("upgrade_cta_clicked", { tool: "feng_shui_bagua", required_tier: "vip" })}
+            >
               Upgrade to VIP
             </Link>
           </div>

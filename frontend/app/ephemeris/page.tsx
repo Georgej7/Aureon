@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { EphemerisDayResponse } from "@/lib/api";
 import { ApiError, postEphemerisDay } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 function todayIso(): string {
@@ -44,7 +45,10 @@ export default function EphemerisPage() {
           return;
         }
         const result = await postEphemerisDay(date, session.access_token);
-        if (!cancelled) setData(result);
+        if (!cancelled) {
+          setData(result);
+          trackEvent("tool_used", { tool: "ephemeris_lookup" });
+        }
       } catch (err) {
         if (!cancelled) {
           setError(

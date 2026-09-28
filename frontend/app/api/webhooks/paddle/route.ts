@@ -31,7 +31,7 @@ async function notifyUser(
 // Practitioner is checked first since it's a separate professional track,
 // not "VIP but more expensive" -- there's no real ordering between them to
 // get backwards, but checking it explicitly first keeps that intent clear.
-function tierForPriceId(priceId: string | null | undefined): SubscriptionTier {
+export function tierForPriceId(priceId: string | null | undefined): SubscriptionTier {
   const practitionerPriceIds = [
     process.env.NEXT_PUBLIC_PADDLE_PRACTITIONER_PRICE_ID,
     process.env.NEXT_PUBLIC_PADDLE_PRACTITIONER_ANNUAL_PRICE_ID,
@@ -54,12 +54,12 @@ function tierForPriceId(priceId: string | null | undefined): SubscriptionTier {
 // SubscriptionUpdatedNotification (the two payload shapes this is called
 // with) — only the fields actually read here, rather than the full
 // Subscription entity class those notification types don't fully match.
-type SubscriptionLike = {
+export type SubscriptionLike = {
   status: string;
   items: { price?: { id?: string | null } | null }[];
 };
 
-function mapSubscriptionStatus(subscription: SubscriptionLike): {
+export function mapSubscriptionStatus(subscription: SubscriptionLike): {
   tier: SubscriptionTier;
   status: "active" | "past_due" | "canceled" | "incomplete";
 } {

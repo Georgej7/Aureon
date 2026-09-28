@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import KnowledgeDetail from "@/components/KnowledgeDetail";
 import type { ChineseZodiacProfile, KnowledgeEntry } from "@/lib/api";
 import { postChineseZodiac } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 const KNOWLEDGE_COLUMNS =
@@ -47,7 +48,10 @@ export default function ChineseZodiacPage() {
       try {
         const birthYear = new Date(data.birth_date).getUTCFullYear();
         const result = await postChineseZodiac(birthYear, session.access_token);
-        if (!cancelled) setProfile(result);
+        if (!cancelled) {
+          setProfile(result);
+          trackEvent("tool_used", { tool: "chinese_zodiac" });
+        }
         // Content topics for this system are "{Animal}" and "{Element} Year"
         // (distinct from Feng Shui's separate "{Element} Element" set, which
         // is a different content file entirely) -- was never queried at
