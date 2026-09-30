@@ -10,7 +10,7 @@ export default function PrivacyPage() {
     <section className="screen active" id="privacy">
       <div className="legal-page">
         <h1>Privacy Policy</h1>
-        <p className="updated">Last updated: September 29, 2026</p>
+        <p className="updated">Last updated: September 30, 2026</p>
 
         <p>
           This Privacy Policy explains what information Aureon (&quot;we&quot;, &quot;us&quot;)
@@ -67,26 +67,57 @@ export default function PrivacyPage() {
           <li>
             <strong>Render</strong> — hosts our application servers.
           </li>
+          <li>
+            <strong>Google (Google Analytics)</strong> — only if you accept analytics cookies; see
+            Section 4.
+          </li>
         </ul>
         <p>
           We don&apos;t share your birth information or chat messages with any other third party,
           and we don&apos;t use them to train AI models.
         </p>
 
-        <h2>4. Data retention</h2>
+        <h2 id="analytics">4. Analytics cookies (only with your consent)</h2>
         <p>
-          We retain your account and profile data for as long as your account is active. You can
-          request deletion of your account and associated data at any time (see Section 6).
+          If you choose <strong>Accept</strong> in the analytics banner, we use Google Analytics 4 to
+          understand which pages are visited and how the site is used, so we can improve it. Until you
+          accept, Google Analytics is not loaded, sets no cookies and receives nothing. If you choose
+          <strong> Reject</strong>, or make no choice, it stays off.
+        </p>
+        <p>If you accept, Google Analytics sets cookies (named <code>_ga</code> and <code>_ga_…</code>, lasting up to two years) and receives:</p>
+        <ul>
+          <li>The pages you visit (the page address without any query string, and with account or record identifiers removed) and the site that referred you</li>
+          <li>Your device and browser type and your approximate location, derived from your IP address (Google Analytics does not store full IP addresses)</li>
+          <li>Simple usage events, such as which tool you opened or that you viewed the pricing page (event names only)</li>
+        </ul>
+        <p>
+          It never receives your name, email, birth information, chart or reading contents, or chat
+          messages. We have turned off Google signals and ad personalization, and we don&apos;t use
+          analytics data for advertising. Google acts as our service provider and may process data
+          outside your country.
+        </p>
+        <p>
+          We save your choice in your browser&apos;s local storage (not a cookie) so we don&apos;t
+          keep asking. You can change or withdraw it at any time with the &quot;Analytics
+          settings&quot; link in the footer; withdrawing stops collection and removes Google Analytics
+          cookies from your browser. Data already collected stays in Google Analytics for the period
+          set in our account, and you can ask us to delete it (see Section 7).
         </p>
 
-        <h2>5. Security</h2>
+        <h2>5. Data retention</h2>
+        <p>
+          We retain your account and profile data for as long as your account is active. You can
+          request deletion of your account and associated data at any time (see Section 7).
+        </p>
+
+        <h2>6. Security</h2>
         <p>
           We use industry-standard practices (encrypted connections, access controls, row-level
           security on our database) to protect your data. No method of transmission or storage is
           100% secure, and we can&apos;t guarantee absolute security.
         </p>
 
-        <h2>6. Your rights</h2>
+        <h2>7. Your rights</h2>
         <p>Depending on where you live, you may have rights to:</p>
         <ul>
           <li>Access the personal data we hold about you</li>
@@ -101,25 +132,25 @@ export default function PrivacyPage() {
           respond within a reasonable timeframe.
         </p>
 
-        <h2>7. Children&apos;s privacy</h2>
+        <h2>8. Children&apos;s privacy</h2>
         <p>
           Aureon is not intended for anyone under 18. We don&apos;t knowingly collect information
           from minors.
         </p>
 
-        <h2>8. International data transfers</h2>
+        <h2>9. International data transfers</h2>
         <p>
           Our service providers may process and store data in countries other than your own. Where
           required, we rely on appropriate safeguards for these transfers.
         </p>
 
-        <h2>9. Changes to this policy</h2>
+        <h2>10. Changes to this policy</h2>
         <p>
           We may update this Privacy Policy from time to time. We&apos;ll post the updated version
           here with a new &quot;Last updated&quot; date.
         </p>
 
-        <h2>10. Contact</h2>
+        <h2>11. Contact</h2>
         <p>
           Questions about this policy or your data? Contact us at{" "}
           <a href="mailto:georgejermizashvili@gmail.com">georgejermizashvili@gmail.com</a>.

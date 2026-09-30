@@ -4,6 +4,7 @@ import "./globals.css";
 import Link from "next/link";
 import Analytics from "@/components/Analytics";
 import BfcacheGuard from "@/components/BfcacheGuard";
+import ConsentBanner, { ConsentSettingsLink } from "@/components/ConsentBanner";
 import Starfield from "@/components/Starfield";
 import SkyViewExit from "@/components/SkyViewExit";
 import TopNav from "@/components/TopNav";
@@ -42,6 +43,7 @@ export default function RootLayout({
     <html lang="en" className={`${fraunces.variable} ${manrope.variable} ${plexMono.variable}`}>
       <body>
         <Analytics />
+        <ConsentBanner />
         <BfcacheGuard />
         <Starfield />
         <div className="vignette" />
@@ -54,6 +56,7 @@ export default function RootLayout({
           <span>© {new Date().getFullYear()} Aureon</span>
           <Link href="/terms">Terms</Link>
           <Link href="/privacy">Privacy</Link>
+          <ConsentSettingsLink />
           <a href="mailto:georgejermizashvili@gmail.com">Support</a>
         </footer>
       </body>

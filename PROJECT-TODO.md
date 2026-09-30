@@ -27,6 +27,8 @@ don't let it go stale.
 
 - [ ] Decide the free-tier paywall trigger (message count vs. system count) — currently undecided, flagged as a Q2 test but could be settled sooner
 - [ ] Re-verify the "known minor visual bug" on the landing page flagged in the marketing plan — may already be fixed by recent commits (Saturn texture, gate icon reverts)
+- [ ] **Paddle sandbox stylesheet blocked by CSP (recorded 2026-09-30, deliberately NOT fixed yet):** loading the pricing page logs `Loading the stylesheet 'https://sandbox-cdn.paddle.com/paddle/v2/assets/css/paddle.css' violates ... "style-src 'self' 'unsafe-inline'"`. `next.config.ts` has no Paddle host in `style-src` (only in `script-src` / `connect-src` / `frame-src`). Seen on a local production build; not yet confirmed whether the checkout overlay renders unstyled on askaureon.com, and the live (non-sandbox) Paddle CDN host will need the same treatment. Check both before real billing goes live.
+- [ ] GA4 is installed but intentionally off: the property exists (Measurement ID `G-XV30244SY8`), the site loads it only after a visitor accepts the consent banner, and it collects nothing until `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set on the Render `Aureon-frontend` service (build-time variable, needs a rebuild).
 - [ ] Real legal review of Terms/Privacy language before any ads run (per `PROJECT-BRIEF.md` §9) — positioning must stay "reflection/entertainment," not predictive-certainty framing
 
 ## 🔵 Bigger, not-yet-started product features (no fixed timeline)
