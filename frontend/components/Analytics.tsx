@@ -1,48 +1,29 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Script from "next/script";
-import { Suspense, useEffect } from "react";
-
-const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+import { useEffect } from "react";
+import { GA_MEASUREMENT_ID, trackPageView } from "@/lib/analytics";
 
 /**
  * Next's App Router doesn't full-reload between routes, so GA4's default
- * on-load pageview only ever fires once. This sends a page_view manually on
- * every route change instead (config below disables the automatic one to
- * avoid double-counting the first load).
+ * on-load pageview only fires once. lib/analytics.ts disables the automatic
+ * one (send_page_view: false) and this sends exactly one page_view per route
+ * change instead, including the first load. Only the pathname is used: query
+ * strings and fragments never go to GA4 (see sanitizePath).
+ *
+ * Initialization lives in lib/analytics.ts (not an inline <Script>) so the
+ * gtag queue always exists before the first event, whichever component's
+ * effect happens to run first; this component only loads gtag.js itself.
  */
-function PageviewTracker() {
+export default function Analytics() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (!GA_MEASUREMENT_ID || typeof window.gtag !== "function") return;
-    const query = searchParams.toString();
-    window.gtag("event", "page_view", { page_path: query ? `${pathname}?${query}` : pathname });
-  }, [pathname, searchParams]);
+    trackPageView(pathname);
+  }, [pathname]);
 
-  return null;
-}
-
-export default function Analytics() {
   if (!GA_MEASUREMENT_ID) return null;
 
-  return (
-    <>
-      <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
-      <Script id="ga4-init" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          window.gtag = gtag;
-          gtag('js', new Date());
-          gtag('config', '${GA_MEASUREMENT_ID}', { send_page_view: false });
-        `}
-      </Script>
-      <Suspense fallback={null}>
-        <PageviewTracker />
-      </Suspense>
-    </>
-  );
+  return <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />;
 }

@@ -18,7 +18,8 @@ const CSP = [
   // (and the style-src-attr it falls back to) needs 'unsafe-inline' or
   // every inline-styled element silently loses its styling.
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data:",
+  // GA4 falls back to an image beacon when fetch/sendBeacon is unavailable.
+  "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com",
   "font-src 'self' data:",
   // GA4 hits go to region-specific *.google-analytics.com / *.analytics.google.com
   // endpoints, and the gtag.js loader itself calls back to googletagmanager.com.
