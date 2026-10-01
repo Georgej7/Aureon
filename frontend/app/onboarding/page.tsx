@@ -5,7 +5,9 @@ import ChartReveal, { ChartRevealHandle } from "@/components/ChartReveal";
 import LocationField, { LocationValue } from "@/components/LocationField";
 import { postNatalChart, postNumerology } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
+import BirthOffsetField from "@/components/BirthOffsetField";
 import { offsetToIso } from "@/lib/astrology";
+import { type BirthOffset, EMPTY_BIRTH_OFFSET } from "@/lib/birth-offset";
 import { createClient } from "@/lib/supabase/client";
 
 const BLANK_LOCATION: LocationValue = { displayName: "", latitude: null, longitude: null };
@@ -40,7 +42,10 @@ export default function OnboardingPage() {
   const [fullName, setFullName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [birthTime, setBirthTime] = useState("");
-  const [utcOffset, setUtcOffset] = useState("0");
+  // No silent default: the offset is derived from birthplace + date + time by BirthOffsetField and the
+  // form cannot be submitted until it is actually known. savedOffset is what an existing profile stored.
+  const [birthOffset, setBirthOffset] = useState<BirthOffset>(EMPTY_BIRTH_OFFSET);
+  const [savedOffset, setSavedOffset] = useState<number | null>(null);
   const [location, setLocation] = useState<LocationValue>(BLANK_LOCATION);
   const [gender, setGender] = useState<Gender | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -74,7 +79,7 @@ export default function OnboardingPage() {
         setFullName(data.full_name ?? "");
         setBirthDate(data.birth_date);
         setBirthTime(data.birth_time ?? "");
-        setUtcOffset(data.utc_offset !== null && data.utc_offset !== undefined ? String(data.utc_offset) : "0");
+        setSavedOffset(data.utc_offset ?? null);
         setGender(data.gender ?? null);
         if (data.latitude !== null && data.longitude !== null) {
           setLocation({
@@ -97,10 +102,11 @@ export default function OnboardingPage() {
   const hasLocation = location.latitude !== null && location.longitude !== null;
   const hasTime = birthTime.trim() !== "";
 
-  const canSubmit = fullName.trim() !== "" && birthDate !== "" && !Number.isNaN(Number(utcOffset));
+  const canSubmit = fullName.trim() !== "" && birthDate !== "" && birthOffset.ready;
 
   async function handleSubmit() {
-    if (!canSubmit || submitting) return;
+    const offsetHours = birthOffset.hours;
+    if (!canSubmit || submitting || offsetHours === null) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -115,7 +121,7 @@ export default function OnboardingPage() {
       }
       const user = session.user;
 
-      const datetime = `${birthDate}T${hasTime ? birthTime : "12:00"}:00${offsetToIso(Number(utcOffset))}`;
+      const datetime = `${birthDate}T${hasTime ? birthTime : "12:00"}:00${offsetToIso(offsetHours)}`;
       const [chart, numerology] = await Promise.all([
         postNatalChart(
           {
@@ -136,7 +142,7 @@ export default function OnboardingPage() {
         birth_location: location.displayName,
         latitude: hasLocation ? location.latitude : null,
         longitude: hasLocation ? location.longitude : null,
-        utc_offset: Number(utcOffset),
+        utc_offset: offsetHours,
         gender,
         chart,
         numerology,
@@ -201,16 +207,14 @@ export default function OnboardingPage() {
             sign. Don&apos;t know your birth city precisely? Leave it blank instead; you&apos;ll
             still get accurate planets and numerology.
           </p>
-          <div className="field">
-            <label>UTC offset at birth (e.g. -5, 4, 5.5)</label>
-            <input
-              type="number"
-              step="0.5"
-              placeholder="4"
-              value={utcOffset}
-              onChange={(e) => setUtcOffset(e.target.value)}
-            />
-          </div>
+          <BirthOffsetField
+            latitude={location.latitude}
+            longitude={location.longitude}
+            date={birthDate}
+            time={birthTime}
+            savedHours={savedOffset}
+            onChange={setBirthOffset}
+          />
           <div className="field">
             <label>Gender (optional)</label>
             <select value={gender ?? ""} onChange={(e) => setGender((e.target.value || null) as Gender | null)}>

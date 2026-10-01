@@ -6,7 +6,9 @@ import KnowledgeDetail from "@/components/KnowledgeDetail";
 import LocationField, { LocationValue } from "@/components/LocationField";
 import type { KnowledgeEntry, SubscriptionTier, Synastry } from "@/lib/api";
 import { postSynastry } from "@/lib/api";
+import BirthOffsetField from "@/components/BirthOffsetField";
 import { offsetToIso, zodiacSign } from "@/lib/astrology";
+import { type BirthOffset, EMPTY_BIRTH_OFFSET } from "@/lib/birth-offset";
 import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
@@ -15,7 +17,7 @@ type PersonInput = {
   birthDate: string;
   birthTime: string;
   location: LocationValue;
-  utcOffset: string;
+  offset: BirthOffset; // derived from place + date + time; null/not-ready until known, never a silent default
 };
 
 const BLANK_PERSON: PersonInput = {
@@ -23,7 +25,7 @@ const BLANK_PERSON: PersonInput = {
   birthDate: "",
   birthTime: "",
   location: { displayName: "", latitude: null, longitude: null },
-  utcOffset: "0",
+  offset: EMPTY_BIRTH_OFFSET,
 };
 
 // Family/parenting themes read from the same synastry aspect set the
@@ -53,7 +55,7 @@ function toBirthDataPayload(person: PersonInput) {
   const hasTime = person.birthTime.trim() !== "";
   const hasLocation = person.location.latitude !== null && person.location.longitude !== null;
   const datetime = `${person.birthDate}T${hasTime ? person.birthTime : "12:00"}:00${offsetToIso(
-    Number(person.utcOffset)
+    person.offset.hours as number // canSubmit guarantees the offset is ready
   )}`;
   return {
     datetime,
@@ -105,15 +107,13 @@ function PersonForm({
         value={person.location}
         onChange={(location) => onChange({ ...person, location })}
       />
-      <div className="field">
-        <label>UTC offset at birth</label>
-        <input
-          type="number"
-          step="0.5"
-          value={person.utcOffset}
-          onChange={(e) => onChange({ ...person, utcOffset: e.target.value })}
-        />
-      </div>
+      <BirthOffsetField
+        latitude={person.location.latitude}
+        longitude={person.location.longitude}
+        date={person.birthDate}
+        time={person.birthTime}
+        onChange={(offset) => onChange({ ...person, offset })}
+      />
     </div>
   );
 }
@@ -155,7 +155,7 @@ export default function BabyCompatibilityPage() {
             latitude: data.latitude ?? null,
             longitude: data.longitude ?? null,
           },
-          utcOffset: data.utc_offset !== null && data.utc_offset !== undefined ? String(data.utc_offset) : "0",
+          offset: EMPTY_BIRTH_OFFSET, // re-derived from the loaded place/date/time, not trusted from the stored value
         });
       }
     }
@@ -173,7 +173,9 @@ export default function BabyCompatibilityPage() {
     personA.name.trim() !== "" &&
     personA.birthDate !== "" &&
     personB.name.trim() !== "" &&
-    personB.birthDate !== "";
+    personB.birthDate !== "" &&
+    personA.offset.ready &&
+    personB.offset.ready;
 
   async function handleCompare() {
     if (!canSubmit || submitting) return;

@@ -147,7 +147,7 @@ export class ApiError extends Error {
   }
 }
 
-async function postJson<TResponse>(path: string, body: unknown, token?: string): Promise<TResponse> {
+async function postJson<TResponse>(path: string, body: unknown, token?: string, signal?: AbortSignal): Promise<TResponse> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
     headers: {
@@ -155,6 +155,7 @@ async function postJson<TResponse>(path: string, body: unknown, token?: string):
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(body),
+    signal,
   });
   if (!res.ok) {
     let detail = "";
@@ -233,6 +234,24 @@ export function postCompositeChart(payload: CompositeChartRequest, token: string
 
 export function postNumerology(payload: NumerologyRequest, token: string): Promise<NumerologyProfile> {
   return postJson<NumerologyProfile>("/api/numerology", payload, token);
+}
+
+// Historically correct UTC offset for a birth place + local birth moment (DST and rule
+// changes included). POST, not GET, so birth date and coordinates stay out of URLs/logs.
+export type TimezoneOption = { utc_offset_hours: number; is_dst: boolean; abbreviation: string | null; label: string };
+export type TimezoneResult = {
+  status: "ok" | "ambiguous" | "nonexistent" | "unknown_zone";
+  tz_name: string | null;
+  utc_offset_hours: number | null;
+  offsets: TimezoneOption[];
+  time_assumed: boolean;
+};
+
+export function postBirthTimezone(
+  payload: { latitude: number; longitude: number; date: string; time: string | null },
+  signal?: AbortSignal
+): Promise<TimezoneResult> {
+  return postJson<TimezoneResult>("/api/timezone/resolve", payload, undefined, signal);
 }
 
 export function postTransits(payload: TransitsRequest, token: string): Promise<Transits> {

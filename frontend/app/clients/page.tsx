@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { postNatalChart, postNumerology, type SubscriptionTier } from "@/lib/api";
+import BirthOffsetField from "@/components/BirthOffsetField";
 import { offsetToIso } from "@/lib/astrology";
+import { type BirthOffset, EMPTY_BIRTH_OFFSET } from "@/lib/birth-offset";
 import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 
@@ -25,7 +27,7 @@ export default function ClientsPage() {
   const [fullName, setFullName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [birthTime, setBirthTime] = useState("");
-  const [utcOffset, setUtcOffset] = useState("0");
+  const [birthOffset, setBirthOffset] = useState<BirthOffset>(EMPTY_BIRTH_OFFSET); // derived, never silently defaulted
   const [birthLocation, setBirthLocation] = useState("");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
@@ -38,7 +40,7 @@ export default function ClientsPage() {
     (longitude.trim() === "" || !Number.isNaN(Number(longitude)));
   const hasTime = birthTime.trim() !== "";
   const canSubmit =
-    fullName.trim() !== "" && birthDate !== "" && locationValid && !Number.isNaN(Number(utcOffset));
+    fullName.trim() !== "" && birthDate !== "" && locationValid && birthOffset.ready;
 
   async function loadClients() {
     const supabase = createClient();
@@ -89,7 +91,7 @@ export default function ClientsPage() {
         return;
       }
 
-      const datetime = `${birthDate}T${hasTime ? birthTime : "12:00"}:00${offsetToIso(Number(utcOffset))}`;
+      const datetime = `${birthDate}T${hasTime ? birthTime : "12:00"}:00${offsetToIso(birthOffset.hours as number)}`;
       const [chart, numerology] = await Promise.all([
         postNatalChart(
           {
@@ -110,7 +112,7 @@ export default function ClientsPage() {
         birth_location: birthLocation,
         latitude: hasLocation ? Number(latitude) : null,
         longitude: hasLocation ? Number(longitude) : null,
-        utc_offset: Number(utcOffset),
+        utc_offset: birthOffset.hours,
         time_known: hasTime,
         chart,
         numerology,
@@ -206,10 +208,13 @@ export default function ClientsPage() {
                 <input type="number" step="0.0001" placeholder="44.8271" value={longitude} onChange={(e) => setLongitude(e.target.value)} />
               </div>
             </div>
-            <div className="field">
-              <label>UTC offset at birth (e.g. -5, 4, 5.5)</label>
-              <input type="number" step="0.5" placeholder="4" value={utcOffset} onChange={(e) => setUtcOffset(e.target.value)} />
-            </div>
+            <BirthOffsetField
+              latitude={hasLocation && locationValid ? Number(latitude) : null}
+              longitude={hasLocation && locationValid ? Number(longitude) : null}
+              date={birthDate}
+              time={birthTime}
+              onChange={setBirthOffset}
+            />
 
             {formError && <p style={{ color: "#c96a4a", fontSize: 13, margin: "0 0 8px" }}>{formError}</p>}
 

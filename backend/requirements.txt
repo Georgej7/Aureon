@@ -17,3 +17,8 @@ anthropic==0.120.2
 python-dotenv==1.2.2
 httpx==0.28.1
 slowapi==0.1.10
+# Birth-time UTC offsets must come from the historical IANA timezone rules
+# (DST included), not from what a user remembers -- see app/calc/timezone.py.
+# tzdata pins the rules themselves so results don't depend on the host OS.
+timezonefinder==9.0.0
+tzdata==2026.4

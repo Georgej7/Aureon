@@ -85,8 +85,10 @@ export function modalityForSign(sign: string): Modality | null {
  * backend's BirthData model can parse. */
 export function offsetToIso(offsetHours: number): string {
   const sign = offsetHours < 0 ? "-" : "+";
-  const abs = Math.abs(offsetHours);
-  const hh = String(Math.floor(abs)).padStart(2, "0");
-  const mm = String(Math.round((abs - Math.floor(abs)) * 60)).padStart(2, "0");
+  // Round once, in whole minutes, then split: rounding the fractional part on its own
+  // can yield "60" (e.g. 4.999 -> "+04:60"), which the backend would reject.
+  const totalMinutes = Math.round(Math.abs(offsetHours) * 60);
+  const hh = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
+  const mm = String(totalMinutes % 60).padStart(2, "0");
   return `${sign}${hh}:${mm}`;
 }

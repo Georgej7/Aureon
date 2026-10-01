@@ -21,6 +21,7 @@ from app.api import (  # noqa: E402 (must follow load_dotenv())
     matrix_of_destiny,
     numerology,
     tarot,
+    timezone,
 )
 from app.rate_limit import limiter  # noqa: E402 (must follow load_dotenv())
 
@@ -54,6 +55,7 @@ app.include_router(electional.router)
 app.include_router(ephemeris.router)
 app.include_router(astrocartography.router)
 app.include_router(matrix_of_destiny.router)
+app.include_router(timezone.router)
 
 
 @app.get("/health")
